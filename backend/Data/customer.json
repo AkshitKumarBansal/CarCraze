@@ -1,0 +1,24 @@
+[
+  {
+    "id": "customer_1755696791560",
+    "firstName": "Akshit",
+    "lastName": "Bansal",
+    "email": "akshit0019.be23@chitkara.edu.in",
+    "password": "$2a$12$8vH50WHYHi1OyMUJSVpkMOBOUxIuKP5Cm6akIDMRsHEc2f5kf.8Ii",
+    "phone": "7888956205",
+    "role": "customer",
+    "createdAt": "2025-08-20T13:33:11.560Z",
+    "lastLogin": null,
+    "isActive": true,
+    "preferences": {
+      "carTypes": [],
+      "priceRange": {
+        "min": 0,
+        "max": 100000
+      },
+      "location": ""
+    },
+    "savedCars": [],
+    "purchaseHistory": []
+  }
+]
