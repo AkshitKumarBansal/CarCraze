@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './SignIn.css';
+import Navbar from '../Common/Navbar';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
+import car1 from '../../images/car1';
+import car2 from '../../images/car2';
+import car3 from '../../images/car3';
 
 const SignIn = ({ onSwitchToSignUp }) => {
   const [formData, setFormData] = useState({
@@ -11,6 +17,15 @@ const SignIn = ({ onSwitchToSignUp }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const images = [car1, car2, car3];
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [images.length]);
 
   // Function to detect role based on email
   const detectRoleFromEmail = (email) => {
@@ -175,10 +190,61 @@ const SignIn = ({ onSwitchToSignUp }) => {
     return icons[role];
   };
 
+  // Simulated Google Sign-In handler
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      // Simulate Google auth popup + response
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
+      // If email already typed, infer role; else use a demo email
+      const email = formData.email?.trim() || 'customer@carcraze.com';
+      const role = detectRoleFromEmail(email);
+
+      alert(`Signed in with Google as ${role.charAt(0).toUpperCase() + role.slice(1)} (${email}). Redirecting...`);
+    } catch (err) {
+      console.error('Google sign-in failed:', err);
+      setErrors({ general: 'Google sign-in failed. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Simulated Facebook Sign-In handler
+  const handleFacebookSignIn = async () => {
+    try {
+      setLoading(true);
+      // Simulate Facebook auth popup + response
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
+      const email = formData.email?.trim() || 'customer@carcraze.com';
+      const role = detectRoleFromEmail(email);
+
+      alert(`Signed in with Facebook as ${role.charAt(0).toUpperCase() + role.slice(1)} (${email}). Redirecting...`);
+    } catch (err) {
+      console.error('Facebook sign-in failed:', err);
+      setErrors({ general: 'Facebook sign-in failed. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (showForgotPassword) {
     return (
-      <div className="auth-container">
-        <div className="auth-card">
+      <>
+        <Navbar />
+        <div className="auth-container">
+          <div className="auth-bg">
+            {images.map((img, idx) => (
+              <div
+                key={idx}
+                className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`}
+                style={{ backgroundImage: `url(${img})` }}
+              />
+            ))}
+            <div className="auth-overlay" />
+          </div>
+          <div className="auth-card">
           <div className="auth-header">
             <h2>Reset Password</h2>
             <p>Enter your email to receive a reset link</p>
@@ -190,15 +256,18 @@ const SignIn = ({ onSwitchToSignUp }) => {
           }} className="auth-form">
             <div className="form-group">
               <label htmlFor="resetEmail">Email Address</label>
-              <input
-                type="email"
-                id="resetEmail"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter your email address"
-                autoFocus
-              />
+              <div className="input-with-icon">
+                <input
+                  type="email"
+                  id="resetEmail"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email address"
+                  autoFocus
+                />
+                <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
+              </div>
             </div>
 
             <button type="submit" className="auth-button">
@@ -213,17 +282,33 @@ const SignIn = ({ onSwitchToSignUp }) => {
               Back to Sign In
             </button>
           </form>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
+    <>
+      <Navbar />
+      <div
+        className="auth-container"
+      >
+        <div className="auth-bg">
+          {images.map((img, idx) => (
+            <div
+              key={idx}
+              className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`}
+              style={{ backgroundImage: `url(${img})` }}
+            />
+          ))}
+          <div className="auth-overlay" />
+        </div>
+        <div className="auth-card">
         <div className="auth-header">
           <h2>Welcome Back</h2>
-          <p>Sign in to your CarCraze account</p>
+          <h4>Sign in to access your CarCraze account</h4>
+          <h5>BUILD TO MOVE YOU</h5>
         </div>
 
 
@@ -231,32 +316,38 @@ const SignIn = ({ onSwitchToSignUp }) => {
           {/* Email Field */}
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className={errors.email ? 'error' : ''}
-              placeholder="Enter your email address"
-              autoComplete="email"
-            />
+            <div className="input-with-icon">
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={errors.email ? 'error' : ''}
+                placeholder="Enter your email address"
+                autoComplete="email"
+              />
+              <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
+            </div>
             {errors.email && <span className="error-message">{errors.email}</span>}
           </div>
 
           {/* Password Field */}
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className={errors.password ? 'error' : ''}
-              placeholder="Enter your password"
-              autoComplete="current-password"
-            />
+            <div className="input-with-icon">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className={errors.password ? 'error' : ''}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+              />
+              <FontAwesomeIcon icon={faLock} className="input-icon" />
+            </div>
             {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
 
@@ -286,20 +377,51 @@ const SignIn = ({ onSwitchToSignUp }) => {
 
           <button 
             type="submit" 
-            className={`auth-button ${loading ? 'loading' : ''}`}
+            className={`auth-button small ${loading ? 'loading' : ''}`}
             disabled={loading}
           >
             {loading ? 'Signing In...' : `Sign In as ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`}
           </button>
+        
+          {/* Divider */}
+          <div className="divider">or</div>
+
+          {/* Google Sign-In */}
+          <button
+            type="button"
+            className="oauth-btn google"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            aria-label="Continue with Google"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+              <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.049,6.053,28.761,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+              <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,16.108,18.961,13,24,13c3.059,0,5.842,1.154,7.961,3.039 l5.657-5.657C33.049,6.053,28.761,4,24,4C16.318,4,9.656,8.338,6.306,14.691z"/>
+              <path fill="#4CAF50" d="M24,44c4.717,0,9.005-1.807,12.247-4.747l-5.657-5.657C28.515,35.994,26.38,37,24,37 c-5.202,0-9.617-3.317-11.278-7.946l-6.5,5.005C8.505,39.556,15.717,44,24,44z"/>
+              <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.793,2.237-2.231,4.166-4.057,5.596 c0.001-0.001,0.002-0.001,0.003-0.002l5.657,5.657C35.697,40.087,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          {/* Facebook Sign-In */}
+          <button
+            type="button"
+            className="oauth-btn facebook"
+            onClick={handleFacebookSignIn}
+            disabled={loading}
+            aria-label="Continue with Facebook"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078V12.07h3.047V9.412c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953h-1.513c-1.493 0-1.957.93-1.957 1.887v2.25h3.328l-.532 3.492h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+              <path fill="#fff" d="M16.671 15.562l.532-3.492h-3.328v-2.25c0-.957.464-1.887 1.957-1.887h1.513V4.98s-1.374-.235-2.686-.235c-2.741 0-4.533 1.661-4.533 4.668v2.658H7.078v3.493h3.047V24h3.75v-8.438h2.796z"/>
+            </svg>
+            Continue with Facebook
+          </button>
         </form>
-
-        <div className="auth-footer">
-          <p>Don't have an account? <button className="link-btn" onClick={onSwitchToSignUp}>Create Account</button></p>
         </div>
-
       </div>
-    </div>
+    </>
   );
-};
+}
 
 export default SignIn;

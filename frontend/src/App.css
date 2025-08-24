@@ -10,22 +10,6 @@
   justify-content: center;
 }
 
-.back-to-home {
-  margin-top: 2rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.back-to-home:hover {
-  background-color: #1d4ed8;
-}
-
 /* Additional App-specific styles */
 .App {
   text-align: left;

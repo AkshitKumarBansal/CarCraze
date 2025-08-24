@@ -1,0 +1,93 @@
+/* Navbar styles moved from index.css */
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-icon {
+  display: flex;
+  align-items: center;
+}
+
+.car-logo {
+  width: 48px;
+  height: 24px;
+  transition: all 0.3s ease;
+}
+
+.logo:hover .car-logo {
+  transform: translateX(5px) scale(1.05);
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #374151;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #2563eb;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.auth-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  border: none;
+}
+
+.auth-btn.sign-up {
+  background: linear-gradient(45deg, #2563eb, #3b82f6);
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.auth-btn.sign-up:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+}
+
+/* Responsive - hide nav links on small screens */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+}
