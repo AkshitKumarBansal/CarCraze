@@ -14,6 +14,18 @@ body {
   color: #333;
 }
 
+/* Prevent unwanted horizontal scroll */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Constrain auth routes to viewport height to avoid vertical scrollbar */
+.auth-page {
+  height: 100dvh;
+  /* overflow-y: hidden; */
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -25,66 +37,7 @@ code {
   padding: 0 20px;
 }
 
-/* Header Styles */
-.header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-}
-
-.nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0;
-}
-
-.logo {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #2563eb;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.logo-icon {
-  display: flex;
-  align-items: center;
-}
-
-.car-logo {
-  width: 48px;
-  height: 24px;
-  transition: all 0.3s ease;
-}
-
-.logo:hover .car-logo {
-  transform: translateX(5px) scale(1.05);
-}
-
-.nav-links {
-  display: flex;
-  list-style: none;
-  gap: 2rem;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: #374151;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-links a:hover {
-  color: #2563eb;
-}
+/* Header styles moved to Components/Common/Navbar.css */
 
 .nav-buttons {
   display: flex;
