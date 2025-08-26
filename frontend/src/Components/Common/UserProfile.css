@@ -1,0 +1,75 @@
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 20px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  margin: 2px 0 0 0;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.logout-button:hover {
+  color: #ef4444;
+  text-decoration: underline;
+}
+
+/* Navbar specific styles */
+.navbar .user-profile {
+  margin-left: auto;
+  margin-right: 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .user-profile {
+    margin: 10px 0;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .user-name {
+    display: none;
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
