@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Simple file-based storage (replace with database in production)
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = path.join(__dirname, 'Data');
 const CUSTOMER_FILE = path.join(DATA_DIR, 'customer.json');
 const SELLER_FILE = path.join(DATA_DIR, 'seller.json');
 const ADMIN_FILE = path.join(DATA_DIR, 'admin.json');
@@ -60,8 +60,13 @@ async function readUsersByRole(role) {
 
 // Write users to role-specific file
 async function writeUsersByRole(role, users) {
-  const filePath = getFilePathByRole(role);
-  await fs.writeFile(filePath, JSON.stringify(users, null, 2));
+  try {
+    const filePath = getFilePathByRole(role);
+    await fs.writeFile(filePath, JSON.stringify(users, null, 2));
+  } catch (error) {
+    console.error(`Error writing users to ${role} file:`, error);
+    throw new Error(`Failed to save ${role} data: ${error.message}`);
+  }
 }
 
 // Read all users from all files
