@@ -453,5 +453,4 @@ const SignIn = ({ onSwitchToSignUp }) => {
     </>
   );
 }
-
 export default SignIn;
