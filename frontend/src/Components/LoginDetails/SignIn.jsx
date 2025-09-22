@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import './SignIn.css';
 import Navbar from '../Common/Navbar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,6 +10,9 @@ import car2 from '../../images/car2';
 import car3 from '../../images/car3';
 
 const SignIn = ({ onSwitchToSignUp }) => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -87,64 +92,37 @@ const SignIn = ({ onSwitchToSignUp }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-    
     setLoading(true);
+    setError('');
     
+    if (!validateForm()) {
+      setLoading(false);
+      return;
+    }
+
     try {
-            // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // In a real app, you would validate credentials with your backend
+      // For now, we'll simulate a successful login
+      login({
+        email: formData.email,
+        name: formData.email.split('@')[0], // Use part of email as name
+        role: formData.role
+      });
       
-      // Here you would typically make an API call to authenticate the user
-      console.log('Login data:', formData);
-      
-      // Simulate different responses based on role
+      // Show welcome message based on role
       const roleMessages = {
         customer: 'Welcome back! Redirecting to car listings...',
         seller: 'Welcome back! Redirecting to your dashboard...',
         admin: 'Admin access granted. Redirecting to admin panel...'
       };
       
-      alert(roleMessages[formData.role]);
+      alert(roleMessages[formData.role] || 'Welcome back!');
       
-      // In a real app, you would:
-
-      // let response;
-      
-      // if (authMode === 'password') {
-      //   response = await fetch('/api/auth/signin', {
-      //     method: 'POST',
-      //     headers: { 'Content-Type': 'application/json' },
-      //     body: JSON.stringify({
-      //       email: formData.email,
-      //       password: formData.password
-      //     })
-      //   });
-      // } else {
-      //   response = await fetch('/api/auth/verify-otp', {
-      //     method: 'POST',
-      //     headers: { 'Content-Type': 'application/json' },
-      //     body: JSON.stringify({
-      //       email: formData.email,
-      //       otp: formData.otp
-      //     })
-      //   });
-      // }
-
-      // const data = await response.json();
-
-      // if (response.ok) {
-      //   alert(`${data.user.role.charAt(0).toUpperCase() + data.user.role.slice(1)} logged in successfully!`);
-      //   localStorage.setItem('token', data.token);
-      //   localStorage.setItem('user', JSON.stringify(data.user));
-      // } else {
-      //   alert(data.message || 'Login failed');
-      // }
-      
-    } catch (error) {
-      console.error('Login error:', error);
-      setErrors({ general: 'Invalid credentials. Please try again.' });
+      // Redirect to home after successful login
+      navigate('/');
+    } catch (err) {
+      console.error('Sign in error:', err);
+      setError('Failed to sign in. Please check your credentials.');
     } finally {
       setLoading(false);
     }

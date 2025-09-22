@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 import car1 from './images/car1';
 import car2 from './images/car2';
 import car3 from './images/car3';
 import Footer from './Components/Common/Footer';
 import Navbar from './Components/Common/Navbar';
-
-// Import SignIn and SignUp components
+import { AuthProvider } from './contexts/AuthContext';
 import SignIn from './Components/LoginDetails/SignIn';
 import SignUp from './Components/LoginDetails/SignUp';
 
@@ -727,29 +726,86 @@ const HomePage = () => {
 
   const handleSearch = (criteria) => {
     setSearchCriteria(criteria);
-    // Scroll to featured cars section
-    document.getElementById('cars').scrollIntoView({ behavior: 'smooth' });
+    // Scroll to featured cars after search
+    setTimeout(() => {
+      const element = document.getElementById('featured-cars');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   return (
     <div className="home-page">
       <Navbar />
-      <Hero onSearch={handleSearch} />
-      <FeaturedCars searchCriteria={searchCriteria} />
-      <Services />
-      <Footer />
+      <section id="home">
+        <Hero onSearch={handleSearch} />
+      </section>
+      <section id="featured-cars">
+        <FeaturedCars searchCriteria={searchCriteria} />
+      </section>
+      <section id="services">
+        <Services />
+      </section>
     </div>
   );
 };
 
+// Scroll to top on route change
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
+// Scroll to section when hash changes
+const ScrollToSection = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location]);
+
+  return null;
+};
+
 // Main App Component with Routing
-function AppwithRouter() {
+function AppWithRouter() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle scroll to section on initial load with hash
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location]);
 
   return (
     <div className="App">
+      <ScrollToTop />
+      <ScrollToSection />
+      <Navbar />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={
+          <HomePage />
+        } />
         <Route path="/signin" element={
           <div className="auth-page">
             <SignIn onSwitchToSignUp={() => navigate('/signup')} />
@@ -761,17 +817,20 @@ function AppwithRouter() {
           </div>
         } />
       </Routes>
+      <Footer />
     </div>
   );
 }
 
 // Root App Component with Router
-function App() {
+const App = () => {
   return (
     <Router>
-      <AppwithRouter />
+      <AuthProvider>
+        <AppWithRouter />
+      </AuthProvider>
     </Router>
   );
-}
+};
 
 export default App;
