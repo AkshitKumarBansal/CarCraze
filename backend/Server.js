@@ -16,8 +16,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'carcraze_secret_key_2024';
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
-  credentials: true
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:58899', 'http://127.0.0.1:59600'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,6 +29,7 @@ const DATA_DIR = path.join(__dirname, 'Data');
 const CUSTOMER_FILE = path.join(DATA_DIR, 'customer.json');
 const SELLER_FILE = path.join(DATA_DIR, 'seller.json');
 const ADMIN_FILE = path.join(DATA_DIR, 'admin.json');
+const CARS_FILE = path.join(DATA_DIR, 'cars.json');
 
 // Ensure data directory exists
 async function ensureDataDir() {
@@ -55,6 +58,26 @@ async function readUsersByRole(role) {
     return JSON.parse(data);
   } catch {
     return [];
+  }
+}
+
+// Read cars from cars file
+async function readCars() {
+  try {
+    const data = await fs.readFile(CARS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+// Write cars to cars file
+async function writeCars(cars) {
+  try {
+    await fs.writeFile(CARS_FILE, JSON.stringify(cars, null, 2));
+  } catch (error) {
+    console.error('Error writing cars to file:', error);
+    throw new Error(`Failed to save cars data: ${error.message}`);
   }
 }
 
@@ -131,6 +154,55 @@ function detectRoleFromEmail(email) {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'CarCraze Server is running!' });
+});
+
+// Test endpoint to create a seller with known password (for development only)
+app.post('/api/test/create-seller', async (req, res) => {
+  try {
+    const testSeller = {
+      id: `seller_test_${Date.now()}`,
+      firstName: 'Test',
+      lastName: 'Seller',
+      email: 'testseller@carcraze.com',
+      password: await bcrypt.hash('password123', 12),
+      phone: '1234567890',
+      role: 'seller',
+      createdAt: new Date().toISOString(),
+      lastLogin: null,
+      isActive: true,
+      businessInfo: {
+        businessName: 'Test Auto Sales',
+        businessAddress: '123 Test Street',
+        businessPhone: '1234567890',
+        businessLicense: '',
+        taxId: ''
+      },
+      inventory: [],
+      salesHistory: [],
+      rating: { average: 0, totalReviews: 0 },
+      verification: { isVerified: false, documents: [] }
+    };
+
+    const sellers = await readUsersByRole('seller');
+    
+    // Check if test seller already exists
+    const existingSeller = sellers.find(s => s.email === 'testseller@carcraze.com');
+    if (existingSeller) {
+      return res.json({ message: 'Test seller already exists', email: 'testseller@carcraze.com', password: 'password123' });
+    }
+    
+    sellers.push(testSeller);
+    await writeUsersByRole('seller', sellers);
+    
+    res.json({ 
+      message: 'Test seller created successfully',
+      email: 'testseller@carcraze.com',
+      password: 'password123'
+    });
+  } catch (error) {
+    console.error('Error creating test seller:', error);
+    res.status(500).json({ error: 'Failed to create test seller' });
+  }
 });
 
 // User Registration
@@ -455,14 +527,6 @@ app.post('/api/auth/signin', async (req, res) => {
       });
     }
 
-    // Verify role matches detected role
-    if (user.role !== detectedRole) {
-      return res.status(401).json({ 
-        error: 'Role mismatch',
-        message: `This email is registered as ${user.role}, not ${detectedRole}`
-      });
-    }
-
     // Generate JWT token
     const token = jwt.sign(
       { 
@@ -504,8 +568,8 @@ app.post('/api/auth/signin', async (req, res) => {
 // Get user profile (protected route)
 app.get('/api/auth/profile', authenticateToken, async (req, res) => {
   try {
-    const users = await readUsers();
-    const user = users.find(u => u.id === req.user.userId);
+    const allUsers = await readAllUsers();
+    const user = allUsers.find(u => u.id === req.user.userId);
     
     if (!user) {
       return res.status(404).json({ 
@@ -522,6 +586,232 @@ app.get('/api/auth/profile', authenticateToken, async (req, res) => {
     res.status(500).json({ 
       error: 'Internal server error',
       message: 'Failed to fetch profile'
+    });
+  }
+});
+
+// Seller Dashboard - Get seller's cars
+app.get('/api/seller/cars', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'seller') {
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: 'Seller access required'
+      });
+    }
+
+    const cars = await readCars();
+    const sellerCars = cars.filter(car => car.sellerId === req.user.userId);
+    
+    res.json({ cars: sellerCars });
+
+  } catch (error) {
+    console.error('Seller cars error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to fetch seller cars'
+    });
+  }
+});
+
+// Add new car (seller only)
+app.post('/api/seller/cars', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'seller') {
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: 'Seller access required'
+      });
+    }
+
+    const {
+      model,
+      brand,
+      year,
+      capacity,
+      fuelType,
+      transmission,
+      description,
+      listingType, // 'sale' or 'rent'
+      price,
+      availability,
+      color,
+      mileage,
+      images,
+      location
+    } = req.body;
+
+    // Validation
+    if (!model || !brand || !year || !capacity || !fuelType || !transmission || !listingType || !price) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        message: 'Model, brand, year, capacity, fuel type, transmission, listing type, and price are required'
+      });
+    }
+
+    if (listingType === 'rent' && !availability) {
+      return res.status(400).json({ 
+        error: 'Missing availability',
+        message: 'Availability is required for rental cars'
+      });
+    }
+
+    // Create new car object
+    const newCar = {
+      id: `car_${Date.now()}`,
+      sellerId: req.user.userId,
+      model,
+      brand,
+      year: parseInt(year),
+      capacity: parseInt(capacity),
+      fuelType,
+      transmission,
+      description: description || '',
+      listingType,
+      price: parseFloat(price),
+      availability: listingType === 'rent' ? availability : null,
+      color: color || '',
+      mileage: mileage ? parseInt(mileage) : 0,
+      images: images || [],
+      location: location || '',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // Read existing cars and add new car
+    const cars = await readCars();
+    cars.push(newCar);
+    await writeCars(cars);
+
+    // Update seller's inventory
+    const sellers = await readUsersByRole('seller');
+    const sellerIndex = sellers.findIndex(s => s.id === req.user.userId);
+    if (sellerIndex !== -1) {
+      sellers[sellerIndex].inventory.push(newCar.id);
+      await writeUsersByRole('seller', sellers);
+    }
+
+    res.status(201).json({
+      message: 'Car added successfully',
+      car: newCar
+    });
+
+  } catch (error) {
+    console.error('Add car error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to add car. Please try again.'
+    });
+  }
+});
+
+// Update car (seller only)
+app.put('/api/seller/cars/:carId', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'seller') {
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: 'Seller access required'
+      });
+    }
+
+    const { carId } = req.params;
+    const updateData = req.body;
+
+    const cars = await readCars();
+    const carIndex = cars.findIndex(car => car.id === carId && car.sellerId === req.user.userId);
+    
+    if (carIndex === -1) {
+      return res.status(404).json({ 
+        error: 'Car not found',
+        message: 'Car not found or you do not have permission to update it'
+      });
+    }
+
+    // Update car data
+    cars[carIndex] = {
+      ...cars[carIndex],
+      ...updateData,
+      updatedAt: new Date().toISOString()
+    };
+
+    await writeCars(cars);
+
+    res.json({
+      message: 'Car updated successfully',
+      car: cars[carIndex]
+    });
+
+  } catch (error) {
+    console.error('Update car error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to update car. Please try again.'
+    });
+  }
+});
+
+// Delete car (seller only)
+app.delete('/api/seller/cars/:carId', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'seller') {
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: 'Seller access required'
+      });
+    }
+
+    const { carId } = req.params;
+
+    const cars = await readCars();
+    const carIndex = cars.findIndex(car => car.id === carId && car.sellerId === req.user.userId);
+    
+    if (carIndex === -1) {
+      return res.status(404).json({ 
+        error: 'Car not found',
+        message: 'Car not found or you do not have permission to delete it'
+      });
+    }
+
+    // Remove car from cars array
+    cars.splice(carIndex, 1);
+    await writeCars(cars);
+
+    // Remove car from seller's inventory
+    const sellers = await readUsersByRole('seller');
+    const sellerIndex = sellers.findIndex(s => s.id === req.user.userId);
+    if (sellerIndex !== -1) {
+      sellers[sellerIndex].inventory = sellers[sellerIndex].inventory.filter(id => id !== carId);
+      await writeUsersByRole('seller', sellers);
+    }
+
+    res.json({
+      message: 'Car deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete car error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to delete car. Please try again.'
+    });
+  }
+});
+
+// Get all cars (public route for browsing)
+app.get('/api/cars', async (req, res) => {
+  try {
+    const cars = await readCars();
+    const activeCars = cars.filter(car => car.status === 'active');
+    
+    res.json({ cars: activeCars });
+
+  } catch (error) {
+    console.error('Get cars error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to fetch cars'
     });
   }
 });
@@ -560,7 +850,7 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
       });
     }
 
-    const users = await readUsers();
+    const users = await readAllUsers();
     const usersWithoutPasswords = users.map(({ password, ...user }) => user);
     
     res.json({ users: usersWithoutPasswords });

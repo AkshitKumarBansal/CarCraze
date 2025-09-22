@@ -212,15 +212,16 @@
 
 .input-with-icon .input-icon {
   position: absolute;
-  right: 12px;
-  color: #718096;
-  font-size: 14px;
-  z-index: 1;
-  padding-right: 10px;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 16px;
+  pointer-events: none;
 }
 
 .input-with-icon input {
-  padding-right: 32px;
+  padding-right: 40px;
 }
 
 .form-group input {
@@ -693,3 +694,32 @@
     color: white;
   }
 } */
+
+/* Role Selection Dropdown */
+.role-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 16px;
+  background-color: white;
+  color: #374151;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.role-select:hover {
+  border-color: #cbd5e0;
+}
