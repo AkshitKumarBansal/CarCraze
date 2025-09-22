@@ -1,0 +1,178 @@
+[
+  {
+    "id": "seller_001",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "seller@carcraze.com",
+    "password": "$2a$12$LQv3c1yqBwEHFl5ygkVQKO5vHb2YVjMpkqeyw/MI5gUSeXMjH4qSe",
+    "phone": "9876543210",
+    "role": "seller",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Smith Auto Sales",
+      "businessAddress": "123 Main Street, Los Angeles, CA 90210",
+      "businessPhone": "9876543210",
+      "businessLicense": "BL123456789",
+      "taxId": "TAX987654321"
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 4.5,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1755697381587",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "ansh0032.be23@chitkara.edu.in",
+    "password": "$2a$12$N/KfkRcVXQC0q9G7llr.Auo/taM5NPme8O0TNjKvBb6a1YSiDR8lK",
+    "phone": "9805443609",
+    "role": "seller",
+    "createdAt": "2025-08-20T13:43:01.587Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Car Dealers",
+      "businessAddress": "Rajpura",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1758540680001",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "gupta0032@gmail.com",
+    "password": "$2a$12$PUkjulhFCQRaGn/xbgmYAuxrtwS2DP.cbzoRUb6KRJThwUGyuwRfC",
+    "phone": "9805443609",
+    "role": "seller",
+    "createdAt": "2025-09-22T11:31:20.001Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Gupta Traders",
+      "businessAddress": "Gagan Chowk, Rajpura",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1758545607402",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "guptag1903@gmail.com",
+    "password": "$2a$12$95q4HNNWYmF/m5LZA9rWtuhvxd3niJH7xn6w0xS7x54wkDHmTvjfO",
+    "phone": "98054 43609",
+    "role": "seller",
+    "createdAt": "2025-09-22T12:53:27.402Z",
+    "lastLogin": "2025-09-22T13:29:27.323Z",
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "chitkara",
+      "businessAddress": "adad",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [
+      "car_1758547711811"
+    ],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1758546327914",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "guptag1903_1@gmail.com",
+    "password": "$2a$12$3U1dO9wf9ytbuSZxNcJejeK2Wni/4ywY7PnIQumbiVORVjwDcmD2u",
+    "phone": "98054 43609",
+    "role": "seller",
+    "createdAt": "2025-09-22T13:05:27.914Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "chitkara",
+      "businessAddress": "KARSOG SAPNOT SAPNOT",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_test_1758546586966",
+    "firstName": "Test",
+    "lastName": "Seller",
+    "email": "testseller@carcraze.com",
+    "password": "$2a$12$fLpPy9Ni17N2Gwq3uID/F.ko9NZEhz0Q42AuYK7qlCByx870T7Mha",
+    "phone": "1234567890",
+    "role": "seller",
+    "createdAt": "2025-09-22T13:09:47.213Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Test Auto Sales",
+      "businessAddress": "123 Test Street",
+      "businessPhone": "1234567890",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  }
+]

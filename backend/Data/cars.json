@@ -1,0 +1,23 @@
+[
+  {
+    "id": "car_1758547711811",
+    "sellerId": "seller_1758545607402",
+    "model": "800",
+    "brand": "Maruti",
+    "year": 2006,
+    "capacity": 5,
+    "fuelType": "Petrol",
+    "transmission": "manual",
+    "description": "Maruti 800 3rd hand",
+    "listingType": "sale",
+    "price": 50000,
+    "availability": null,
+    "color": "White",
+    "mileage": 15,
+    "images": [],
+    "location": "Chandigarh, India",
+    "status": "active",
+    "createdAt": "2025-09-22T13:28:31.811Z",
+    "updatedAt": "2025-09-22T13:28:31.811Z"
+  }
+]

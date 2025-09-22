@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import './SignIn.css';
 import Navbar from '../Common/Navbar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,13 +9,11 @@ import car2 from '../../images/car2';
 import car3 from '../../images/car3';
 
 const SignIn = ({ onSwitchToSignUp }) => {
-  const { login } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: ''
+    role: 'customer' // Default to customer
   });
 
   const [errors, setErrors] = useState({});
@@ -36,7 +33,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
   const detectRoleFromEmail = (email) => {
     if (email.includes('admin') || email.startsWith('admin@') || email === 'admin@carcraze.com') {
       return 'admin';
-    } else if (email.includes('seller') || email.startsWith('seller@') || email === 'seller@carcraze.com') {
+    } else if (email.includes('seller') || email.startsWith('seller@') || email.includes('testseller')) {
       return 'seller';
     } else {
       return 'customer';
@@ -92,37 +89,58 @@ const SignIn = ({ onSwitchToSignUp }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
     
-    if (!validateForm()) {
-      setLoading(false);
-      return;
-    }
-
+    if (!validateForm()) return;
+    
+    setLoading(true);
+    
     try {
-      // In a real app, you would validate credentials with your backend
-      // For now, we'll simulate a successful login
-      login({
-        email: formData.email,
-        name: formData.email.split('@')[0], // Use part of email as name
-        role: formData.role
+      console.log('Attempting to sign in with:', { email: formData.email, role: formData.role });
+      
+      const response = await fetch('http://localhost:5000/api/auth/signin', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
       });
+
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (response.ok) {
+        // Store authentication data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        console.log('User role:', data.user.role);
+        
+        // Show success message
+        alert(`Welcome back, ${data.user.firstName}!`);
+        
+        // Redirect based on role
+        if (data.user.role === 'seller') {
+          console.log('Redirecting to seller dashboard...');
+          navigate('/seller/dashboard');
+        } else if (data.user.role === 'admin') {
+          console.log('Redirecting to admin dashboard...');
+          navigate('/admin/dashboard');
+        } else {
+          console.log('Redirecting to home...');
+          navigate('/');
+        }
+      } else {
+        console.error('Login failed:', data);
+        setErrors({ general: data.message || 'Login failed' });
+      }
       
-      // Show welcome message based on role
-      const roleMessages = {
-        customer: 'Welcome back! Redirecting to car listings...',
-        seller: 'Welcome back! Redirecting to your dashboard...',
-        admin: 'Admin access granted. Redirecting to admin panel...'
-      };
-      
-      alert(roleMessages[formData.role] || 'Welcome back!');
-      
-      // Redirect to home after successful login
-      navigate('/');
-    } catch (err) {
-      console.error('Sign in error:', err);
-      setError('Failed to sign in. Please check your credentials.');
+    } catch (error) {
+      console.error('Network error during login:', error);
+      setErrors({ general: 'Network error. Please check if the server is running and try again.' });
     } finally {
       setLoading(false);
     }
@@ -180,6 +198,15 @@ const SignIn = ({ onSwitchToSignUp }) => {
       const role = detectRoleFromEmail(email);
 
       alert(`Signed in with Google as ${role.charAt(0).toUpperCase() + role.slice(1)} (${email}). Redirecting...`);
+      
+      // Redirect based on role
+      if (role === 'seller') {
+        navigate('/seller/dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error('Google sign-in failed:', err);
       setErrors({ general: 'Google sign-in failed. Please try again.' });
@@ -199,6 +226,15 @@ const SignIn = ({ onSwitchToSignUp }) => {
       const role = detectRoleFromEmail(email);
 
       alert(`Signed in with Facebook as ${role.charAt(0).toUpperCase() + role.slice(1)} (${email}). Redirecting...`);
+      
+      // Redirect based on role
+      if (role === 'seller') {
+        navigate('/seller/dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error('Facebook sign-in failed:', err);
       setErrors({ general: 'Facebook sign-in failed. Please try again.' });
@@ -329,6 +365,22 @@ const SignIn = ({ onSwitchToSignUp }) => {
             {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
 
+          {/* Role Selection */}
+          <div className="form-group">
+            <label htmlFor="role">Sign in as</label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleInputChange}
+              className="role-select"
+            >
+              <option value="customer">🚗 Customer</option>
+              <option value="seller">🏪 Seller</option>
+              <option value="admin">⚙️ Admin</option>
+            </select>
+          </div>
+
 
           {errors.general && (
             <div className="error-message general-error">
@@ -358,7 +410,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
             className={`auth-button small ${loading ? 'loading' : ''}`}
             disabled={loading}
           >
-            {loading ? 'Signing In...' : `Sign In as ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`}
+            {loading ? 'Signing In...' : `Sign In as ${formData.role ? formData.role.charAt(0).toUpperCase() + formData.role.slice(1) : 'User'}`}
           </button>
         
           {/* Divider */}

@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import './SignUp.css';
 import Navbar from '../Common/Navbar';
 import car1 from '../../images/car1';
@@ -9,10 +7,8 @@ import car3 from '../../images/car3';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faUser, faLock, faPhone, faBuilding, faMapMarkerAlt, faUserShield, faKey } from '@fortawesome/free-solid-svg-icons';
 
+
 const SignUp = ({ onSwitchToSignIn }) => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -108,38 +104,42 @@ const SignUp = ({ onSwitchToSignIn }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setLoading(true);
-    setError('');
-    setErrors({});
 
     try {
-      // In a real app, you would send this data to your backend
-      // For now, we'll simulate a successful registration and login
-      const userData = {
-        email: formData.email,
-        name: `${formData.firstName} ${formData.lastName}`.trim(),
-        role: formData.role,
-        // Include additional fields as needed
-        phone: formData.phone,
-        businessName: formData.businessName || null,
-        businessEmail: formData.businessEmail || null
-      };
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-      // Log the user in
-      login(userData);
+      const data = await response.json();
 
-      // Show success message
-      alert('Account created successfully! Redirecting to your dashboard...');
+      if (!response.ok) {
+        alert(data.message || "Registration failed");
+      } else {
+        alert(`${data.user.role} registered successfully!`);
+      }
 
-      // Redirect to home page
-      navigate('/');
-    } catch (err) {
-      console.error('Sign up error:', err);
-      setError('Failed to create an account. Please try again.');
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        phone: "",
+        role: "customer",
+        businessName: "",
+        businessAddress: "",
+        businessPhone: "",
+        adminCode: "",
+      });
+
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -359,6 +359,7 @@ const SignUp = ({ onSwitchToSignIn }) => {
               </div>
             </div>
 
+
             {/* Password Fields */}
             <div className="form-row">
               <div className="form-group">
@@ -398,12 +399,19 @@ const SignUp = ({ onSwitchToSignIn }) => {
             {/* Role-specific fields */}
             {renderRoleSpecificFields()}
 
-            {error && <div className="error-message">{error}</div>}
-            <div className="form-actions">
-              <button type="submit" className="auth-button" disabled={loading}>
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </button>
-            </div>
+            {errors.general && (
+              <div className="error-message general-error">
+                {errors.general}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className={`auth-button ${loading ? 'loading' : ''}`}
+              disabled={loading}
+            >
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </button>
           </form>
 
           <div className="auth-footer">
