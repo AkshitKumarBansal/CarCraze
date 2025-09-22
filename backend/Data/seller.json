@@ -85,5 +85,94 @@
       "isVerified": false,
       "documents": []
     }
+  },
+  {
+    "id": "seller_1758545607402",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "guptag1903@gmail.com",
+    "password": "$2a$12$95q4HNNWYmF/m5LZA9rWtuhvxd3niJH7xn6w0xS7x54wkDHmTvjfO",
+    "phone": "98054 43609",
+    "role": "seller",
+    "createdAt": "2025-09-22T12:53:27.402Z",
+    "lastLogin": "2025-09-22T13:29:27.323Z",
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "chitkara",
+      "businessAddress": "adad",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [
+      "car_1758547711811"
+    ],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1758546327914",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "guptag1903_1@gmail.com",
+    "password": "$2a$12$3U1dO9wf9ytbuSZxNcJejeK2Wni/4ywY7PnIQumbiVORVjwDcmD2u",
+    "phone": "98054 43609",
+    "role": "seller",
+    "createdAt": "2025-09-22T13:05:27.914Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "chitkara",
+      "businessAddress": "KARSOG SAPNOT SAPNOT",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_test_1758546586966",
+    "firstName": "Test",
+    "lastName": "Seller",
+    "email": "testseller@carcraze.com",
+    "password": "$2a$12$fLpPy9Ni17N2Gwq3uID/F.ko9NZEhz0Q42AuYK7qlCByx870T7Mha",
+    "phone": "1234567890",
+    "role": "seller",
+    "createdAt": "2025-09-22T13:09:47.213Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Test Auto Sales",
+      "businessAddress": "123 Test Street",
+      "businessPhone": "1234567890",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
   }
 ]
