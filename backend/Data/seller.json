@@ -56,5 +56,34 @@
       "isVerified": false,
       "documents": []
     }
+  },
+  {
+    "id": "seller_1758540680001",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "gupta0032@gmail.com",
+    "password": "$2a$12$PUkjulhFCQRaGn/xbgmYAuxrtwS2DP.cbzoRUb6KRJThwUGyuwRfC",
+    "phone": "9805443609",
+    "role": "seller",
+    "createdAt": "2025-09-22T11:31:20.001Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Gupta Traders",
+      "businessAddress": "Gagan Chowk, Rajpura",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
   }
 ]
