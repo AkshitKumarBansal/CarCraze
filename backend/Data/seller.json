@@ -1,0 +1,89 @@
+[
+  {
+    "id": "seller_001",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "seller@carcraze.com",
+    "password": "$2a$12$LQv3c1yqBwEHFl5ygkVQKO5vHb2YVjMpkqeyw/MI5gUSeXMjH4qSe",
+    "phone": "9876543210",
+    "role": "seller",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Smith Auto Sales",
+      "businessAddress": "123 Main Street, Los Angeles, CA 90210",
+      "businessPhone": "9876543210",
+      "businessLicense": "BL123456789",
+      "taxId": "TAX987654321"
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 4.5,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1755697381587",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "ansh0032.be23@chitkara.edu.in",
+    "password": "$2a$12$N/KfkRcVXQC0q9G7llr.Auo/taM5NPme8O0TNjKvBb6a1YSiDR8lK",
+    "phone": "9805443609",
+    "role": "seller",
+    "createdAt": "2025-08-20T13:43:01.587Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Car Dealers",
+      "businessAddress": "Rajpura",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1758540680001",
+    "firstName": "Ansh",
+    "lastName": "Gupta",
+    "email": "gupta0032@gmail.com",
+    "password": "$2a$12$PUkjulhFCQRaGn/xbgmYAuxrtwS2DP.cbzoRUb6KRJThwUGyuwRfC",
+    "phone": "9805443609",
+    "role": "seller",
+    "createdAt": "2025-09-22T11:31:20.001Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "Gupta Traders",
+      "businessAddress": "Gagan Chowk, Rajpura",
+      "businessPhone": "9805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  }
+]
