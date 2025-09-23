@@ -6,12 +6,13 @@ import SignIn from './Components/LoginDetails/SignIn';
 import SignUp from './Components/LoginDetails/SignUp';
 import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import Navbar from './Components/Common/Navbar';
-
-// Import Seller components
 import SellerDashboard from './Components/Seller/SellerDashboard';
 import AddCar from './Components/Seller/AddCar';
-import Dashboard from './Components/Dashboard/dashboard';
+import CustomerDashboard from './Components/Customer/CustomerDashboard';
 import Profile from './Components/Profile/Profile';
+import NewCars from './Components/Customer/NewCars';
+import OldCars from './Components/Customer/OldCars';
+import RentalCars from './Components/Customer/RentalCars';
 
 const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
@@ -59,7 +60,37 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           path="/dashboard"
           element={
             <ProtectedRoute requiredRole="customer">
-              <Dashboard />
+              <CustomerDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* New Cars Route */}
+        <Route
+          path="/new-cars"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <NewCars />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Old Cars Route */}
+        <Route
+          path="/old-cars"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <OldCars />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rental Cars Route */}
+        <Route
+          path="/rent-cars"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <RentalCars />
             </ProtectedRoute>
           }
         />

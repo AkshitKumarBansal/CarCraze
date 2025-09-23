@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
+import Hero from '../Home/Hero';
 
 const SellerDashboard = () => {
   const navigate = useNavigate();
@@ -109,6 +110,7 @@ const SellerDashboard = () => {
     return (
       <div className="dashboard-container">
         <Navbar />
+        <Hero onSearch={() => { /* no-op for seller dashboard */ }} />
         <div className="loading-spinner">
           <div className="spinner"></div>
           <p>Loading your dashboard...</p>
@@ -120,6 +122,7 @@ const SellerDashboard = () => {
   return (
     <div className="dashboard-container">
       <Navbar />
+      <Hero onSearch={() => { /* no-op for seller dashboard */ }} />
       
       {/* Dashboard Header */}
       <div className="dashboard-header">
@@ -307,4 +310,3 @@ const SellerDashboard = () => {
 };
 
 export default SellerDashboard;
-
