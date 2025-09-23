@@ -11,6 +11,7 @@ import Navbar from './Components/Common/Navbar';
 import SellerDashboard from './Components/Seller/SellerDashboard';
 import AddCar from './Components/Seller/AddCar';
 import Dashboard from './Components/Dashboard/dashboard';
+import Profile from './Components/Profile/Profile';
 
 const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
@@ -59,6 +60,16 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           element={
             <ProtectedRoute requiredRole="customer">
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile Route */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <Profile />
             </ProtectedRoute>
           }
         />
