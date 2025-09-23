@@ -130,8 +130,8 @@ const SignIn = ({ onSwitchToSignUp }) => {
           console.log('Redirecting to admin dashboard...');
           navigate('/admin/dashboard');
         } else {
-          console.log('Redirecting to home...');
-          navigate('/');
+          console.log('Redirecting to customer dashboard...');
+          navigate('/dashboard');
         }
       } else {
         console.error('Login failed:', data);
@@ -205,7 +205,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
       } else if (role === 'admin') {
         navigate('/admin/dashboard');
       } else {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (err) {
       console.error('Google sign-in failed:', err);
@@ -233,7 +233,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
       } else if (role === 'admin') {
         navigate('/admin/dashboard');
       } else {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (err) {
       console.error('Facebook sign-in failed:', err);
@@ -426,7 +426,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078V12.07h3.047V9.412c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953h-1.513c-1.493 0-1.957.93-1.957 1.887v2.25h3.328l-.532 3.492h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
-              <path fill="#fff" d="M16.671 15.562l.532-3.492h-3.328v-2.25c0-.957.464-1.887 1.957-1.887h1.513V4.98s-1.374-.235-2.686-.235c-2.741 0-4.533 1.661-4.533 4.668v2.658H7.078v3.493h3.047V24h3.75v-8.438h2.796z"/>
+              <path fill="#fff" d="M16.671 15.562l.532-3.492h-3.328v-2.25c0-.957.464-1.887 1.957-1.887h1.513V4.98s-1.374-.235-2.686-.235c-2.741 0-4.533 1.661-4.533 4.668v2.658H7.078v3.493h3.047V24h3.75v-8.437h2.796z"/>
             </svg>
             Continue with Facebook
           </button>
@@ -438,202 +438,3 @@ const SignIn = ({ onSwitchToSignUp }) => {
 }
 
 export default SignIn;
-
-
-
-
-// import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import Navbar from '../Common/Navbar';
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
-// import car1 from '../../images/car1';
-// import car2 from '../../images/car2';
-// import car3 from '../../images/car3';
-// import './SignIn.css';
-
-// const SignIn = ({ onSwitchToSignUp, setIsLoggedIn }) => {
-//   const navigate = useNavigate();
-//   const [formData, setFormData] = useState({ email: '', password: '', role: 'customer' });
-//   const [errors, setErrors] = useState({});
-//   const [loading, setLoading] = useState(false);
-//   const [showForgotPassword, setShowForgotPassword] = useState(false);
-
-//   const images = [car1, car2, car3];
-//   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-//   // Carousel image rotation
-//   useEffect(() => {
-//     const id = setInterval(() => {
-//       setCurrentImageIndex(prev => (prev + 1) % images.length);
-//     }, 5000);
-//     return () => clearInterval(id);
-//   }, [images.length]);
-
-//   // Detect role based on email
-//   const detectRoleFromEmail = email => {
-//     if (email.includes('admin')) return 'admin';
-//     if (email.includes('seller')) return 'seller';
-//     return 'customer';
-//   };
-
-//   const handleInputChange = e => {
-//     const { name, value } = e.target;
-//     setFormData(prev => ({
-//       ...prev,
-//       [name]: value,
-//       ...(name === 'email' && { role: detectRoleFromEmail(value) })
-//     }));
-//     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-//   };
-
-//   const validateForm = () => {
-//     const newErrors = {};
-//     if (!formData.email.trim()) newErrors.email = 'Email is required';
-//     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-//     if (!formData.password) newErrors.password = 'Password is required';
-//     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-//     setErrors(newErrors);
-//     return Object.keys(newErrors).length === 0;
-//   };
-
-//   const handleSubmit = async e => {
-//     e.preventDefault();
-//     if (!validateForm()) return;
-
-//     setLoading(true);
-//     try {
-//       // Simulate API login
-//       const token = 'sample_token';
-//       const user = { firstName: 'John', role: formData.role };
-
-//       localStorage.setItem('token', token);
-//       localStorage.setItem('user', JSON.stringify(user));
-
-//       setIsLoggedIn(true); // ✅ update Navbar login state
-
-//       // Redirect by role
-//       if (user.role === 'seller') navigate('/seller/dashboard');
-//       else if (user.role === 'admin') navigate('/admin/dashboard');
-//       else navigate('/');
-
-//       alert(`Welcome back, ${user.firstName}!`);
-//     } catch (err) {
-//       setErrors({ general: 'Login failed. Please try again.' });
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const handleForgotPassword = async email => {
-//     if (!email.trim()) return alert('Please enter your email');
-//     if (!/\S+@\S+\.\S+/.test(email)) return alert('Enter a valid email');
-
-//     alert('Password reset link sent to your email!');
-//     setShowForgotPassword(false);
-//   };
-
-//   const handleOAuthSignIn = async provider => {
-//     setLoading(true);
-//     try {
-//       await new Promise(res => setTimeout(res, 1000)); // simulate OAuth API
-
-//       const email = formData.email || 'customer@carcraze.com';
-//       const role = detectRoleFromEmail(email);
-
-//       localStorage.setItem('token', 'sample_token');
-//       localStorage.setItem('user', JSON.stringify({ firstName: 'John', role }));
-
-//       setIsLoggedIn(true); // update Navbar
-
-//       if (role === 'seller') navigate('/seller/dashboard');
-//       else if (role === 'admin') navigate('/admin/dashboard');
-//       else navigate('/');
-
-//       alert(`Signed in with ${provider} as ${role}`);
-//     } catch (err) {
-//       setErrors({ general: `${provider} sign-in failed` });
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   // Forgot Password UI
-//   if (showForgotPassword) {
-//     return (
-//       <>
-//         <Navbar isLoggedIn={localStorage.getItem('token')} setIsLoggedIn={setIsLoggedIn} />
-//         <div className="auth-container">
-//           <div className="auth-bg">
-//             {images.map((img, idx) => (
-//               <div key={idx} className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`} style={{ backgroundImage: `url(${img})` }} />
-//             ))}
-//             <div className="auth-overlay" />
-//           </div>
-//           <div className="auth-card">
-//             <h2>Reset Password</h2>
-//             <form onSubmit={e => { e.preventDefault(); handleForgotPassword(formData.email); }}>
-//               <input type="email" name="email" placeholder="Enter your email" value={formData.email} onChange={handleInputChange} />
-//               <button type="submit">Send Reset Link</button>
-//               <button type="button" onClick={() => setShowForgotPassword(false)}>Back to Sign In</button>
-//             </form>
-//           </div>
-//         </div>
-//       </>
-//     );
-//   }
-
-//   // Sign In UI
-//   return (
-//     <>
-//       <Navbar isLoggedIn={localStorage.getItem('token')} setIsLoggedIn={setIsLoggedIn} />
-//       <div className="auth-container">
-//         <div className="auth-bg">
-//           {images.map((img, idx) => (
-//             <div key={idx} className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`} style={{ backgroundImage: `url(${img})` }} />
-//           ))}
-//           <div className="auth-overlay" />
-//         </div>
-
-//         <div className="auth-card">
-//           <h2>Welcome Back</h2>
-//           <h4>Sign in to your CarCraze account</h4>
-
-//           <form onSubmit={handleSubmit}>
-//             <div>
-//               <label>Email</label>
-//               <input type="email" name="email" value={formData.email} onChange={handleInputChange} />
-//               {errors.email && <span>{errors.email}</span>}
-//             </div>
-//             <div>
-//               <label>Password</label>
-//               <input type="password" name="password" value={formData.password} onChange={handleInputChange} />
-//               {errors.password && <span>{errors.password}</span>}
-//             </div>
-//             {errors.general && <span>{errors.general}</span>}
-
-//             <div className="form-options">
-//               <label>
-//                 <input type="checkbox" /> Remember me
-//               </label>
-//               <button type="button" onClick={() => setShowForgotPassword(true)}>Forgot Password?</button>
-//             </div>
-
-//             <button type="submit" disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
-//           </form>
-
-//           <div className="divider">or</div>
-
-//           <button onClick={() => handleOAuthSignIn('Google')} disabled={loading}>Continue with Google</button>
-//           <button onClick={() => handleOAuthSignIn('Facebook')} disabled={loading}>Continue with Facebook</button>
-
-//           <p>
-//             Don't have an account? <span onClick={onSwitchToSignUp} style={{ cursor: 'pointer', color: 'blue' }}>Sign Up</span>
-//           </p>
-//         </div>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default SignIn;
