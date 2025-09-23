@@ -2,6 +2,7 @@
   padding: 2rem;
   background-color: #f4f7f6;
   min-height: 100vh;
+  margin-top: 3.25rem;
 }
 
 .dashboard-header {
@@ -16,7 +17,11 @@
 }
 
 .dashboard-content {
-  font-size: 1.1rem;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.1rem;
   color: #555;
 }
 
@@ -25,7 +30,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
-  margin-top: 2.5rem;
 }
 
 .option-card {
@@ -75,6 +79,16 @@
 
 .option-button:hover {
   background-color: #0056b3;
+}
+
+/* Option card image */
+.option-image {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  border: 1px solid #e0e0e0;
 }
 
 /* Catalog Section */
@@ -180,4 +194,15 @@
 .option-button.small {
   padding: 0.5rem 0.9rem;
   font-size: 0.9rem;
+}
+
+/* Catalog car thumbnail */
+.car-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: #f7f7f7;
+  border: 1px solid #eee;
 }

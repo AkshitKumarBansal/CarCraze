@@ -4,6 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faCarSide, faKey } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import Hero from '../Home/Hero';
+import newCarsImage from '../../images/NewCars.png';
+import oldCarsImage from '../../images/OldCars.png';
+import rentCarsImage from '../../images/RentalCars.png';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -31,41 +34,83 @@ const CustomerDashboard = () => {
     fetchCars();
   }, []);
 
+  // Optional: Fallback function for image errors (e.g., set a default)
+  const handleImageError = (e) => {
+    e.target.src = '/default-placeholder.png'; // Or use a public folder placeholder if needed
+  };
+
   return (
     <div className="dashboard-container">
-      <Hero onSearch={() => { window.location.hash = 'catalog'; }} />
-      <h1 className="dashboard-header">Welcome to your Dashboard</h1>
+      <Hero
+        onLetsGo={() => {
+          const el = document.getElementById('options');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          else window.location.hash = 'options';
+        }}
+        onSearch={({ serviceType }) => {
+          if (serviceType === 'rent') {
+            navigate('/rent-cars');
+          } else if (serviceType === 'buy-new') {
+            navigate('/new-cars');
+          } else if (serviceType === 'buy-used') {
+            navigate('/old-cars');
+          } else {
+            // Fallback: scroll to catalog on the dashboard
+            window.location.hash = 'catalog';
+          }
+        }}
+      />
       <p className="dashboard-content">
         Explore our services or manage your account.
       </p>
-
-      <div className="options-grid">
-        {/* New Cars Card */}
+      <div id="options" className="options-grid">
+        {/* New Cars Card - Using the imported image */}
         <div className="option-card">
-          <FontAwesomeIcon icon={faCar} className="option-icon" />
+          <img 
+            src={newCarsImage} 
+            alt="New Cars Collection" 
+            className="option-image"
+            onError={handleImageError}
+          />
           <h3 className="option-title">New Cars</h3>
           <p className="option-description">Browse the latest models from top brands.</p>
-          <button className="option-button" onClick={() => navigate('/new-cars')}>Explore New Cars</button>
+          <button className="option-button" onClick={() => navigate('/new-cars')}>
+            Explore New Cars
+          </button>
         </div>
 
         {/* Old Cars Card */}
         <div className="option-card">
-          <FontAwesomeIcon icon={faCarSide} className="option-icon" />
+          <img 
+            src={oldCarsImage} 
+            alt="Old Cars Collection" 
+            className="option-image"
+            onError={handleImageError}
+          />
           <h3 className="option-title">Old Cars</h3>
           <p className="option-description">Find certified pre-owned vehicles at great prices.</p>
-          <button className="option-button" onClick={() => navigate('/old-cars')}>Discover Old Cars</button>
+          <button className="option-button" onClick={() => navigate('/old-cars')}>
+            Discover Old Cars
+          </button>
         </div>
 
         {/* Rent Cars Card */}
         <div className="option-card">
-          <FontAwesomeIcon icon={faKey} className="option-icon" />
+          <img 
+            src={rentCarsImage} 
+            alt="Rental Cars Collection" 
+            className="option-image"
+            onError={handleImageError}
+          />
           <h3 className="option-title">Rent Cars</h3>
           <p className="option-description">Rent a car for your next trip, short or long term.</p>
-          <button className="option-button" onClick={() => navigate('/rent-cars')}>Book a Rental</button>
+          <button className="option-button" onClick={() => navigate('/rent-cars')}>
+            Book a Rental
+          </button>
         </div>
       </div>
 
-      {/* Catalog Section */}
+      {/* Catalog Section - Images for each car card (with fallback to newCarsImage) */}
       <div id="catalog" className="catalog-section">
         <h2 className="catalog-title">Car Catalog</h2>
         {loading && <div className="catalog-status">Loading cars...</div>}
@@ -74,6 +119,13 @@ const CustomerDashboard = () => {
           <div className="catalog-grid">
             {cars.map((car) => (
               <div className="car-card" key={car.id}>
+                {/* Car image: prefer first image from backend, else fallback to NewCars.png */}
+                <img
+                  src={(Array.isArray(car.images) && car.images[0]) || newCarsImage}
+                  alt={`${car.brand} ${car.model}`}
+                  className="car-image"
+                  onError={handleImageError}
+                />
                 <div className="car-card-header">
                   <span className="car-brand">{car.brand}</span>
                   <span className="car-year">{car.year}</span>
