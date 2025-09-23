@@ -6,11 +6,9 @@ import SignIn from './Components/LoginDetails/SignIn';
 import SignUp from './Components/LoginDetails/SignUp';
 import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import Navbar from './Components/Common/Navbar';
-
-// Import Seller components
 import SellerDashboard from './Components/Seller/SellerDashboard';
 import AddCar from './Components/Seller/AddCar';
-import Dashboard from './Components/Dashboard/dashboard';
+import CustomerDashboard from './Components/Customer/CustomerDashboard';
 import Profile from './Components/Profile/Profile';
 
 const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
@@ -59,7 +57,7 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           path="/dashboard"
           element={
             <ProtectedRoute requiredRole="customer">
-              <Dashboard />
+              <CustomerDashboard />
             </ProtectedRoute>
           }
         />

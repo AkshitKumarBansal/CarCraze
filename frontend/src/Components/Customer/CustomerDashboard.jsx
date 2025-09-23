@@ -1,9 +1,9 @@
 import React from 'react';
-import './dashboard.css';
+import './CustomerDashboard.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faCarSide, faKey } from '@fortawesome/free-solid-svg-icons';
 
-const Dashboard = () => {
+const CustomerDashboard = () => {
   return (
     <div className="dashboard-container">
       <h1 className="dashboard-header">Welcome to your Dashboard</h1>
@@ -40,4 +40,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default CustomerDashboard;
