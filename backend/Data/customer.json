@@ -44,5 +44,27 @@
     },
     "savedCars": [],
     "purchaseHistory": []
+  },
+  {
+    "id": "customer_1758631791716",
+    "firstName": "Anshika",
+    "lastName": "Phul",
+    "email": "anshika0033.be23@chitkara.edu.in",
+    "password": "$2a$12$qmPBITaf3emJLKkvuI0g..byreP1pBCZS08.7hOIHWCmWHpqeREOm",
+    "phone": "9805443609",
+    "role": "customer",
+    "createdAt": "2025-09-23T12:49:51.717Z",
+    "lastLogin": "2025-09-23T12:50:11.825Z",
+    "isActive": true,
+    "preferences": {
+      "carTypes": [],
+      "priceRange": {
+        "min": 0,
+        "max": 100000
+      },
+      "location": ""
+    },
+    "savedCars": [],
+    "purchaseHistory": []
   }
 ]
