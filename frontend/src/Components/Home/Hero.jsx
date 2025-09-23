@@ -8,7 +8,7 @@ import car3 from '../../images/car3';
 import '/src/index.css';
 
 
-const Hero = ({ onSearch }) => {
+const Hero = ({ onSearch, onLetsGo }) => {
   const [heroRef, isHeroVisible] = useScrollAnimation(0.2);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,7 +60,16 @@ const Hero = ({ onSearch }) => {
             Book your ride in just a few clicks. We have the keys to your next adventure.
           </p>
           <div className={`${isHeroVisible ? 'slide-in-up delay-3' : ''}`}>
-            <button className="btn btn-primary btn-lg pulse-glow" onClick={openModal}>
+            <button
+              className="btn btn-primary btn-lg pulse-glow"
+              onClick={() => {
+                if (typeof onLetsGo === 'function') {
+                  onLetsGo();
+                } else {
+                  openModal();
+                }
+              }}
+            >
               Let's Go <i className="fas fa-arrow-right"></i>
             </button>
           </div>
