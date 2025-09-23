@@ -76,3 +76,108 @@
 .option-button:hover {
   background-color: #0056b3;
 }
+
+/* Catalog Section */
+.catalog-section {
+  margin-top: 3rem;
+}
+
+.catalog-title {
+  font-size: 1.8rem;
+  color: #222;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.catalog-status,
+.catalog-error {
+  text-align: center;
+  color: #666;
+  padding: 1rem 0;
+}
+
+.catalog-error {
+  color: #c62828;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.car-card {
+  background: #fff;
+  border: 1px solid #e9e9e9;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.car-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.car-brand {
+  font-weight: 600;
+  color: #333;
+}
+
+.car-year {
+  font-size: 0.95rem;
+  color: #777;
+}
+
+.car-model {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.car-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.chip {
+  background: #f1f5ff;
+  color: #1a73e8;
+  border: 1px solid #e0e7ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.car-description {
+  color: #555;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.car-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.price {
+  font-weight: 700;
+  color: #0b8043;
+}
+
+.option-button.small {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.9rem;
+}

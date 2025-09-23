@@ -45,7 +45,11 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
             <li>
               <Link to={isLoggedIn && userRole === 'customer' ? "/dashboard" : "/#home"}>Home</Link>
             </li>
-            <li><Link to="/#cars">Cars</Link></li>
+            <li>
+              <Link to={isLoggedIn && userRole === 'customer' ? "/dashboard#catalog" : "/#cars"}>
+                Cars
+              </Link>
+            </li>
             <li><Link to="/#services">Services</Link></li>
             <li><Link to="/#about">About</Link></li>
             <li><Link to="/#contact">Contact</Link></li>
