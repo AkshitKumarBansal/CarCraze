@@ -95,7 +95,7 @@
     "phone": "98054 43609",
     "role": "seller",
     "createdAt": "2025-09-22T12:53:27.402Z",
-    "lastLogin": "2025-09-23T11:11:16.396Z",
+    "lastLogin": "2025-09-23T13:27:02.071Z",
     "isActive": true,
     "businessInfo": {
       "businessName": "chitkara",
@@ -105,7 +105,9 @@
       "taxId": ""
     },
     "inventory": [
-      "car_1758547711811"
+      "car_1758547711811",
+      "car_1758633507627",
+      "car_1758633708981"
     ],
     "salesHistory": [],
     "rating": {

@@ -183,7 +183,7 @@ const SellerDashboard = () => {
                 <i className="fas fa-dollar-sign"></i>
               </div>
               <div className="stat-content">
-                <h3>{cars.filter(car => car.listingType === 'sale').length}</h3>
+                <h3>{cars.filter(car => car.listingType === 'sale_new' || car.listingType === 'sale_old').length}</h3>
                 <p>For Sale</p>
               </div>
             </div>
@@ -236,7 +236,9 @@ const SellerDashboard = () => {
                       <h3>{car.year} {car.brand} {car.model}</h3>
                       <div className="listing-type">
                         <span className={`type-badge ${car.listingType}`}>
-                          {car.listingType === 'rent' ? 'For Rent' : 'For Sale'}
+                          {car.listingType === 'rent' ? 'For Rent' : 
+                           car.listingType === 'sale_new' ? 'For Sale (New)' : 
+                           car.listingType === 'sale_old' ? 'For Sale (Used)' : 'For Sale'}
                         </span>
                       </div>
                     </div>
