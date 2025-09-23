@@ -10,6 +10,7 @@ import Navbar from './Components/Common/Navbar';
 // Import Seller components
 import SellerDashboard from './Components/Seller/SellerDashboard';
 import AddCar from './Components/Seller/AddCar';
+import EditCar from './Components/Seller/EditCar';
 import Dashboard from './Components/Dashboard/dashboard';
 
 const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
@@ -77,6 +78,14 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           element={
             <ProtectedRoute requiredRole="seller">
               <AddCar />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller/edit-car/:carId"
+          element={
+            <ProtectedRoute requiredRole="seller">
+              <EditCar />
             </ProtectedRoute>
           }
         />
