@@ -365,23 +365,6 @@ const SignIn = ({ onSwitchToSignUp }) => {
             {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
 
-          {/* Role Selection */}
-          <div className="form-group">
-            <label htmlFor="role">Sign in as</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleInputChange}
-              className="role-select"
-            >
-              <option value="customer">🚗 Customer</option>
-              <option value="seller">🏪 Seller</option>
-              <option value="admin">⚙️ Admin</option>
-            </select>
-          </div>
-
-
           {errors.general && (
             <div className="error-message general-error">
               {errors.general}
@@ -410,7 +393,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
             className={`auth-button small ${loading ? 'loading' : ''}`}
             disabled={loading}
           >
-            {loading ? 'Signing In...' : `Sign In as ${formData.role ? formData.role.charAt(0).toUpperCase() + formData.role.slice(1) : 'User'}`}
+            Sign In
           </button>
         
           {/* Divider */}
@@ -453,4 +436,204 @@ const SignIn = ({ onSwitchToSignUp }) => {
     </>
   );
 }
+
 export default SignIn;
+
+
+
+
+// import React, { useState, useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import Navbar from '../Common/Navbar';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
+// import car1 from '../../images/car1';
+// import car2 from '../../images/car2';
+// import car3 from '../../images/car3';
+// import './SignIn.css';
+
+// const SignIn = ({ onSwitchToSignUp, setIsLoggedIn }) => {
+//   const navigate = useNavigate();
+//   const [formData, setFormData] = useState({ email: '', password: '', role: 'customer' });
+//   const [errors, setErrors] = useState({});
+//   const [loading, setLoading] = useState(false);
+//   const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+//   const images = [car1, car2, car3];
+//   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+//   // Carousel image rotation
+//   useEffect(() => {
+//     const id = setInterval(() => {
+//       setCurrentImageIndex(prev => (prev + 1) % images.length);
+//     }, 5000);
+//     return () => clearInterval(id);
+//   }, [images.length]);
+
+//   // Detect role based on email
+//   const detectRoleFromEmail = email => {
+//     if (email.includes('admin')) return 'admin';
+//     if (email.includes('seller')) return 'seller';
+//     return 'customer';
+//   };
+
+//   const handleInputChange = e => {
+//     const { name, value } = e.target;
+//     setFormData(prev => ({
+//       ...prev,
+//       [name]: value,
+//       ...(name === 'email' && { role: detectRoleFromEmail(value) })
+//     }));
+//     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+//   };
+
+//   const validateForm = () => {
+//     const newErrors = {};
+//     if (!formData.email.trim()) newErrors.email = 'Email is required';
+//     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+//     if (!formData.password) newErrors.password = 'Password is required';
+//     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+//     setErrors(newErrors);
+//     return Object.keys(newErrors).length === 0;
+//   };
+
+//   const handleSubmit = async e => {
+//     e.preventDefault();
+//     if (!validateForm()) return;
+
+//     setLoading(true);
+//     try {
+//       // Simulate API login
+//       const token = 'sample_token';
+//       const user = { firstName: 'John', role: formData.role };
+
+//       localStorage.setItem('token', token);
+//       localStorage.setItem('user', JSON.stringify(user));
+
+//       setIsLoggedIn(true); // ✅ update Navbar login state
+
+//       // Redirect by role
+//       if (user.role === 'seller') navigate('/seller/dashboard');
+//       else if (user.role === 'admin') navigate('/admin/dashboard');
+//       else navigate('/');
+
+//       alert(`Welcome back, ${user.firstName}!`);
+//     } catch (err) {
+//       setErrors({ general: 'Login failed. Please try again.' });
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleForgotPassword = async email => {
+//     if (!email.trim()) return alert('Please enter your email');
+//     if (!/\S+@\S+\.\S+/.test(email)) return alert('Enter a valid email');
+
+//     alert('Password reset link sent to your email!');
+//     setShowForgotPassword(false);
+//   };
+
+//   const handleOAuthSignIn = async provider => {
+//     setLoading(true);
+//     try {
+//       await new Promise(res => setTimeout(res, 1000)); // simulate OAuth API
+
+//       const email = formData.email || 'customer@carcraze.com';
+//       const role = detectRoleFromEmail(email);
+
+//       localStorage.setItem('token', 'sample_token');
+//       localStorage.setItem('user', JSON.stringify({ firstName: 'John', role }));
+
+//       setIsLoggedIn(true); // update Navbar
+
+//       if (role === 'seller') navigate('/seller/dashboard');
+//       else if (role === 'admin') navigate('/admin/dashboard');
+//       else navigate('/');
+
+//       alert(`Signed in with ${provider} as ${role}`);
+//     } catch (err) {
+//       setErrors({ general: `${provider} sign-in failed` });
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Forgot Password UI
+//   if (showForgotPassword) {
+//     return (
+//       <>
+//         <Navbar isLoggedIn={localStorage.getItem('token')} setIsLoggedIn={setIsLoggedIn} />
+//         <div className="auth-container">
+//           <div className="auth-bg">
+//             {images.map((img, idx) => (
+//               <div key={idx} className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`} style={{ backgroundImage: `url(${img})` }} />
+//             ))}
+//             <div className="auth-overlay" />
+//           </div>
+//           <div className="auth-card">
+//             <h2>Reset Password</h2>
+//             <form onSubmit={e => { e.preventDefault(); handleForgotPassword(formData.email); }}>
+//               <input type="email" name="email" placeholder="Enter your email" value={formData.email} onChange={handleInputChange} />
+//               <button type="submit">Send Reset Link</button>
+//               <button type="button" onClick={() => setShowForgotPassword(false)}>Back to Sign In</button>
+//             </form>
+//           </div>
+//         </div>
+//       </>
+//     );
+//   }
+
+//   // Sign In UI
+//   return (
+//     <>
+//       <Navbar isLoggedIn={localStorage.getItem('token')} setIsLoggedIn={setIsLoggedIn} />
+//       <div className="auth-container">
+//         <div className="auth-bg">
+//           {images.map((img, idx) => (
+//             <div key={idx} className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`} style={{ backgroundImage: `url(${img})` }} />
+//           ))}
+//           <div className="auth-overlay" />
+//         </div>
+
+//         <div className="auth-card">
+//           <h2>Welcome Back</h2>
+//           <h4>Sign in to your CarCraze account</h4>
+
+//           <form onSubmit={handleSubmit}>
+//             <div>
+//               <label>Email</label>
+//               <input type="email" name="email" value={formData.email} onChange={handleInputChange} />
+//               {errors.email && <span>{errors.email}</span>}
+//             </div>
+//             <div>
+//               <label>Password</label>
+//               <input type="password" name="password" value={formData.password} onChange={handleInputChange} />
+//               {errors.password && <span>{errors.password}</span>}
+//             </div>
+//             {errors.general && <span>{errors.general}</span>}
+
+//             <div className="form-options">
+//               <label>
+//                 <input type="checkbox" /> Remember me
+//               </label>
+//               <button type="button" onClick={() => setShowForgotPassword(true)}>Forgot Password?</button>
+//             </div>
+
+//             <button type="submit" disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
+//           </form>
+
+//           <div className="divider">or</div>
+
+//           <button onClick={() => handleOAuthSignIn('Google')} disabled={loading}>Continue with Google</button>
+//           <button onClick={() => handleOAuthSignIn('Facebook')} disabled={loading}>Continue with Facebook</button>
+
+//           <p>
+//             Don't have an account? <span onClick={onSwitchToSignUp} style={{ cursor: 'pointer', color: 'blue' }}>Sign Up</span>
+//           </p>
+//         </div>
+//       </div>
+//     </>
+//   );
+// };
+
+// export default SignIn;
