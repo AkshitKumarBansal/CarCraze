@@ -15,7 +15,7 @@ const AddCar = () => {
     fuelType: '',
     transmission: '',
     description: '',
-    listingType: 'sale',
+    listingType: 'sale_new',
     price: '',
     color: '',
     mileage: '',
@@ -354,7 +354,8 @@ const AddCar = () => {
                     value={formData.listingType}
                     onChange={handleInputChange}
                   >
-                    <option value="sale">For Sale</option>
+                    <option value="sale_new">Sell (New Car)</option>
+                    <option value="sale_old">Sell (Old Car)</option>
                     <option value="rent">For Rent</option>
                   </select>
                 </div>

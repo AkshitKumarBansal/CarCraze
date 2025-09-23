@@ -301,9 +301,14 @@
   color: #1d4ed8;
 }
 
-.type-badge.sale {
+.type-badge.sale_new {
   background-color: #d1fae5;
   color: #065f46;
+}
+
+.type-badge.sale_old {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .car-specs {

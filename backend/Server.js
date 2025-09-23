@@ -632,7 +632,7 @@ app.post('/api/seller/cars', authenticateToken, async (req, res) => {
       fuelType,
       transmission,
       description,
-      listingType, // 'sale' or 'rent'
+      listingType, // 'sale_new', 'sale_old', or 'rent'
       price,
       availability,
       color,
@@ -646,6 +646,15 @@ app.post('/api/seller/cars', authenticateToken, async (req, res) => {
       return res.status(400).json({ 
         error: 'Missing required fields',
         message: 'Model, brand, year, capacity, fuel type, transmission, listing type, and price are required'
+      });
+    }
+
+    // Validate listing type
+    const validListingTypes = ['sale_new', 'sale_old', 'rent'];
+    if (!validListingTypes.includes(listingType)) {
+      return res.status(400).json({ 
+        error: 'Invalid listing type',
+        message: 'Listing type must be sale_new, sale_old, or rent'
       });
     }
 
