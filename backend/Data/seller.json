@@ -95,7 +95,7 @@
     "phone": "98054 43609",
     "role": "seller",
     "createdAt": "2025-09-22T12:53:27.402Z",
-    "lastLogin": "2025-09-23T13:27:02.071Z",
+    "lastLogin": "2025-09-24T07:25:13.793Z",
     "isActive": true,
     "businessInfo": {
       "businessName": "chitkara",
@@ -107,7 +107,11 @@
     "inventory": [
       "car_1758547711811",
       "car_1758633507627",
-      "car_1758633708981"
+      "car_1758633708981",
+      "car_1758698554705",
+      "car_1758698848191",
+      "car_1758698982691",
+      "car_1758699104958"
     ],
     "salesHistory": [],
     "rating": {
@@ -167,6 +171,41 @@
       "taxId": ""
     },
     "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1758699188324",
+    "firstName": "Akshit ",
+    "lastName": "Kumar",
+    "email": "akbansal6204@gmail.com",
+    "password": "$2a$12$gQVBsDGb7ob9x28TkGSxA.7NDcDdjyeQQsoh8SnJirl656yUG/Pg.",
+    "phone": "9805443609",
+    "role": "seller",
+    "createdAt": "2025-09-24T07:33:08.324Z",
+    "lastLogin": "2025-09-24T07:33:24.900Z",
+    "isActive": true,
+    "businessInfo": {
+      "businessName": "AkB",
+      "businessAddress": "Chitkara University Rajpura",
+      "businessPhone": "09805443609",
+      "businessLicense": "",
+      "taxId": ""
+    },
+    "inventory": [
+      "car_1758699351458",
+      "car_1758699655380",
+      "car_1758699788664",
+      "car_1758700117617",
+      "car_1758700215111"
+    ],
     "salesHistory": [],
     "rating": {
       "average": 0,

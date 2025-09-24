@@ -233,6 +233,19 @@
   box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
 }
 
+.car-image-container {
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+.car-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .car-image-placeholder {
   height: 200px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -241,7 +254,28 @@
   justify-content: center;
   color: white;
   font-size: 3rem;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.car-image-placeholder.has-image {
+  display: none;
+}
+
+.image-count {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .status-badge {
