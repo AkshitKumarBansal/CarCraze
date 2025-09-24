@@ -151,7 +151,7 @@ const AddCar = () => {
         formData.append('images', image);
       });
 
-      const response = await fetch('http://localhost:5001/api/upload/car-images', {
+      const response = await fetch('http://localhost:5000/api/upload/car-images', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -264,7 +264,7 @@ const AddCar = () => {
         delete submitData.availability;
       }
 
-      const response = await fetch('http://localhost:5001/api/seller/cars', {
+      const response = await fetch('http://localhost:5000/api/seller/cars', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

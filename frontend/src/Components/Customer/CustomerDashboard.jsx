@@ -34,9 +34,19 @@ const CustomerDashboard = () => {
     fetchCars();
   }, []);
 
-  // Optional: Fallback function for image errors (e.g., set a default)
+  // Robust fallback for image errors: use local placeholders instead of a missing public asset
   const handleImageError = (e) => {
-    e.target.src = '/default-placeholder.png'; // Or use a public folder placeholder if needed
+    e.currentTarget.onerror = null; // prevent infinite loop
+    e.currentTarget.src = newCarsImage;
+  };
+
+  const getCarImage = (car) => {
+    const first = Array.isArray(car?.images) && car.images[0] ? car.images[0] : null;
+    if (first) return first;
+    // choose placeholder by listing type
+    if (car?.listingType === 'sale_old') return oldCarsImage;
+    if (car?.listingType === 'rent') return rentCarsImage;
+    return newCarsImage;
   };
 
   return (
@@ -119,9 +129,9 @@ const CustomerDashboard = () => {
           <div className="catalog-grid">
             {cars.map((car) => (
               <div className="car-card" key={car.id}>
-                {/* Car image: prefer first image from backend, else fallback to NewCars.png */}
+                {/* Car image: backend-provided first image or a local placeholder by listing type */}
                 <img
-                  src={(Array.isArray(car.images) && car.images[0]) || newCarsImage}
+                  src={getCarImage(car)}
                   alt={`${car.brand} ${car.model}`}
                   className="car-image"
                   onError={handleImageError}

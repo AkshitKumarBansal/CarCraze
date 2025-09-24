@@ -7,6 +7,7 @@ const RentalCars = () => {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -30,18 +31,35 @@ const RentalCars = () => {
     fetchCars();
   }, []);
 
+  const filteredCars = cars.filter(car =>
+    `${car.brand ?? ''} ${car.model ?? ''}`.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="dashboard-container">
+      <button className="option-button small back-button" onClick={() => navigate(-1)}>← Back</button>
       <h1 className="dashboard-header">Rental Cars</h1>
       <p className="dashboard-content">Rent a car for your next trip, short or long term.</p>
-      <button className="option-button small back-button" onClick={() => navigate(-1)}>← Back</button>
+
+      {/* Search */}
+      <div className="catalog-controls" style={{margin: '0 0 1rem 0'}}>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by car name (brand or model)..."
+          className="search-input"
+          style={{width:'100%', maxWidth: '420px', padding:'10px 12px', borderRadius:'8px', border:'1px solid #ddd'}}
+        />
+      </div>
+
       <div className="catalog-section">
         <h2 className="catalog-title">All Rental Cars</h2>
         {loading && <div className="catalog-status">Loading rental cars...</div>}
         {error && !loading && <div className="catalog-error">{error}</div>}
         {!loading && !error && (
           <div className="catalog-grid">
-            {cars.map(car => (
+            {filteredCars.map(car => (
               <div className="car-card" key={car.id}>
                 <div className="car-card-header">
                   <span className="car-brand">{car.brand}</span>
@@ -57,7 +75,7 @@ const RentalCars = () => {
                   {car.description}
                 </div>
                 <div className="car-footer">
-                  <span className="price">₹{car.price.toLocaleString('en-IN')}{car.listingType === 'rent' ? '/day' : ''}</span>
+                  <span className="price">₹{car.price.toLocaleString('en-IN')}/day</span>
                   <button className="option-button small">View Details</button>
                 </div>
               </div>

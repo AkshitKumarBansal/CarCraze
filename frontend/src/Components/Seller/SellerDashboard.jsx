@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
 import Hero from '../Home/Hero';
+import newCarsImage from '../../images/NewCars.png';
+import oldCarsImage from '../../images/OldCars.png';
+import rentCarsImage from '../../images/RentalCars.png';
 
 const SellerDashboard = () => {
   const navigate = useNavigate();
@@ -16,6 +19,15 @@ const SellerDashboard = () => {
     if (!imageUrl) return null;
     // Replace any localhost port with the current server port
     return imageUrl.replace(/localhost:\d+/, 'localhost:5000');
+  };
+
+  // Choose an image for a car: prefer backend URL, else use a local placeholder
+  const getCarImage = (car) => {
+    const first = Array.isArray(car?.images) && car.images[0] ? fixImageUrl(car.images[0]) : null;
+    if (first) return first;
+    if (car?.listingType === 'sale_old') return oldCarsImage;
+    if (car?.listingType === 'rent') return rentCarsImage;
+    return newCarsImage;
   };
 
   useEffect(() => {
@@ -231,20 +243,15 @@ const SellerDashboard = () => {
               {cars.map((car) => (
                 <div key={car.id} className="car-card">
                   <div className="car-image-container">
-                    {car.images && car.images.length > 0 ? (
-                      <img 
-                        src={fixImageUrl(car.images[0])} 
-                        alt={`${car.brand} ${car.model}`}
-                        className="car-image"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <div className={`car-image-placeholder ${car.images && car.images.length > 0 ? 'has-image' : ''}`}>
-                      <i className="fas fa-car"></i>
-                    </div>
+                    <img
+                      src={getCarImage(car)}
+                      alt={`${car.brand} ${car.model}`}
+                      className="car-image"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getCarImage({ listingType: car.listingType, images: [] });
+                      }}
+                    />
                     <span className={getStatusBadge(car.status)}>
                       {car.status}
                     </span>
