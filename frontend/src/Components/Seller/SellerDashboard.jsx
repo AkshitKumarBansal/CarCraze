@@ -11,6 +11,13 @@ const SellerDashboard = () => {
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
 
+  // Helper function to fix image URLs with correct port
+  const fixImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    // Replace any localhost port with the current server port
+    return imageUrl.replace(/localhost:\d+/, 'localhost:5000');
+  };
+
   useEffect(() => {
     // Check if user is authenticated and is a seller
     const token = localStorage.getItem('token');
@@ -230,7 +237,7 @@ const SellerDashboard = () => {
                   <div className="car-image-container">
                     {car.images && car.images.length > 0 ? (
                       <img 
-                        src={car.images[0]} 
+                        src={fixImageUrl(car.images[0])} 
                         alt={`${car.brand} ${car.model}`}
                         className="car-image"
                         onError={(e) => {
