@@ -129,16 +129,12 @@ const SellerDashboard = () => {
   return (
     <div className="dashboard-container">
       <Navbar />
-      <Hero onSearch={() => { /* no-op for seller dashboard */ }} />
+      <Hero onSearch={() => { /* no-op for seller dashboard */ }} user={user} />
       
       {/* Dashboard Header */}
       <div className="dashboard-header">
         <div className="container">
           <div className="header-content">
-            <div className="welcome-section">
-              <h1>Welcome back, {user?.firstName}!</h1>
-              <p>Manage your car inventory and track your sales</p>
-            </div>
             <div className="header-actions">
               <button 
                 className="btn btn-primary"
