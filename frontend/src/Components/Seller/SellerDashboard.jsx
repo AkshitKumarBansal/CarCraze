@@ -128,7 +128,7 @@ const SellerDashboard = () => {
   if (loading) {
     return (
       <div className="dashboard-container">
-        <Navbar />
+        <Navbar isLoggedIn={true} setIsLoggedIn={() => {}} />
         <Hero onSearch={() => { /* no-op for seller dashboard */ }} />
         <div className="loading-spinner">
           <div className="spinner"></div>
@@ -140,7 +140,7 @@ const SellerDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <Navbar />
+      <Navbar isLoggedIn={true} setIsLoggedIn={() => {}} />
       <Hero onSearch={() => { /* no-op for seller dashboard */ }} user={user} />
       
       {/* Dashboard Header */}
