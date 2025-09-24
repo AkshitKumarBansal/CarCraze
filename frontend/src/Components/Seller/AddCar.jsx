@@ -151,7 +151,6 @@ const AddCar = () => {
       selectedImages.forEach((image, index) => {
         formData.append('images', image);
       });
-
       const response = await fetch(API_ENDPOINTS.UPLOAD_IMAGES, {
         method: 'POST',
         headers: {
@@ -264,8 +263,7 @@ const AddCar = () => {
       } else {
         delete submitData.availability;
       }
-
-      const response = await fetch(API_ENDPOINTS.SELLER_CARS, {
+      const response = await fetch(API_ENDPOINTS.SELLER_CARS
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
