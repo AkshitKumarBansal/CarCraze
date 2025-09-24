@@ -8,10 +8,7 @@ import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import Navbar from './Components/Common/Navbar';
 import SellerDashboard from './Components/Seller/SellerDashboard';
 import AddCar from './Components/Seller/AddCar';
-
 import EditCar from './Components/Seller/EditCar';
-
-
 import CustomerDashboard from './Components/Customer/CustomerDashboard';
 import Profile from './Components/Profile/Profile';
 import NewCars from './Components/Customer/NewCars';
@@ -20,7 +17,7 @@ import RentalCars from './Components/Customer/RentalCars';
 import About from './Components/Common/About';
 import Contact from './Components/Common/Contact';
 import Service from './Components/Common/Service';
-
+import Footer from './Components/Common/Footer';
 
 const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
@@ -38,7 +35,7 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
               onLoginSuccess={() => {
                 localStorage.setItem('token', 'sample_token');
                 setIsLoggedIn(true);
-                console.log("🔐 User Logged In -> isLoggedIn: ON");
+                console.log(" User Logged In -> isLoggedIn: ON");
                 navigate('/');
               }}
             />
@@ -52,7 +49,7 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
               onSignupSuccess={() => {
                 localStorage.setItem('token', 'sample_token');
                 setIsLoggedIn(true);
-                console.log("📝 User Signed Up & Logged In -> isLoggedIn: ON");
+                console.log(" User Signed Up & Logged In -> isLoggedIn: ON");
                 navigate('/');
               }}
             />
@@ -134,6 +131,7 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           }
         />
       </Routes>
+      <Footer />
     </div>
   );
 };
@@ -146,7 +144,7 @@ const App = () => {
     }
   }, []);
   useEffect(() => {
-    console.log("✅ User login state:", isLoggedIn ? "ON (Logged In)" : "OFF (Logged Out)");
+    console.log(" User login state:", isLoggedIn ? "ON (Logged In)" : "OFF (Logged Out)");
   }, [isLoggedIn]);
   return (
     <Router>
