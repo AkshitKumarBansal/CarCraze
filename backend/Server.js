@@ -6,12 +6,13 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import fs from 'fs/promises';
 import path from 'path';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || 'carcraze_secret_key_2024';
 
 // Middleware
@@ -24,12 +25,19 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files for uploaded images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Simple file-based storage (replace with database in production)
 const DATA_DIR = path.join(__dirname, 'Data');
 const CUSTOMER_FILE = path.join(DATA_DIR, 'customer.json');
 const SELLER_FILE = path.join(DATA_DIR, 'seller.json');
 const ADMIN_FILE = path.join(DATA_DIR, 'admin.json');
 const CARS_FILE = path.join(DATA_DIR, 'cars.json');
+
+// Image storage configuration
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const CAR_IMAGES_DIR = path.join(UPLOADS_DIR, 'car-images');
 
 // Ensure data directory exists
 async function ensureDataDir() {
@@ -39,6 +47,52 @@ async function ensureDataDir() {
     await fs.mkdir(DATA_DIR, { recursive: true });
   }
 }
+
+// Ensure uploads directory exists
+async function ensureUploadsDir() {
+  try {
+    await fs.access(UPLOADS_DIR);
+  } catch {
+    await fs.mkdir(UPLOADS_DIR, { recursive: true });
+  }
+  
+  try {
+    await fs.access(CAR_IMAGES_DIR);
+  } catch {
+    await fs.mkdir(CAR_IMAGES_DIR, { recursive: true });
+  }
+}
+
+// Configure multer for image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, CAR_IMAGES_DIR);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename: timestamp_sellerId_originalname
+    const uniqueSuffix = Date.now() + '_' + req.user.userId;
+    const fileExtension = path.extname(file.originalname);
+    const fileName = file.fieldname + '_' + uniqueSuffix + fileExtension;
+    cb(null, fileName);
+  }
+});
+
+// File filter for images only
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
 
 // Get file path based on role
 function getFilePathByRole(role) {
@@ -149,11 +203,71 @@ function detectRoleFromEmail(email) {
   }
 }
 
+// Middleware to authenticate JWT token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ 
+      error: 'Access denied',
+      message: 'No token provided'
+    });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ 
+        error: 'Invalid token',
+        message: 'Token is invalid or expired'
+      });
+    }
+    req.user = user;
+    next();
+  });
+}
+
 // Routes
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'CarCraze Server is running!' });
+});
+
+// Image upload endpoint
+app.post('/api/upload/car-images', authenticateToken, upload.array('images', 5), async (req, res) => {
+  try {
+    if (req.user.role !== 'seller') {
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: 'Seller access required'
+      });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ 
+        error: 'No files uploaded',
+        message: 'Please select at least one image to upload'
+      });
+    }
+
+    // Generate image URLs
+    const imageUrls = req.files.map(file => {
+      return `http://localhost:${PORT}/uploads/car-images/${file.filename}`;
+    });
+
+    res.json({
+      message: 'Images uploaded successfully',
+      images: imageUrls
+    });
+
+  } catch (error) {
+    console.error('Image upload error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to upload images. Please try again.'
+    });
+  }
 });
 
 // Test endpoint to create a seller with known password (for development only)
@@ -825,30 +939,6 @@ app.get('/api/cars', async (req, res) => {
   }
 });
 
-// Middleware to authenticate JWT token
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ 
-      error: 'Access denied',
-      message: 'No token provided'
-    });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ 
-        error: 'Invalid token',
-        message: 'Token is invalid or expired'
-      });
-    }
-    req.user = user;
-    next();
-  });
-}
-
 // Get all users (admin only)
 app.get('/api/admin/users', authenticateToken, async (req, res) => {
   try {
@@ -894,6 +984,7 @@ app.use('*', (req, res) => {
 async function startServer() {
   try {
     await ensureDataDir();
+    await ensureUploadsDir();
     
     app.listen(PORT, () => {
       console.log(`🚗 CarCraze Server running on port ${PORT}`);

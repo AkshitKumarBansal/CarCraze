@@ -27,6 +27,10 @@ const AddCar = () => {
     }
   });
 
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreview, setImagePreview] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+
   useEffect(() => {
     // Check if user is authenticated and is a seller
     const token = localStorage.getItem('token');
@@ -69,6 +73,104 @@ const AddCar = () => {
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    
+    if (files.length > 5) {
+      setErrors(prev => ({
+        ...prev,
+        images: 'Maximum 5 images allowed'
+      }));
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles = [];
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    for (let file of files) {
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({
+          ...prev,
+          images: 'Only JPEG, PNG, and WebP images are allowed'
+        }));
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        setErrors(prev => ({
+          ...prev,
+          images: 'Each image must be less than 5MB'
+        }));
+        return;
+      }
+      
+      validFiles.push(file);
+    }
+
+    setSelectedImages(validFiles);
+    
+    // Create preview URLs
+    const previewUrls = validFiles.map(file => URL.createObjectURL(file));
+    setImagePreview(previewUrls);
+    
+    // Clear any previous errors
+    if (errors.images) {
+      setErrors(prev => ({
+        ...prev,
+        images: ''
+      }));
+    }
+  };
+
+  const removeImage = (index) => {
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreview.filter((_, i) => i !== index);
+    
+    // Revoke the URL to free memory
+    URL.revokeObjectURL(imagePreview[index]);
+    
+    setSelectedImages(newImages);
+    setImagePreview(newPreviews);
+  };
+
+  const uploadImages = async () => {
+    if (selectedImages.length === 0) return [];
+
+    setUploadingImages(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      
+      selectedImages.forEach((image, index) => {
+        formData.append('images', image);
+      });
+
+      const response = await fetch('http://localhost:5001/api/upload/car-images', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return data.images;
+      } else {
+        throw new Error(data.message || 'Failed to upload images');
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      throw error;
+    } finally {
+      setUploadingImages(false);
     }
   };
 
@@ -133,12 +235,26 @@ const AddCar = () => {
     
     try {
       const token = localStorage.getItem('token');
+      
+      // Upload images first
+      let imageUrls = [];
+      if (selectedImages.length > 0) {
+        try {
+          imageUrls = await uploadImages();
+        } catch (error) {
+          setErrors({ general: 'Failed to upload images. Please try again.' });
+          setLoading(false);
+          return;
+        }
+      }
+      
       const submitData = {
         ...formData,
         year: parseInt(formData.year),
         capacity: parseInt(formData.capacity),
         price: parseFloat(formData.price),
-        mileage: formData.mileage ? parseInt(formData.mileage) : 0
+        mileage: formData.mileage ? parseInt(formData.mileage) : 0,
+        images: imageUrls
       };
 
       // Only include availability for rental cars
@@ -148,7 +264,7 @@ const AddCar = () => {
         delete submitData.availability;
       }
 
-      const response = await fetch('http://localhost:5000/api/seller/cars', {
+      const response = await fetch('http://localhost:5001/api/seller/cars', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -448,6 +564,49 @@ const AddCar = () => {
               </div>
             </div>
 
+            {/* Car Images */}
+            <div className="form-section">
+              <h3>Car Images</h3>
+              <div className="form-group">
+                <label htmlFor="images">Upload Car Images (Max 5 images)</label>
+                <input
+                  type="file"
+                  id="images"
+                  name="images"
+                  multiple
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleImageChange}
+                  className={errors.images ? 'error' : ''}
+                />
+                {errors.images && <span className="error-text">{errors.images}</span>}
+                <p className="form-help">
+                  Supported formats: JPEG, PNG, WebP. Maximum size: 5MB per image.
+                </p>
+              </div>
+
+              {/* Image Preview */}
+              {imagePreview.length > 0 && (
+                <div className="image-preview-container">
+                  <h4>Image Preview</h4>
+                  <div className="image-preview-grid">
+                    {imagePreview.map((preview, index) => (
+                      <div key={index} className="image-preview-item">
+                        <img src={preview} alt={`Preview ${index + 1}`} />
+                        <button
+                          type="button"
+                          className="remove-image-btn"
+                          onClick={() => removeImage(index)}
+                          title="Remove image"
+                        >
+                          <i className="fas fa-times"></i>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Form Actions */}
             <div className="form-actions">
               <button 
@@ -459,10 +618,10 @@ const AddCar = () => {
               </button>
               <button 
                 type="submit" 
-                className={`btn btn-primary ${loading ? 'loading' : ''}`}
-                disabled={loading}
+                className={`btn btn-primary ${loading || uploadingImages ? 'loading' : ''}`}
+                disabled={loading || uploadingImages}
               >
-                {loading ? 'Adding Car...' : 'Add Car'}
+                {uploadingImages ? 'Uploading Images...' : loading ? 'Adding Car...' : 'Add Car'}
               </button>
             </div>
           </form>

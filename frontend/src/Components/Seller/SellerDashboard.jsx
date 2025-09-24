@@ -224,11 +224,30 @@ const SellerDashboard = () => {
             <div className="cars-grid">
               {cars.map((car) => (
                 <div key={car.id} className="car-card">
-                  <div className="car-image-placeholder">
-                    <i className="fas fa-car"></i>
+                  <div className="car-image-container">
+                    {car.images && car.images.length > 0 ? (
+                      <img 
+                        src={car.images[0]} 
+                        alt={`${car.brand} ${car.model}`}
+                        className="car-image"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className={`car-image-placeholder ${car.images && car.images.length > 0 ? 'has-image' : ''}`}>
+                      <i className="fas fa-car"></i>
+                    </div>
                     <span className={getStatusBadge(car.status)}>
                       {car.status}
                     </span>
+                    {car.images && car.images.length > 1 && (
+                      <div className="image-count">
+                        <i className="fas fa-images"></i>
+                        {car.images.length}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="car-details">
