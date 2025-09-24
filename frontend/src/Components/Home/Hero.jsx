@@ -8,7 +8,7 @@ import car3 from '../../images/car3';
 import '/src/index.css';
 
 
-const Hero = ({ onSearch, onLetsGo }) => {
+const Hero = ({ onSearch, onLetsGo, user }) => {
   const [heroRef, isHeroVisible] = useScrollAnimation(0.2);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,9 +55,17 @@ const Hero = ({ onSearch, onLetsGo }) => {
       </div>
       <div className="container">
         <div className="hero-content">
-          <h1 className={`${isHeroVisible ? 'zoom-in' : ''}`}>Find Your Perfect Car</h1>
+          <h1 className={`${isHeroVisible ? 'zoom-in' : ''}`}>
+            {user && user.role === 'seller' 
+              ? `Welcome ${user.firstName}!` 
+              : 'Find Your Perfect Car'
+            }
+          </h1>
           <p className={`${isHeroVisible ? 'fade-in-up delay-2' : ''}`}>
-            Book your ride in just a few clicks. We have the keys to your next adventure.
+            {user && user.role === 'seller'
+              ? 'Manage your car inventory and grow your business with CarCraze.'
+              : 'Book your ride in just a few clicks. We have the keys to your next adventure.'
+            }
           </p>
           <div className={`${isHeroVisible ? 'slide-in-up delay-3' : ''}`}>
             <button
@@ -70,7 +78,10 @@ const Hero = ({ onSearch, onLetsGo }) => {
                 }
               }}
             >
-              Let's Go <i className="fas fa-arrow-right"></i>
+              {user && user.role === 'seller' 
+                ? <>Manage Inventory <i className="fas fa-car"></i></>
+                : <>Let's Go <i className="fas fa-arrow-right"></i></>
+              }
             </button>
           </div>
         </div>

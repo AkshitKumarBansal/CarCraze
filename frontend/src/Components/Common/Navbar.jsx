@@ -5,17 +5,28 @@ import "./Navbar.css";
 const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user) {
-        setUserRole(user.role);
+    // Check if user is logged in by checking token and user data
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      setUserRole(parsedUser.role);
+      if (setIsLoggedIn) {
+        setIsLoggedIn(true);
       }
     } else {
+      setUser(null);
       setUserRole(null);
+      if (setIsLoggedIn) {
+        setIsLoggedIn(false);
+      }
     }
-  }, [isLoggedIn]);
+  }, [setIsLoggedIn]);
 
   // Debug log to check current state
   console.log("Navbar rendered - isLoggedIn:", isLoggedIn);
@@ -56,17 +67,52 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
           </ul>
 
           {/* Auth Buttons */}
-          {!isLoggedIn ? (
+          {!user ? (
             <div className="auth-buttons">
               <Link to="/signup" className="auth-btn sign-up">Sign Up</Link>
               <Link to="/signin" className="auth-btn sign-in">Sign In</Link>
             </div>
           ) : (
             <div className="auth-buttons">
-              <Link to="/profile" className="auth-btn profile">Profile</Link>
-              <button onClick={handleLogout} className="auth-btn sign-out">
-                Sign Out
-              </button>
+              {userRole === 'seller' ? (
+                <>
+                  <div className="user-profile">
+                    <span className="user-name">Hello, {user.firstName}</span>
+                    <div className="profile-dropdown">
+                      <Link to="/seller/dashboard" className="auth-btn profile">
+                        <i className="fas fa-tachometer-alt"></i> Dashboard
+                      </Link>
+                      <Link to="/seller/add-car" className="auth-btn profile">
+                        <i className="fas fa-plus"></i> Add Car
+                      </Link>
+                      <button onClick={handleLogout} className="auth-btn sign-out">
+                        <i className="fas fa-sign-out-alt"></i> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : userRole === 'customer' ? (
+                <>
+                  <div className="user-profile">
+                    <span className="user-name">Hello, {user.firstName}</span>
+                    <div className="profile-dropdown">
+                      <Link to="/profile" className="auth-btn profile">
+                        <i className="fas fa-user"></i> Profile
+                      </Link>
+                      <Link to="/dashboard" className="auth-btn profile">
+                        <i className="fas fa-tachometer-alt"></i> Dashboard
+                      </Link>
+                      <button onClick={handleLogout} className="auth-btn sign-out">
+                        <i className="fas fa-sign-out-alt"></i> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <button onClick={handleLogout} className="auth-btn sign-out">
+                  Sign Out
+                </button>
+              )}
             </div>
           )}
         </nav>

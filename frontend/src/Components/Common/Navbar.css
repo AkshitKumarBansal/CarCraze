@@ -87,7 +87,114 @@
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
 }
 
+.auth-btn.sign-in {
+  background: transparent;
+  color: #2563eb;
+  border: 2px solid #2563eb;
+}
+
+.auth-btn.sign-in:hover {
+  background: #2563eb;
+  color: white;
+}
+
+.auth-btn.profile {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 1rem;
+  margin: 0.2rem 0;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-btn.profile:hover {
+  background: #e5e7eb;
+  color: #2563eb;
+}
+
+.auth-btn.sign-out {
+  background: #ef4444;
+  color: white;
+  padding: 0.5rem 1rem;
+  margin: 0.2rem 0;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-btn.sign-out:hover {
+  background: #dc2626;
+}
+
+/* User Profile Dropdown */
+.user-profile {
+  position: relative;
+  display: inline-block;
+}
+
+.user-name {
+  color: #374151;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.user-name:hover {
+  background-color: #f3f4f6;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.user-profile:hover .profile-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.profile-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid white;
+}
+
 /* Responsive - hide nav links on small screens */
 @media (max-width: 768px) {
   .nav-links { display: none; }
+  
+  .user-name {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .profile-dropdown {
+    min-width: 180px;
+  }
 }
