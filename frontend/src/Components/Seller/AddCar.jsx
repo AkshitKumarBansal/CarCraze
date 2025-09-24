@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AddCar.css';
 import Navbar from '../Common/Navbar';
+import { API_ENDPOINTS } from '../../config/api';
 
 const AddCar = () => {
   const navigate = useNavigate();
@@ -264,7 +265,7 @@ const AddCar = () => {
         delete submitData.availability;
       }
 
-      const response = await fetch('http://localhost:5000/api/seller/cars', {
+      const response = await fetch('http://localhost:5001/api/seller/cars', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

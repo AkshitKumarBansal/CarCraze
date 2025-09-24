@@ -194,5 +194,100 @@
     "status": "active",
     "createdAt": "2025-09-24T07:50:15.111Z",
     "updatedAt": "2025-09-24T07:50:15.111Z"
+  },
+  {
+    "id": "car_1758715823937",
+    "sellerId": "seller_1758545607402",
+    "model": "XL6",
+    "brand": "Maruti",
+    "year": 2025,
+    "capacity": 5,
+    "fuelType": "Petrol",
+    "transmission": "manual",
+    "description": "new",
+    "listingType": "sale_new",
+    "price": 800000,
+    "availability": null,
+    "color": "Blue",
+    "mileage": 22,
+    "images": [
+      "http://localhost:5000/uploads/car-images/images_1758715823861_seller_1758545607402.png"
+    ],
+    "location": "Chandigarh",
+    "status": "active",
+    "createdAt": "2025-09-24T12:10:23.937Z",
+    "updatedAt": "2025-09-24T12:10:23.938Z"
+  },
+  {
+    "id": "car_1758715978685",
+    "sellerId": "seller_1758545607402",
+    "model": "XUV700",
+    "brand": "Mahindra ",
+    "year": 2025,
+    "capacity": 7,
+    "fuelType": "Diesel",
+    "transmission": "manual",
+    "description": "new",
+    "listingType": "sale_new",
+    "price": 2500000,
+    "availability": null,
+    "color": "Black",
+    "mileage": 14,
+    "images": [
+      "http://localhost:5000/uploads/car-images/images_1758715978660_seller_1758545607402.png"
+    ],
+    "location": "Chandigarh",
+    "status": "active",
+    "createdAt": "2025-09-24T12:12:58.685Z",
+    "updatedAt": "2025-09-24T12:12:58.685Z"
+  },
+  {
+    "id": "car_1758716133821",
+    "sellerId": "seller_1758545607402",
+    "model": "Thar",
+    "brand": "Mahindra ",
+    "year": 2025,
+    "capacity": 4,
+    "fuelType": "Diesel",
+    "transmission": "manual",
+    "description": "Available",
+    "listingType": "rent",
+    "price": 5000,
+    "availability": {
+      "startDate": "2025-09-24",
+      "endDate": "2025-10-11"
+    },
+    "color": "Black",
+    "mileage": 10,
+    "images": [
+      "http://localhost:5000/uploads/car-images/images_1758716133805_seller_1758545607402.png"
+    ],
+    "location": "Chandigarh",
+    "status": "active",
+    "createdAt": "2025-09-24T12:15:33.821Z",
+    "updatedAt": "2025-09-24T12:15:33.821Z"
+  },
+  {
+    "id": "car_1758716371963",
+    "sellerId": "seller_1758545607402",
+    "model": "Baleno",
+    "brand": "Suzuki",
+    "year": 2020,
+    "capacity": 5,
+    "fuelType": "Petrol",
+    "transmission": "manual",
+    "description": "50000 km driven only",
+    "listingType": "sale_old",
+    "price": 500000,
+    "availability": null,
+    "color": "Blue",
+    "mileage": 21,
+    "images": [
+      "http://localhost:5000/uploads/car-images/images_1758716371948_seller_1758545607402.png"
+    ],
+    "location": "Chandigarh",
+    "status": "active",
+    "createdAt": "2025-09-24T12:19:31.963Z",
+    "updatedAt": "2025-09-24T12:19:31.963Z"
   }
 ]

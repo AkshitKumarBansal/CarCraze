@@ -10,6 +10,13 @@ const NewCars = () => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
+  // Helper function to fix image URLs with correct port
+  const fixImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    // Replace any localhost port with the current server port
+    return imageUrl.replace(/localhost:\d+/, 'localhost:5000');
+  };
+
   useEffect(() => {
     const fetchCars = async () => {
       try {
@@ -18,6 +25,7 @@ const NewCars = () => {
         const res = await fetch('http://localhost:5000/api/cars');
         if (!res.ok) throw new Error(`Failed to fetch cars: ${res.status}`);
         const data = await res.json();
+        console.log('Fetched new cars data:', data.cars); // DEBUG: See what data we get
         const all = Array.isArray(data?.cars) ? data.cars : [];
         const onlyNew = all.filter(c => c.listingType === 'sale_new');
         setCars(onlyNew);
@@ -60,6 +68,28 @@ const NewCars = () => {
           <div className="catalog-grid">
             {filteredCars.map(car => (
                <div className="car-card" key={car.id}>
+                 <div className="car-image-container">
+                   {car.images && car.images.length > 0 ? (
+                     <img 
+                       src={fixImageUrl(car.images[0])} 
+                       alt={`${car.brand} ${car.model}`}
+                       className="car-image"
+                       onError={(e) => {
+                         e.target.style.display = 'none';
+                         e.target.nextSibling.style.display = 'flex';
+                       }}
+                     />
+                   ) : null}
+                   <div className={`car-image-placeholder ${car.images && car.images.length > 0 ? 'has-image' : ''}`}>
+                     <i className="fas fa-car"></i>
+                   </div>
+                   {car.images && car.images.length > 1 && (
+                     <div className="image-count">
+                       <i className="fas fa-images"></i>
+                       {car.images.length}
+                     </div>
+                   )}
+                 </div>
                  <div className="car-card-header">
                    <span className="car-brand">{car.brand}</span>
                    <span className="car-year">{car.year}</span>
