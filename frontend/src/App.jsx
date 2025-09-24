@@ -27,19 +27,16 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
 
   return (
     <div className="App">
-      {/* ✅ Navbar always visible */}
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-
       <Routes>
         <Route path="/" element={<HomePage />} />
-
         <Route
           path="/signin"
           element={
             <SignIn
               onSwitchToSignUp={() => navigate('/signup')}
               onLoginSuccess={() => {
-                localStorage.setItem('token', 'sample_token'); // replace with real token
+                localStorage.setItem('token', 'sample_token');
                 setIsLoggedIn(true);
                 console.log("🔐 User Logged In -> isLoggedIn: ON");
                 navigate('/');
@@ -47,7 +44,6 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
             />
           }
         />
-
         <Route
           path="/signup"
           element={
@@ -62,8 +58,6 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
             />
           }
         />
-
-        {/* Customer Dashboard Route */}
         <Route
           path="/dashboard"
           element={
@@ -72,8 +66,6 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
             </ProtectedRoute>
           }
         />
-
-        {/* New Cars Route */}
         <Route
           path="/new-cars"
           element={
@@ -82,8 +74,6 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
             </ProtectedRoute>
           }
         />
-
-        {/* Old Cars Route */}
         <Route
           path="/old-cars"
           element={
@@ -92,8 +82,6 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
             </ProtectedRoute>
           }
         />
-
-        {/* Rental Cars Route */}
         <Route
           path="/rent-cars"
           element={
@@ -102,8 +90,6 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
             </ProtectedRoute>
           }
         />
-
-        {/* Profile Route */}
         <Route
           path="/profile"
           element={
@@ -154,18 +140,14 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   useEffect(() => {
-    // Restore login state from localStorage
     if (localStorage.getItem("token")) {
       setIsLoggedIn(true);
     }
   }, []);
-
   useEffect(() => {
     console.log("✅ User login state:", isLoggedIn ? "ON (Logged In)" : "OFF (Logged Out)");
-  }, [isLoggedIn]); // <-- Logs every time login state changes
-
+  }, [isLoggedIn]);
   return (
     <Router>
       <AppWithRouter isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
