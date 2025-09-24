@@ -157,6 +157,12 @@
   padding: 3rem 0;
 }
 
+.dashboard-content .container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
 .section-header {
   text-align: center;
   margin-bottom: 3rem;
@@ -215,8 +221,31 @@
 /* Cars Grid */
 .cars-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+  justify-items: center;
+}
+
+@media (min-width: 768px) {
+  .cars-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cars-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .cars-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
 }
 
 .car-card {
@@ -226,6 +255,12 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid #e5e7eb;
   transition: all 0.3s ease;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 480px;
 }
 
 .car-card:hover {
@@ -306,6 +341,10 @@
 
 .car-details {
   padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .car-header {
@@ -390,22 +429,31 @@
   margin-bottom: 1rem;
   padding-top: 1rem;
   border-top: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .price {
   font-size: 1.25rem;
   font-weight: 700;
   color: #1f2937;
+  flex-shrink: 0;
+  margin-right: 0.5rem;
 }
 
 .car-actions {
   display: flex;
   gap: 0.5rem;
+  flex-shrink: 0;
+  align-items: center;
 }
 
 .btn-sm {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
+  white-space: nowrap;
+  border-radius: 6px;
+  min-width: auto;
 }
 
 .btn-outline {
@@ -456,6 +504,13 @@
   
   .cars-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+  
+  .car-card {
+    max-width: 100%;
+    min-height: auto;
   }
   
   .car-footer {
@@ -466,5 +521,13 @@
   
   .car-actions {
     justify-content: center;
+    width: 100%;
+  }
+  
+  .car-actions .btn-sm {
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+    padding: 0.5rem 0.5rem;
   }
 }
