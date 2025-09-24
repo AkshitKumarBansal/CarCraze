@@ -13,6 +13,9 @@ import Profile from './Components/Profile/Profile';
 import NewCars from './Components/Customer/NewCars';
 import OldCars from './Components/Customer/OldCars';
 import RentalCars from './Components/Customer/RentalCars';
+import About from './Components/Common/About';
+import Contact from './Components/Common/Contact';
+import Service from './Components/Common/Service';
 
 const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
@@ -104,6 +107,15 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
             </ProtectedRoute>
           }
         />
+
+        {/* Services Route */}
+        <Route path="/services" element={<Service />} />
+
+        {/* About Route */}
+        <Route path="/about" element={<About />} />
+
+        {/* Contact Route */}
+        <Route path="/contact" element={<Contact />} />
 
         {/* Seller Routes */}
         <Route
