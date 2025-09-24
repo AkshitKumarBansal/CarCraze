@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'carcraze_secret_key_2024';
 
 // Middleware
@@ -27,6 +27,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files for uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Also serve images from the car-images subdirectory directly
+app.use('/uploads/car-images', express.static(path.join(__dirname, 'uploads', 'car-images')));
 
 // Simple file-based storage (replace with database in production)
 const DATA_DIR = path.join(__dirname, 'Data');
