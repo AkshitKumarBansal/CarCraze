@@ -6,12 +6,21 @@ import SignIn from './Components/LoginDetails/SignIn';
 import SignUp from './Components/LoginDetails/SignUp';
 import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import Navbar from './Components/Common/Navbar';
-
-// Import Seller components
 import SellerDashboard from './Components/Seller/SellerDashboard';
 import AddCar from './Components/Seller/AddCar';
+
 import EditCar from './Components/Seller/EditCar';
-import Dashboard from './Components/Dashboard/dashboard';
+
+
+import CustomerDashboard from './Components/Customer/CustomerDashboard';
+import Profile from './Components/Profile/Profile';
+import NewCars from './Components/Customer/NewCars';
+import OldCars from './Components/Customer/OldCars';
+import RentalCars from './Components/Customer/RentalCars';
+import About from './Components/Common/About';
+import Contact from './Components/Common/Contact';
+import Service from './Components/Common/Service';
+
 
 const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
@@ -59,10 +68,59 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           path="/dashboard"
           element={
             <ProtectedRoute requiredRole="customer">
-              <Dashboard />
+              <CustomerDashboard />
             </ProtectedRoute>
           }
         />
+
+        {/* New Cars Route */}
+        <Route
+          path="/new-cars"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <NewCars />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Old Cars Route */}
+        <Route
+          path="/old-cars"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <OldCars />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rental Cars Route */}
+        <Route
+          path="/rent-cars"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <RentalCars />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile Route */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Services Route */}
+        <Route path="/services" element={<Service />} />
+
+        {/* About Route */}
+        <Route path="/about" element={<About />} />
+
+        {/* Contact Route */}
+        <Route path="/contact" element={<Contact />} />
 
         {/* Seller Routes */}
         <Route
