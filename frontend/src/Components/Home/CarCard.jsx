@@ -1,11 +1,9 @@
-import '/src/index.css';
-
 const CarCard = ({ car }) => {
   const formatPrice = (price, category) => {
     if (category === 'rent') {
-      return `$${price}/day`;
+      return `₹${price}/day`;
     } else {
-      return `$${price.toLocaleString()}`;
+      return `₹${price.toLocaleString()}`;
     }
   };
 

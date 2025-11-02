@@ -3,12 +3,10 @@ import '/src/index.css';
 
 // Import common components
 import Navbar from '../Common/Navbar';
-import Footer from '../Common/Footer';
 
 // Import home-specific components
 import Hero from './Hero';
 import FeaturedCars from './FeaturedCars';
-import Services from '../Common/Service';
 
 const HomePage = () => {
   const [searchCriteria, setSearchCriteria] = useState(null);
@@ -24,8 +22,6 @@ const HomePage = () => {
       <Navbar />
       <Hero onSearch={handleSearch} />
       <FeaturedCars searchCriteria={searchCriteria} />
-      <Services />
-      <Footer />
     </div>
   );
 };
