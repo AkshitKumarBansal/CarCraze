@@ -40,6 +40,21 @@ const CustomerDashboard = () => {
     fetchCars();
   }, []);
 
+  // Robust fallback for image errors: use local placeholders instead of a missing public asset
+  const handleImageError = (e) => {
+    e.currentTarget.onerror = null; // prevent infinite loop
+    e.currentTarget.src = newCarsImage;
+  };
+
+  const getCarImage = (car) => {
+    const first = Array.isArray(car?.images) && car.images[0] ? car.images[0] : null;
+    if (first) return first;
+    // choose placeholder by listing type
+    if (car?.listingType === 'sale_old') return oldCarsImage;
+    if (car?.listingType === 'rent') return rentCarsImage;
+    return newCarsImage;
+  };
+
   return (
     <div className="dashboard-container">
       <Hero
@@ -111,28 +126,13 @@ const CustomerDashboard = () => {
           <div className="catalog-grid">
             {cars.map((car) => (
               <div className="car-card" key={car.id}>
-                <div className="car-image-container">
-                  {car.images && car.images.length > 0 ? (
-                    <img 
-                      src={fixImageUrl(car.images[0])} 
-                      alt={`${car.brand} ${car.model}`}
-                      className="car-image"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`car-image-placeholder ${car.images && car.images.length > 0 ? 'has-image' : ''}`}>
-                    <i className="fas fa-car"></i>
-                  </div>
-                  {car.images && car.images.length > 1 && (
-                    <div className="image-count">
-                      <i className="fas fa-images"></i>
-                      {car.images.length}
-                    </div>
-                  )}
-                </div>
+                {/* Car image: backend-provided first image or a local placeholder by listing type */}
+                <img
+                  src={getCarImage(car)}
+                  alt={`${car.brand} ${car.model}`}
+                  className="car-image"
+                  onError={handleImageError}
+                />
                 <div className="car-card-header">
                   <span className="car-brand">{car.brand}</span>
                   <span className="car-year">{car.year}</span>

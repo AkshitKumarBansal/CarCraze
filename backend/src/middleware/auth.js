@@ -11,8 +11,8 @@ function authenticateToken(req, res, next) {
   }
   const token = authHeader.split(' ')[1];
   if (!token) {
-    return res.status(401).json({
-      error: 'Unauthorized',  
+    return res.status(401).json({  
+      error: 'Unauthorized',
       message: 'Missing bearer token',
     });
   }
