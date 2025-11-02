@@ -1,0 +1,42 @@
+/* Featured Cars Section */
+.featured-cars {
+  padding: 5rem 0;
+  background: #f9fafb;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.featured-cars.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.featured-cars.hidden {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.car-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .car-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .featured-cars {
+    padding: 3rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .car-grid {
+    gap: 1.5rem;
+  }
+}

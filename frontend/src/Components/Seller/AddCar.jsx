@@ -263,6 +263,8 @@ const AddCar = () => {
       } else {
         delete submitData.availability;
       }
+
+      const response = await fetch('http://localhost:5001/api/seller/cars', {
       const response = await fetch(API_ENDPOINTS.SELLER_CARS
         method: 'POST',
         headers: {

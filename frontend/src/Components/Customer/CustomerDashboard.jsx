@@ -4,15 +4,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faCarSide, faKey } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import Hero from '../Home/Hero';
-import newCarsImage from '../../images/NewCars.png';
-import oldCarsImage from '../../images/OldCars.png';
-import rentCarsImage from '../../images/RentalCars.png';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Helper function to fix image URLs with correct port
+  const fixImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    // Replace any localhost port with the current server port
+    return imageUrl.replace(/localhost:\d+/, 'localhost:5000');
+  };
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -22,6 +26,8 @@ const CustomerDashboard = () => {
         const res = await fetch('http://localhost:5000/api/cars');
         if (!res.ok) throw new Error(`Failed to fetch cars: ${res.status}`);
         const data = await res.json();
+        console.log('Fetched cars data:', data.cars); // DEBUG: See what data we get
+        console.log('First car images:', data.cars[0]?.images); // DEBUG: See image URLs
         setCars(Array.isArray(data?.cars) ? data.cars.slice(0, 9) : []);
       } catch (err) {
         console.error('Error fetching cars:', err);
@@ -74,14 +80,11 @@ const CustomerDashboard = () => {
         Explore our services or manage your account.
       </p>
       <div id="options" className="options-grid">
-        {/* New Cars Card - Using the imported image */}
+        {/* New Cars Card */}
         <div className="option-card">
-          <img 
-            src={newCarsImage} 
-            alt="New Cars Collection" 
-            className="option-image"
-            onError={handleImageError}
-          />
+          <div className="option-icon">
+            <FontAwesomeIcon icon={faCar} size="3x" />
+          </div>
           <h3 className="option-title">New Cars</h3>
           <p className="option-description">Browse the latest models from top brands.</p>
           <button className="option-button" onClick={() => navigate('/new-cars')}>
@@ -91,12 +94,9 @@ const CustomerDashboard = () => {
 
         {/* Old Cars Card */}
         <div className="option-card">
-          <img 
-            src={oldCarsImage} 
-            alt="Old Cars Collection" 
-            className="option-image"
-            onError={handleImageError}
-          />
+          <div className="option-icon">
+            <FontAwesomeIcon icon={faCarSide} size="3x" />
+          </div>
           <h3 className="option-title">Old Cars</h3>
           <p className="option-description">Find certified pre-owned vehicles at great prices.</p>
           <button className="option-button" onClick={() => navigate('/old-cars')}>
@@ -106,12 +106,9 @@ const CustomerDashboard = () => {
 
         {/* Rent Cars Card */}
         <div className="option-card">
-          <img 
-            src={rentCarsImage} 
-            alt="Rental Cars Collection" 
-            className="option-image"
-            onError={handleImageError}
-          />
+          <div className="option-icon">
+            <FontAwesomeIcon icon={faKey} size="3x" />
+          </div>
           <h3 className="option-title">Rent Cars</h3>
           <p className="option-description">Rent a car for your next trip, short or long term.</p>
           <button className="option-button" onClick={() => navigate('/rent-cars')}>
@@ -120,7 +117,7 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* Catalog Section - Images for each car card (with fallback to newCarsImage) */}
+      {/* Catalog Section - Updated image handling */}
       <div id="catalog" className="catalog-section">
         <h2 className="catalog-title">Car Catalog</h2>
         {loading && <div className="catalog-status">Loading cars...</div>}

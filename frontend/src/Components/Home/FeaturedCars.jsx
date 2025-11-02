@@ -1,11 +1,47 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import useScrollAnimation from "../../Hooks/useScrollAnimation";
 import CarCard from "./CarCard";
-import '/src/index.css';
-
+import './FeaturedCars.css';
 
 const FeaturedCars = ({ searchCriteria }) => {
   const [sectionRef, isVisible] = useScrollAnimation(0.1);
+  const [sellerCars, setSellerCars] = useState([]);
+
+  // Fetch cars from backend
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/cars');
+        const data = await response.json();
+        
+        // Transform backend cars to match frontend format
+        const transformedCars = data.cars.map(car => ({
+          id: car.id,
+          name: `${car.year} ${car.brand} ${car.model}`,
+          seats: car.capacity,
+          transmission: car.transmission,
+          fuel: car.fuelType,
+          price: car.price,
+          icon: car.listingType === 'rent' ? "fas fa-car" : "fas fa-car-side",
+          type: car.transmission === 'automatic' ? 'luxury' : 'midsize',
+          category: car.listingType === 'rent' ? 'rent' : 
+                   car.listingType === 'sale_new' ? 'buy-new' : 'buy-used',
+          image: car.images && car.images.length > 0 ? car.images[0] : null,
+          mileage: car.mileage,
+          color: car.color,
+          location: car.location,
+          description: car.description
+        }));
+        
+        setSellerCars(transformedCars);
+      } catch (error) {
+        console.error('Error fetching cars:', error);
+        setSellerCars([]);
+      }
+    };
+
+    fetchCars();
+  }, []);
 
   const rentalCars = [
     {
@@ -181,8 +217,8 @@ const FeaturedCars = ({ searchCriteria }) => {
     },
   ];
 
-  // Combine all cars
-  const allCars = [...rentalCars, ...newCars, ...usedCars];
+  // Combine all cars including seller cars from backend
+  const allCars = [...rentalCars, ...newCars, ...usedCars, ...sellerCars];
 
   // Filter cars by searchCriteria if provided
   const filteredCars = searchCriteria
