@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../../config/api';
 import './SignUp.css';
 import Navbar from '../Common/Navbar';
 import car1 from '../../images/car1';
@@ -108,10 +109,35 @@ const SignUp = ({ onSwitchToSignIn }) => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/signup", {
+      // Format the request body for sellers
+      let requestBody = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        role: formData.role
+      };
+
+      // Add business info for sellers
+      if (formData.role === 'seller') {
+        requestBody.businessInfo = {
+          name: formData.businessName,
+          email: formData.businessEmail,
+          phone: formData.businessPhone,
+          address: formData.businessAddress
+        };
+      }
+
+      // Add admin code for admins
+      if (formData.role === 'admin') {
+        requestBody.adminCode = formData.adminCode;
+      }
+
+  const response = await fetch(API_ENDPOINTS.SIGNUP, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();

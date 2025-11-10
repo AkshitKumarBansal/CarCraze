@@ -1,47 +1,50 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import useScrollAnimation from "../../Hooks/useScrollAnimation";
 import CarCard from "./CarCard";
 import './FeaturedCars.css';
+import { API_ENDPOINTS } from '../../config/api';
 
 const FeaturedCars = ({ searchCriteria }) => {
   const [sectionRef, isVisible] = useScrollAnimation(0.1);
   const [sellerCars, setSellerCars] = useState([]);
 
   // Fetch cars from backend
-  useEffect(() => {
-    const fetchCars = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/cars');
-        const data = await response.json();
-        
-        // Transform backend cars to match frontend format
-        const transformedCars = data.cars.map(car => ({
-          id: car.id,
-          name: `${car.year} ${car.brand} ${car.model}`,
-          seats: car.capacity,
-          transmission: car.transmission,
-          fuel: car.fuelType,
-          price: car.price,
-          icon: car.listingType === 'rent' ? "fas fa-car" : "fas fa-car-side",
-          type: car.transmission === 'automatic' ? 'luxury' : 'midsize',
-          category: car.listingType === 'rent' ? 'rent' : 
-                   car.listingType === 'sale_new' ? 'buy-new' : 'buy-used',
-          image: car.images && car.images.length > 0 ? car.images[0] : null,
-          mileage: car.mileage,
-          color: car.color,
-          location: car.location,
-          description: car.description
-        }));
-        
-        setSellerCars(transformedCars);
-      } catch (error) {
-        console.error('Error fetching cars:', error);
-        setSellerCars([]);
-      }
-    };
+  const fetchCars = useCallback(async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.CARS);
+      if (!response.ok) throw new Error('Failed to fetch cars');
+      const data = await response.json();
 
-    fetchCars();
+      // Transform backend cars to match frontend format
+      const transformedCars = (data.cars || []).map(car => ({
+        id: car._id || car.id,
+        name: `${car.year || ''} ${car.brand || ''} ${car.model || ''}`.trim(),
+        seats: car.capacity,
+        transmission: car.transmission,
+        fuel: car.fuelType,
+        price: car.price,
+        icon: car.listingType === 'rent' ? "fas fa-car" : "fas fa-car-side",
+        type: car.transmission === 'automatic' ? 'luxury' : 'midsize',
+        category: car.listingType === 'rent' ? 'rent' : 
+                 car.listingType === 'sale_new' ? 'buy-new' : 'buy-used',
+        image: car.images && car.images.length > 0 ? car.images[0] : null,
+        mileage: car.mileage,
+        color: car.color,
+        location: car.location,
+        description: car.description,
+        raw: car
+      }));
+
+      setSellerCars(transformedCars);
+    } catch (error) {
+      console.error('Error fetching cars:', error);
+      setSellerCars([]);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchCars();
+  }, [fetchCars]);
 
   const rentalCars = [
     {
@@ -234,7 +237,9 @@ const FeaturedCars = ({ searchCriteria }) => {
         <h2 className="section-title">Featured Cars</h2>
         <div className="car-grid">
           {filteredCars.length > 0 ? (
-            filteredCars.map((car) => <CarCard key={car.id} car={car} />)
+            filteredCars.map((car) => (
+              <CarCard key={car.id} car={car} onActionSuccess={fetchCars} />
+            ))
           ) : (
             <p>No cars match your search.</p>
           )}

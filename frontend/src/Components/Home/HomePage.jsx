@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '/src/index.css';
+import Service from '../Common/Service';
 
 // Import common components
 import Navbar from '../Common/Navbar';
@@ -22,6 +23,7 @@ const HomePage = () => {
       <Navbar />
       <Hero onSearch={handleSearch} />
       <FeaturedCars searchCriteria={searchCriteria} />
+      <Service />
     </div>
   );
 };

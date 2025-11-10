@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
-const { readCars, writeCars } = require('../services/fileDb');
+const Car = require('../models/Car');
 
 const router = express.Router();
 
@@ -10,8 +10,7 @@ router.get('/cars', authenticateToken, async (req, res) => {
     if (req.user.role !== 'seller') {
       return res.status(403).json({ message: 'Seller access required' });
     }
-    const cars = await readCars();
-    const myCars = cars.filter((c) => c.sellerId === req.user.userId);
+    const myCars = await Car.find({ sellerId: req.user.userId }).lean();
     res.json({ cars: myCars });
   } catch (err) {
     console.error('Seller get cars error:', err);
@@ -25,7 +24,6 @@ router.post('/cars', authenticateToken, async (req, res) => {
     if (req.user.role !== 'seller') {
       return res.status(403).json({ message: 'Seller access required' });
     }
-    const cars = await readCars();
 
     const {
       brand, model, year, capacity, fuelType, transmission,
@@ -33,27 +31,22 @@ router.post('/cars', authenticateToken, async (req, res) => {
       availability, images = [],
     } = req.body;
 
-    const car = {
-      id: `car_${Date.now()}`,
+    const carDoc = new Car({
       sellerId: req.user.userId,
       brand, model, year, capacity, fuelType, transmission,
       description,
-      listingType, // 'sale_new' | 'sale_old' | 'rent'
+      listingType,
       price,
       color,
       mileage,
       location,
       availability: listingType === 'rent' ? availability || null : null,
       images: Array.isArray(images) ? images : [],
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      status: 'active'
+    });
 
-    cars.push(car);
-    await writeCars(cars);
-
-    res.json({ message: 'Car added successfully', car });
+    await carDoc.save();
+    res.json({ message: 'Car added successfully', car: carDoc });
   } catch (err) {
     console.error('Add car error:', err);
     res.status(500).json({ message: 'Internal server error' });
@@ -67,21 +60,13 @@ router.put('/cars/:carId', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Seller access required' });
     }
     const { carId } = req.params;
-    const cars = await readCars();
-    const idx = cars.findIndex((c) => c.id === carId && c.sellerId === req.user.userId);
-    if (idx === -1) return res.status(404).json({ message: 'Car not found or not owned by you' });
+    const car = await Car.findOne({ _id: carId, sellerId: req.user.userId });
+    if (!car) return res.status(404).json({ message: 'Car not found or not owned by you' });
 
-    const updated = {
-      ...cars[idx],
-      ...req.body,
-      updatedAt: new Date().toISOString(),
-    };
-    // For non-rent, ensure availability null
-    if (updated.listingType !== 'rent') updated.availability = null;
-
-    cars[idx] = updated;
-    await writeCars(cars);
-    res.json({ message: 'Car updated successfully', car: updated });
+    Object.assign(car, req.body);
+    if (car.listingType !== 'rent') car.availability = null;
+    await car.save();
+    res.json({ message: 'Car updated successfully', car });
   } catch (err) {
     console.error('Update car error:', err);
     res.status(500).json({ message: 'Internal server error' });
@@ -95,12 +80,10 @@ router.delete('/cars/:carId', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Seller access required' });
     }
     const { carId } = req.params;
-    const cars = await readCars();
-    const car = cars.find((c) => c.id === carId && c.sellerId === req.user.userId);
+    const car = await Car.findOne({ _id: carId, sellerId: req.user.userId });
     if (!car) return res.status(404).json({ message: 'Car not found or not owned by you' });
 
-    const remaining = cars.filter((c) => !(c.id === carId && c.sellerId === req.user.userId));
-    await writeCars(remaining);
+    await car.deleteOne();
     res.json({ message: 'Car deleted successfully' });
   } catch (err) {
     console.error('Delete car error:', err);

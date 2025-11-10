@@ -219,5 +219,51 @@
       "isVerified": false,
       "documents": []
     }
+  },
+  {
+    "id": "seller_1762772188944",
+    "firstName": "Abhishek",
+    "lastName": "Arora",
+    "email": "abhishekarora866@gmail.com",
+    "password": "$2a$12$o4fFDPHaxi.6MS5TaeN.7Onl4dWPFQHqi.vcMC7xgO8vHjSJ2WMTS",
+    "phone": "7814712591",
+    "role": "seller",
+    "createdAt": "2025-11-10T10:56:28.944Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {},
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
+  },
+  {
+    "id": "seller_1762772324137",
+    "firstName": "Abhishek",
+    "lastName": "Arora",
+    "email": "aa46@gmail.com",
+    "password": "$2a$12$b8jzLKD8H996uxKmp8c5VuTHYvdsefH.ZlhVw3S.ZE3WxYCrgxvmK",
+    "phone": "7814712591",
+    "role": "seller",
+    "createdAt": "2025-11-10T10:58:44.137Z",
+    "lastLogin": null,
+    "isActive": true,
+    "businessInfo": {},
+    "inventory": [],
+    "salesHistory": [],
+    "rating": {
+      "average": 0,
+      "totalReviews": 0
+    },
+    "verification": {
+      "isVerified": false,
+      "documents": []
+    }
   }
 ]

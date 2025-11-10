@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
-const { readAllUsers } = require('../services/fileDb');
+const User = require('../models/User');
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ router.get('/users', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Admin access required' });
     }
-    const users = await readAllUsers();
+    const users = await User.find({}).select('-password').lean();
     res.json({ users });
   } catch (err) {
     console.error('Admin get users error:', err);

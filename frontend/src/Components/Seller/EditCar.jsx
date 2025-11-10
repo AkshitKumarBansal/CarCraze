@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../../config/api';
 import { useNavigate, useParams } from 'react-router-dom';
 import './AddCar.css';
 import Navbar from '../Common/Navbar';
@@ -52,7 +53,7 @@ const EditCar = () => {
   const fetchCarData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/seller/cars', {
+      const response = await fetch(API_ENDPOINTS.SELLER_CARS, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -61,7 +62,7 @@ const EditCar = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const car = data.cars.find(c => c.id === carId);
+  const car = data.cars.find(c => (c._id === carId || c.id === carId));
         
         if (car) {
           setFormData({
@@ -201,7 +202,7 @@ const EditCar = () => {
         delete submitData.availability;
       }
 
-      const response = await fetch(`http://localhost:5000/api/seller/cars/${carId}`, {
+      const response = await fetch(`${API_ENDPOINTS.SELLER_CARS}/${carId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

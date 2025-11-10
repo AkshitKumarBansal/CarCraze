@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import './Service.css';
 import { useNavigate } from 'react-router-dom';
+import useScrollAnimation from '../../Hooks/useScrollAnimation';
 
-const serviceItems = [
+const allServiceItems = [
   {
     id: 'buy-new',
     title: 'Buy New Car',
@@ -53,78 +54,112 @@ const serviceItems = [
   }
 ];
 
-const Service = () => {
+const Service = ({ mode = 'all' }) => {
   const navigate = useNavigate();
   const [active, setActive] = useState(null);
+  const [sectionRef, sectionVisible] = useScrollAnimation(0.2);
+
+  // Determine which service cards to show based on mode
+  // mode: 'all' | 'buyer' | 'seller'
+  const buyerIds = ['buy-new', 'buy-old', 'rent'];
+  const sellerIds = ['sell-new', 'sell-old', 'put-on-rent'];
+
+  const visibleItems = allServiceItems.filter(item => {
+    if (mode === 'buyer') return buyerIds.includes(item.id);
+    if (mode === 'seller') return sellerIds.includes(item.id);
+    return true; // all
+  });
 
   const openDetails = (item) => setActive(item);
   const closeDetails = () => setActive(null);
 
   const goToFlow = (id) => {
-    // Optional quick navigation for shopping/renting flows
-    if (id === 'buy-new') navigate('/new-cars');
-    else if (id === 'buy-old') navigate('/old-cars');
-    else if (id === 'rent') navigate('/rent-cars');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/signin');
+      return;
+    }
+    switch(id) {
+      case 'buy-new': navigate('/new-cars'); break;
+      case 'buy-old': navigate('/old-cars'); break;
+      case 'rent': navigate('/rent-cars'); break;
+      case 'sell-new':
+      case 'sell-old':
+      case 'put-on-rent':
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        if (userData.role === 'seller') navigate('/seller/dashboard');
+        else navigate('/signup', { state: { role: 'seller' } });
+        break;
+      default: navigate('/');
+    }
+  };
+
+  // Child component so hooks (useScrollAnimation) are used at top-level of a component
+  const ServiceCard = ({ s }) => {
+    const [cardRef, cardVisible] = useScrollAnimation(0.15);
+    return (
+      <div
+        key={s.id}
+        ref={cardRef}
+        className={`service-card-modern ${cardVisible ? 'animate-fade-in-up' : ''}`}
+        style={{ '--accent': s.color }}
+      >
+        <div className="service-card-icon-bg">
+          <span className="service-card-icon" style={{ color: s.color }}>
+            <i className={s.icon}></i>
+          </span>
+        </div>
+        <div className="service-card-content">
+          <h3>{s.title}</h3>
+          <p className="service-card-short">{s.short}</p>
+        </div>
+        <div className="service-card-actions">
+          <button className="btn-modern btn-view" onClick={() => openDetails(s)}>
+            <i className="fas fa-eye"></i> Details
+          </button>
+          <button className="btn-modern btn-start" onClick={() => goToFlow(s.id)}>
+            <i className="fas fa-arrow-right"></i> Start
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="services-wrapper">
-      <div className="services-hero">
-        <div className="container">
-          <h1>Our Services</h1>
-          <p>Everything you need to buy, sell, or rent a car — in one place.</p>
-        </div>
+    <section className="services-section-modern" ref={sectionRef}>
+      <div className={`services-hero-modern ${sectionVisible ? 'animate-fade-in-up' : ''}`}>
+        <h1>Discover Our Car Services</h1>
+        <p>Buy, sell, or rent cars with confidence. Explore all options below!</p>
       </div>
-
-      <div className="container">
-        <div className="services-grid">
-          {serviceItems.map((s) => (
-            <div key={s.id} className="service-card" style={{ borderTopColor: s.color }}>
-              <div className="service-icon" style={{ color: s.color }}>
-                <i className={s.icon}></i>
-              </div>
-              <h3>{s.title}</h3>
-              <p className="service-short">{s.short}</p>
-              <div className="service-actions">
-                <button className="btn btn-outline" onClick={() => openDetails(s)}>
-                  <i className="fas fa-eye"></i> View
-                </button>
-                {(s.id === 'buy-new' || s.id === 'buy-old' || s.id === 'rent') && (
-                  <button className="btn btn-primary" onClick={() => goToFlow(s.id)}>
-                    <i className="fas fa-arrow-right"></i> Start
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="services-cards-modern">
+        {visibleItems.map((s) => (
+          <ServiceCard key={s.id} s={s} />
+        ))}
       </div>
 
       {active && (
         <div className="modal-overlay" onClick={closeDetails}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content-modern" onClick={e => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={closeDetails}>
               <i className="fas fa-times"></i>
             </button>
-            <div className="modal-header">
-              <div className="service-icon big" style={{ color: active.color }}>
+            <div className="modal-header-modern">
+              <span className="service-card-icon big" style={{ color: active.color }}>
                 <i className={active.icon}></i>
-              </div>
+              </span>
               <h2>{active.title}</h2>
             </div>
-            <p className="service-details">{active.details}</p>
+            <p className="service-details-modern">{active.details}</p>
             <div className="modal-actions">
-              <button className="btn" onClick={closeDetails}>Close</button>
-              {(active.id === 'buy-new' || active.id === 'buy-old' || active.id === 'rent') && (
-                <button className="btn btn-primary" onClick={() => { goToFlow(active.id); closeDetails(); }}>
-                  Continue
-                </button>
-              )}
+              <button className="btn-modern" onClick={closeDetails}>Close</button>
+              <button className="btn-modern btn-start" onClick={() => { goToFlow(active.id); closeDetails(); }}>
+                Continue
+              </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
