@@ -3,7 +3,7 @@ import './Service.css';
 import { useNavigate } from 'react-router-dom';
 import useScrollAnimation from '../../Hooks/useScrollAnimation';
 
-const serviceItems = [
+const allServiceItems = [
   {
     id: 'buy-new',
     title: 'Buy New Car',
@@ -54,10 +54,21 @@ const serviceItems = [
   }
 ];
 
-const Service = () => {
+const Service = ({ mode = 'all' }) => {
   const navigate = useNavigate();
   const [active, setActive] = useState(null);
   const [sectionRef, sectionVisible] = useScrollAnimation(0.2);
+
+  // Determine which service cards to show based on mode
+  // mode: 'all' | 'buyer' | 'seller'
+  const buyerIds = ['buy-new', 'buy-old', 'rent'];
+  const sellerIds = ['sell-new', 'sell-old', 'put-on-rent'];
+
+  const visibleItems = allServiceItems.filter(item => {
+    if (mode === 'buyer') return buyerIds.includes(item.id);
+    if (mode === 'seller') return sellerIds.includes(item.id);
+    return true; // all
+  });
 
   const openDetails = (item) => setActive(item);
   const closeDetails = () => setActive(null);
@@ -83,6 +94,37 @@ const Service = () => {
     }
   };
 
+  // Child component so hooks (useScrollAnimation) are used at top-level of a component
+  const ServiceCard = ({ s }) => {
+    const [cardRef, cardVisible] = useScrollAnimation(0.15);
+    return (
+      <div
+        key={s.id}
+        ref={cardRef}
+        className={`service-card-modern ${cardVisible ? 'animate-fade-in-up' : ''}`}
+        style={{ '--accent': s.color }}
+      >
+        <div className="service-card-icon-bg">
+          <span className="service-card-icon" style={{ color: s.color }}>
+            <i className={s.icon}></i>
+          </span>
+        </div>
+        <div className="service-card-content">
+          <h3>{s.title}</h3>
+          <p className="service-card-short">{s.short}</p>
+        </div>
+        <div className="service-card-actions">
+          <button className="btn-modern btn-view" onClick={() => openDetails(s)}>
+            <i className="fas fa-eye"></i> Details
+          </button>
+          <button className="btn-modern btn-start" onClick={() => goToFlow(s.id)}>
+            <i className="fas fa-arrow-right"></i> Start
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <section className="services-section-modern" ref={sectionRef}>
       <div className={`services-hero-modern ${sectionVisible ? 'animate-fade-in-up' : ''}`}>
@@ -90,60 +132,35 @@ const Service = () => {
         <p>Buy, sell, or rent cars with confidence. Explore all options below!</p>
       </div>
       <div className="services-cards-modern">
-        {serviceItems.map((s, idx) => {
-          const [cardRef, cardVisible] = useScrollAnimation(0.15);
-              return (
-                <div
-                  key={s.id}
-                  ref={cardRef}
-                  className={`service-card-modern ${cardVisible ? 'animate-fade-in-up' : ''}`}
-                  style={{ '--accent': s.color }}
-                >
-                  <div className="service-card-icon-bg">
-                    <span className="service-card-icon" style={{ color: s.color }}>
-                      <i className={s.icon}></i>
-                    </span>
-                  </div>
-                  <div className="service-card-content">
-                    <h3>{s.title}</h3>
-                    <p className="service-card-short">{s.short}</p>
-                  </div>
-                  <div className="service-card-actions">
-                    <button className="btn-modern btn-view" onClick={() => openDetails(s)}>
-                      <i className="fas fa-eye"></i> Details
-                    </button>
-                    <button className="btn-modern btn-start" onClick={() => goToFlow(s.id)}>
-                      <i className="fas fa-arrow-right"></i> Start
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {active && (
-            <div className="modal-overlay" onClick={closeDetails}>
-              <div className="modal-content-modern" onClick={e => e.stopPropagation()}>
-                <button className="modal-close-btn" onClick={closeDetails}>
-                  <i className="fas fa-times"></i>
-                </button>
-                <div className="modal-header-modern">
-                  <span className="service-card-icon big" style={{ color: active.color }}>
-                    <i className={active.icon}></i>
-                  </span>
-                  <h2>{active.title}</h2>
-                </div>
-                <p className="service-details-modern">{active.details}</p>
-                <div className="modal-actions">
-                  <button className="btn-modern" onClick={closeDetails}>Close</button>
-                  <button className="btn-modern btn-start" onClick={() => { goToFlow(active.id); closeDetails(); }}>
-                    Continue
-                  </button>
-                </div>
-              </div>
+        {visibleItems.map((s) => (
+          <ServiceCard key={s.id} s={s} />
+        ))}
+      </div>
+
+      {active && (
+        <div className="modal-overlay" onClick={closeDetails}>
+          <div className="modal-content-modern" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={closeDetails}>
+              <i className="fas fa-times"></i>
+            </button>
+            <div className="modal-header-modern">
+              <span className="service-card-icon big" style={{ color: active.color }}>
+                <i className={active.icon}></i>
+              </span>
+              <h2>{active.title}</h2>
             </div>
-          )}
-        </section>
-      );
-    };
+            <p className="service-details-modern">{active.details}</p>
+            <div className="modal-actions">
+              <button className="btn-modern" onClick={closeDetails}>Close</button>
+              <button className="btn-modern btn-start" onClick={() => { goToFlow(active.id); closeDetails(); }}>
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
 
 export default Service;

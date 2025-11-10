@@ -351,6 +351,7 @@ import { useNavigate } from 'react-router-dom';
 import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
 import Hero from '../Home/Hero';
+import Service from '../Common/Service';
 import newCarsImage from '../../images/NewCars.png';
 import oldCarsImage from '../../images/OldCars.png';
 import rentCarsImage from '../../images/RentalCars.png';
@@ -489,7 +490,9 @@ const SellerDashboard = () => {
   return (
     <div className="dashboard-container">
       <Navbar isLoggedIn={true} setIsLoggedIn={() => {}} />
-      <Hero onSearch={() => { /* no-op for seller dashboard */ }} user={user} />
+  <Hero onSearch={() => { /* no-op for seller dashboard */ }} user={user} />
+  {/* Show seller-specific Services section */}
+  <Service mode="seller" />
       
       {/* Dashboard Header */}
       <div className="dashboard-header">

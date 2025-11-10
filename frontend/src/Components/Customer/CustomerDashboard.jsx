@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faCarSide, faKey } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import Hero from '../Home/Hero';
+import Service from '../Common/Service';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -79,43 +80,8 @@ const CustomerDashboard = () => {
       <p className="dashboard-content">
         Explore our services or manage your account.
       </p>
-      <div id="options" className="options-grid">
-        {/* New Cars Card */}
-        <div className="option-card">
-          <div className="option-icon">
-            <FontAwesomeIcon icon={faCar} size="3x" />
-          </div>
-          <h3 className="option-title">New Cars</h3>
-          <p className="option-description">Browse the latest models from top brands.</p>
-          <button className="option-button" onClick={() => navigate('/new-cars')}>
-            Explore New Cars
-          </button>
-        </div>
-
-        {/* Old Cars Card */}
-        <div className="option-card">
-          <div className="option-icon">
-            <FontAwesomeIcon icon={faCarSide} size="3x" />
-          </div>
-          <h3 className="option-title">Old Cars</h3>
-          <p className="option-description">Find certified pre-owned vehicles at great prices.</p>
-          <button className="option-button" onClick={() => navigate('/old-cars')}>
-            Discover Old Cars
-          </button>
-        </div>
-
-        {/* Rent Cars Card */}
-        <div className="option-card">
-          <div className="option-icon">
-            <FontAwesomeIcon icon={faKey} size="3x" />
-          </div>
-          <h3 className="option-title">Rent Cars</h3>
-          <p className="option-description">Rent a car for your next trip, short or long term.</p>
-          <button className="option-button" onClick={() => navigate('/rent-cars')}>
-            Book a Rental
-          </button>
-        </div>
-      </div>
+  {/* Reuse the Home Service section for consistent UI (buyer view) */}
+  <Service mode="buyer" />
 
       {/* Catalog Section - Updated image handling */}
       <div id="catalog" className="catalog-section">
