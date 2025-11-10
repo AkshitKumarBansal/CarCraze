@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_ENDPOINTS } from '../../config/api';
 import './CustomerDashboard.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,8 +13,7 @@ const OldCars = () => {
   // Helper function to fix image URLs with correct port
   const fixImageUrl = (imageUrl) => {
     if (!imageUrl) return null;
-    // Replace any localhost port with the current server port
-    return imageUrl.replace(/localhost:\d+/, 'localhost:5000');
+    return imageUrl.replace(/localhost:\d+/, 'localhost:5001');
   };
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const OldCars = () => {
       try {
         setLoading(true);
         setError('');
-        const res = await fetch('http://localhost:5000/api/cars');
+  const res = await fetch(API_ENDPOINTS.CARS);
         if (!res.ok) throw new Error(`Failed to fetch cars: ${res.status}`);
         const data = await res.json();
         console.log('Fetched old cars data:', data.cars); // DEBUG: See what data we get

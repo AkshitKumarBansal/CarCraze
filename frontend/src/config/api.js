@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:5001';
 
 export const API_ENDPOINTS = {
   // Auth endpoints
@@ -8,7 +8,9 @@ export const API_ENDPOINTS = {
   PROFILE: `${API_BASE_URL}/api/auth/profile`,
   
   // Car endpoints
+  CARS: `${API_BASE_URL}/api/cars`,
   SELLER_CARS: `${API_BASE_URL}/api/seller/cars`,
+  RENTALS: `${API_BASE_URL}/api/rentals`,
   UPLOAD_IMAGES: `${API_BASE_URL}/api/upload/car-images`,
   
   // Health check

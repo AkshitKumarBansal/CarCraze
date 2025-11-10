@@ -1,6 +1,9 @@
+require('dotenv').config();
 const http = require('http');
 const app = require('./src/app');
-const { PORT } = require('./src/config');
+const { PORT, connectMongoDB } = require('./src/config');
+
+connectMongoDB();
 
 const server = http.createServer(app);
 

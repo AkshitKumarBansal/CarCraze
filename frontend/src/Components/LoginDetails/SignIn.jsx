@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
 import './SignIn.css';
 import Navbar from '../Common/Navbar';
@@ -97,7 +98,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
     try {
       console.log('Attempting to sign in with:', { email: formData.email, role: formData.role });
       
-      const response = await fetch('http://localhost:5000/api/auth/signin', {
+  const response = await fetch(API_ENDPOINTS.SIGNIN, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json'

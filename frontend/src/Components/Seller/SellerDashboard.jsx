@@ -346,6 +346,7 @@
 // export default SellerDashboard;
 
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
 import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
@@ -364,8 +365,8 @@ const SellerDashboard = () => {
   // Helper function to fix image URLs with correct port
   const fixImageUrl = (imageUrl) => {
     if (!imageUrl) return null;
-    // Replace any localhost port with the current server port
-    return imageUrl.replace(/localhost:\d+/, 'localhost:5000');
+    // If image is a relative URL, ensure it points to backend host
+    return imageUrl.replace(/localhost:\d+/, 'localhost:5001');
   };
 
   // Choose an image for a car: prefer backend URL, else use a local placeholder
@@ -400,7 +401,7 @@ const SellerDashboard = () => {
   const fetchSellerCars = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/seller/cars', {
+      const response = await fetch(API_ENDPOINTS.SELLER_CARS, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -429,7 +430,7 @@ const SellerDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/seller/cars/${carId}`, {
+      const response = await fetch(`${API_ENDPOINTS.SELLER_CARS}/${carId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -438,7 +439,7 @@ const SellerDashboard = () => {
       });
 
       if (response.ok) {
-        setCars(cars.filter(car => car.id !== carId));
+  setCars(cars.filter(car => (car._id || car.id) !== carId));
         alert('Car deleted successfully!');
       } else {
         const errorData = await response.json();
@@ -587,8 +588,8 @@ const SellerDashboard = () => {
             </div>
           ) : (
             <div className="cars-grid">
-              {cars.map((car) => (
-                <div key={car.id} className="car-card">
+                {cars.map((car) => (
+                <div key={car._id || car.id} className="car-card">
                   <div className="car-image-container">
                     <img
                       src={getCarImage(car)}
@@ -655,13 +656,13 @@ const SellerDashboard = () => {
                       <div className="car-actions">
                         <button 
                           className="btn btn-sm btn-outline"
-                          onClick={() => navigate(`/seller/edit-car/${car.id}`)}
+                          onClick={() => navigate(`/seller/edit-car/${car._id || car.id}`)}
                         >
                           <i className="fas fa-edit"></i> Edit
                         </button>
                         <button 
                           className="btn btn-sm btn-danger"
-                          onClick={() => handleDeleteCar(car.id)}
+                          onClick={() => handleDeleteCar(car._id || car.id)}
                         >
                           <i className="fas fa-trash"></i> Delete
                         </button>

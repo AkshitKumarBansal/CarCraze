@@ -1,6 +1,8 @@
-const path = require('path');
 
-const PORT = process.env.PORT || 5000;
+const path = require('path');
+const mongoose = require('mongoose');
+
+const PORT = process.env.PORT || 5001;
 
 const ROOT_DIR = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(ROOT_DIR, 'Data');
@@ -23,6 +25,41 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:59600',
 ];
 
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://abhishekarora866:Abhi2511@carcraze.e6b6rl3.mongodb.net/carCraze?retryWrites=true&w=majority';
+
+async function connectMongoDB() {
+  try {
+    const options = {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    };
+
+    mongoose.set('strictQuery', false);
+    
+    await mongoose.connect(MONGO_URI, options);
+    console.log('MongoDB connected successfully!');
+
+    mongoose.connection.on('error', err => {
+      console.error('MongoDB connection error:', err);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.warn('MongoDB disconnected. Attempting to reconnect...');
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('MongoDB reconnected!');
+    });
+
+  } catch (err) {
+    console.error('Failed to connect to MongoDB:', err);
+    // Exit process with failure if we can't connect to MongoDB
+    process.exit(1);
+  }
+}
+
 module.exports = {
   PORT,
   ROOT_DIR,
@@ -35,4 +72,6 @@ module.exports = {
   CAR_IMAGES_DIR,
   JWT_SECRET,
   ALLOWED_ORIGINS,
+  MONGO_URI,
+  connectMongoDB,
 };
