@@ -1,6 +1,7 @@
 
 const path = require('path');
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 const PORT = process.env.PORT || 5001;
 
@@ -25,10 +26,11 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:59600',
 ];
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://abhishekarora866:Abhi2511@carcraze.e6b6rl3.mongodb.net/carCraze?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/carcraze';
 
 async function connectMongoDB() {
   try {
+    console.log('Connecting to MongoDB...');
     const options = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -38,7 +40,7 @@ async function connectMongoDB() {
 
     mongoose.set('strictQuery', false);
     
-    await mongoose.connect(MONGO_URI, options);
+    await mongoose.connect(MONGODB_URI, options);
     console.log('MongoDB connected successfully!');
 
     mongoose.connection.on('error', err => {
@@ -72,6 +74,6 @@ module.exports = {
   CAR_IMAGES_DIR,
   JWT_SECRET,
   ALLOWED_ORIGINS,
-  MONGO_URI,
+  MONGODB_URI,
   connectMongoDB,
 };

@@ -22,7 +22,8 @@ router.post(
           message: 'Please select at least one image to upload',
         });
       }
-      const imageUrls = req.files.map((f) => `http://localhost:${PORT}/uploads/car-images/${f.filename}`);
+      // Cloudinary returns full URL in file.path
+      const imageUrls = req.files.map((f) => f.path);
       res.json({
         message: 'Images uploaded successfully',
         images: imageUrls,

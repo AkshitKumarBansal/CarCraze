@@ -1,19 +1,21 @@
+
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const { CAR_IMAGES_DIR } = require('../config');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+require('dotenv').config();
 
-// Ensure directory exists
-fs.mkdirSync(CAR_IMAGES_DIR, { recursive: true });
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, CAR_IMAGES_DIR);
-  },
-  filename: function (req, file, cb) {
-    const safeOriginal = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const name = `${Date.now()}_${safeOriginal}`;
-    cb(null, name);
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'carcraze/cars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 1200, height: 800, crop: 'limit' }],
   },
 });
 
@@ -22,13 +24,6 @@ const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB
     files: 5,
-  },
-  fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowed.includes(file.mimetype)) {
-      return cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
-    }
-    cb(null, true);
   },
 });
 
