@@ -1,14 +1,15 @@
 /* Auth Container */
 .auth-container {
   width: 100vw; /* span full viewport width */
-  height: calc(100dvh - var(--navbar-h, 72px));
+  /* Reserve vertical space for header and allow scrolling; footer follows document flow */
+  min-height: calc(100vh - var(--nav-height, 80px));
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: none; /* use shared image from inline style */
-  padding-top: var(--navbar-h, 72px); /* avoid fixed navbar overlap */
+  padding: calc(var(--nav-height, 80px) + 24px) 20px 24px;
   box-sizing: border-box;
-  overflow: hidden; /* avoid horizontal scrollbar */
+  overflow: auto; /* allow scrolling when form is taller than viewport */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative; /* anchor for absolute .auth-bg */
 }

@@ -11,6 +11,10 @@ export const API_ENDPOINTS = {
   CARS: `${API_BASE_URL}/api/cars`,
   SELLER_CARS: `${API_BASE_URL}/api/seller/cars`,
   RENTALS: `${API_BASE_URL}/api/rentals`,
+  // Cart endpoints
+  CART: `${API_BASE_URL}/api/cart`,
+  CART_CHECKOUT: `${API_BASE_URL}/api/cart/checkout`,
+  ORDERS: `${API_BASE_URL}/api/orders`,
   UPLOAD_IMAGES: `${API_BASE_URL}/api/upload/car-images`,
   
   // Health check

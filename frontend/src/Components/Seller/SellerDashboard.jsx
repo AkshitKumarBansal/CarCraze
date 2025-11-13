@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
 import Hero from '../Home/Hero';
+import Service from '../Common/Service';
+import ImageModal from '../Common/ImageModal';
+import newCarsImage from '../../images/NewCars.png';
+import oldCarsImage from '../../images/OldCars.png';
+import rentCarsImage from '../../images/RentalCars.png';
 
 const SellerDashboard = () => {
   const navigate = useNavigate();
@@ -10,6 +15,8 @@ const SellerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
+  const [showImage, setShowImage] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
 
   useEffect(() => {
     // Check if user is authenticated and is a seller
@@ -224,6 +231,17 @@ const SellerDashboard = () => {
               {cars.map((car) => (
                 <div key={car._id || car.id} className="car-card">
                   <div className="car-image-container">
+                    <img
+                      src={getCarImage(car)}
+                      alt={`${car.brand} ${car.model}`}
+                      className="car-image"
+                      onClick={() => { setImageSrc(getCarImage(car)); setShowImage(true); }}
+                      style={{ cursor: 'zoom-in' }}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getCarImage({ listingType: car.listingType, images: [] });
+                      }}
+                    />
                     {car.images && car.images.length > 0 ? (
                       <img 
                         src={car.images[0]} 
@@ -306,6 +324,9 @@ const SellerDashboard = () => {
           )}
         </div>
       </div>
+      {showImage && (
+        <ImageModal src={imageSrc} alt="Car image" onClose={() => setShowImage(false)} />
+      )}
     </div>
   );
 }

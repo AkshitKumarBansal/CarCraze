@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from '../../config/api';
 import "./Navbar.css";
 
 const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
   const [user, setUser] = useState(null);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     // Check if user is logged in by checking token and user data
@@ -26,6 +28,25 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
         setIsLoggedIn(false);
       }
     }
+    // Fetch cart count for customers
+    (async () => {
+      try {
+        if (token && userData) {
+          const parsedUser = JSON.parse(userData);
+          if (parsedUser.role === 'customer') {
+            const res = await fetch(API_ENDPOINTS.CART, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+              const d = await res.json();
+              setCartCount(Array.isArray(d.items) ? d.items.length : 0);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch cart count', err);
+      }
+    })();
   }, [setIsLoggedIn]);
 
   // Debug log to check current state
@@ -99,6 +120,13 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                       <Link to="/profile" className="auth-btn profile">
                         <i className="fas fa-user"></i> Profile
                       </Link>
+                        <Link to="/cart" className="auth-btn profile cart-link">
+                          <i className="fas fa-shopping-cart"></i> Cart
+                          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                        </Link>
+                        <Link to="/orders" className="auth-btn profile">
+                          <i className="fas fa-box"></i> Orders
+                        </Link>
                       <Link to="/dashboard" className="auth-btn profile">
                         <i className="fas fa-tachometer-alt"></i> Dashboard
                       </Link>

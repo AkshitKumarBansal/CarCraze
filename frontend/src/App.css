@@ -15,6 +15,67 @@
   text-align: left;
 }
 
+/* Reserve space so fixed header/footer don't cover content */
+:root {
+  --nav-height: 80px; /* adjust if your header is taller */
+  --footer-height: 220px; /* approximate footer space to avoid overlap */
+}
+
+.App {
+  padding-top: var(--nav-height);
+  /* removed large bottom padding to avoid blank space under footer (footer is in document flow) */
+  padding-bottom: 0;
+}
+
+/* When a modal is open, prevent background scrolling */
+.modal-open {
+  overflow: hidden !important;
+  height: 100%;
+}
+
+/* Full-screen modal overlay that captures all interactions */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  /* Very large z-index to ensure overlay sits above any app element */
+  z-index: 2147483647; /* max 32-bit signed int */
+  pointer-events: auto;
+}
+
+/* Ensure modal content is interactive while background is inert */
+.modal-overlay .modal {
+  pointer-events: auto;
+}
+
+/* Make the rest of the UI inert when a modal is open: disable pointer events and text selection
+   but keep modal overlay and its descendants interactive. This prevents clicks/hover/focus
+   on background elements while the modal is shown. */
+body.modal-open * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Re-enable interactions for the modal overlay and its children */
+body.modal-open .modal-overlay,
+body.modal-open .modal-overlay * {
+  pointer-events: auto !important;
+  user-select: auto !important;
+}
+
+/* Prevent touch scrolling on mobile when modal open */
+body.modal-open {
+  touch-action: none;
+}
+
+/* Ensure anchor links and scrollIntoView target leaves space for the fixed header */
+section, .section, [id] {
+  scroll-margin-top: calc(var(--nav-height) + 12px);
+}
+
 /* Smooth scrolling for anchor links */
 html {
   scroll-behavior: smooth;
