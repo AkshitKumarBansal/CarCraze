@@ -6,12 +6,15 @@ import { faCar, faCarSide, faKey } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import Hero from '../Home/Hero';
 import Service from '../Common/Service';
+import ImageModal from '../Common/ImageModal';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showImage, setShowImage] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
 
   // Helper function to fix image URLs with correct port
   const fixImageUrl = (imageUrl) => {
@@ -58,6 +61,9 @@ const CustomerDashboard = () => {
 
   return (
     <div className="dashboard-container">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px' }}>
+        <button className="option-button" onClick={() => navigate('/cart')}>Open Cart</button>
+      </div>
       <Hero
         onLetsGo={() => {
           const el = document.getElementById('options');
@@ -91,14 +97,16 @@ const CustomerDashboard = () => {
         {!loading && !error && (
           <div className="catalog-grid">
             {cars.map((car) => (
-              <div className="car-card" key={car.id}>
+              <div className="car-card" key={car._id || car.id}>
                 {/* Car image: backend-provided first image or a local placeholder by listing type */}
-                <img
-                  src={getCarImage(car)}
-                  alt={`${car.brand} ${car.model}`}
-                  className="car-image"
-                  onError={handleImageError}
-                />
+                  <img
+                    src={getCarImage(car)}
+                    alt={`${car.brand} ${car.model}`}
+                    className="car-image"
+                    onClick={() => { setImageSrc(getCarImage(car)); setShowImage(true); }}
+                    style={{ cursor: 'zoom-in' }}
+                    onError={handleImageError}
+                  />
                 <div className="car-card-header">
                   <span className="car-brand">{car.brand}</span>
                   <span className="car-year">{car.year}</span>
@@ -112,17 +120,49 @@ const CustomerDashboard = () => {
                 <div className="car-description" title={car.description}>
                   {car.description}
                 </div>
-                <div className="car-footer">
-                  <span className="price">
-                    {car.listingType === 'rent' ? `₹${car.price}/day` : `₹${car.price.toLocaleString('en-IN')}`}
-                  </span>
-                  <button className="option-button small">View Details</button>
-                </div>
+                    <div className="car-footer">
+                      <span className="price">
+                        {car.listingType === 'rent' ? `₹${car.price}/day` : `₹${car.price.toLocaleString('en-IN')}`}
+                      </span>
+                      <div className="car-footer-actions">
+                        <button className="option-button small">View Details</button>
+                        <button
+                          className="option-button small"
+                          onClick={async () => {
+                            const token = localStorage.getItem('token');
+                            if (!token) {
+                              navigate('/signin');
+                              return;
+                            }
+                            try {
+                              const res = await fetch(API_ENDPOINTS.CART, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ carId: car._id || car.id })
+                              });
+                              const data = await res.json();
+                              if (!res.ok) {
+                                throw new Error(data.message || 'Add to cart failed');
+                              }
+                              alert('Added to cart');
+                            } catch (err) {
+                              console.error('Add to cart error', err);
+                              alert('Failed to add to cart: ' + (err.message || ''));
+                            }
+                          }}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
               </div>
             ))}
           </div>
         )}
       </div>
+      {showImage && (
+        <ImageModal src={imageSrc} alt="Car image" onClose={() => setShowImage(false)} />
+      )}
     </div>
   );
 };

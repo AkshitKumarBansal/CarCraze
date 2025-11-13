@@ -352,6 +352,7 @@ import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
 import Hero from '../Home/Hero';
 import Service from '../Common/Service';
+import ImageModal from '../Common/ImageModal';
 import newCarsImage from '../../images/NewCars.png';
 import oldCarsImage from '../../images/OldCars.png';
 import rentCarsImage from '../../images/RentalCars.png';
@@ -362,6 +363,8 @@ const SellerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
+  const [showImage, setShowImage] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
 
   // Helper function to fix image URLs with correct port
   const fixImageUrl = (imageUrl) => {
@@ -598,6 +601,8 @@ const SellerDashboard = () => {
                       src={getCarImage(car)}
                       alt={`${car.brand} ${car.model}`}
                       className="car-image"
+                      onClick={() => { setImageSrc(getCarImage(car)); setShowImage(true); }}
+                      style={{ cursor: 'zoom-in' }}
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = getCarImage({ listingType: car.listingType, images: [] });
@@ -685,6 +690,9 @@ const SellerDashboard = () => {
           )}
         </div>
       </div>
+      {showImage && (
+        <ImageModal src={imageSrc} alt="Car image" onClose={() => setShowImage(false)} />
+      )}
     </div>
   );
 };

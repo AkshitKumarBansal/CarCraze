@@ -14,6 +14,8 @@ import Profile from './Components/Profile/Profile';
 import NewCars from './Components/Customer/NewCars';
 import OldCars from './Components/Customer/OldCars';
 import RentalCars from './Components/Customer/RentalCars';
+import CustomerCart from './Components/Customer/CustomerCart';
+import CustomerOrders from './Components/Customer/CustomerOrders';
 import About from './Components/Common/About';
 import Contact from './Components/Common/Contact';
 import Service from './Components/Common/Service';
@@ -92,6 +94,22 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           element={
             <ProtectedRoute requiredRole="customer">
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <CustomerCart />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <CustomerOrders />
             </ProtectedRoute>
           }
         />

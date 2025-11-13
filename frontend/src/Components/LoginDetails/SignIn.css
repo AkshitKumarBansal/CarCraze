@@ -3,14 +3,16 @@
   width: 100vw; /* full horizontal coverage */
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  min-height: 100vh;
+  /* make room for fixed header and allow scrolling; footer sits after content so only a small bottom padding is needed */
+  min-height: calc(100vh - var(--nav-height, 80px));
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: none;
-  padding: 80px 20px 20px;
+  padding: calc(var(--nav-height, 80px) + 24px) 20px 24px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative; /* anchor for absolute .auth-bg */
+  overflow: auto;
 }
 
 /* Background slideshow layer */

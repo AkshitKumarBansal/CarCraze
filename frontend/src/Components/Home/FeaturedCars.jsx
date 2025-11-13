@@ -24,10 +24,11 @@ const FeaturedCars = ({ searchCriteria }) => {
         fuel: car.fuelType,
         price: car.price,
         icon: car.listingType === 'rent' ? "fas fa-car" : "fas fa-car-side",
+        // prefer the first uploaded image if available
+        image: car.images && car.images.length > 0 ? car.images[0] : null,
         type: car.transmission === 'automatic' ? 'luxury' : 'midsize',
         category: car.listingType === 'rent' ? 'rent' : 
                  car.listingType === 'sale_new' ? 'buy-new' : 'buy-used',
-        image: car.images && car.images.length > 0 ? car.images[0] : null,
         mileage: car.mileage,
         color: car.color,
         location: car.location,
@@ -220,8 +221,8 @@ const FeaturedCars = ({ searchCriteria }) => {
     },
   ];
 
-  // Combine all cars including seller cars from backend
-  const allCars = [...rentalCars, ...newCars, ...usedCars, ...sellerCars];
+  // Show only cars uploaded by users (backend data)
+  const allCars = sellerCars;
 
   // Filter cars by searchCriteria if provided
   const filteredCars = searchCriteria
