@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../Hooks/useToast';
 import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
 import Hero from '../Home/Hero';
@@ -11,6 +12,7 @@ import rentCarsImage from '../../images/RentalCars.png';
 
 const SellerDashboard = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,7 +24,7 @@ const SellerDashboard = () => {
     // Check if user is authenticated and is a seller
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
+
     if (!token || !userData) {
       navigate('/signin');
       return;
@@ -64,7 +66,7 @@ const SellerDashboard = () => {
   };
 
   const handleDeleteCar = async (carId) => {
-    if (!window.confirm('Are you sure you want to delete this car?')) {
+    if (!window.confirm('Are you sure you want to delete this car? This action cannot be undone.')) {
       return;
     }
 
@@ -80,14 +82,14 @@ const SellerDashboard = () => {
 
       if (response.ok) {
         setCars(cars.filter(car => car._id !== carId));
-        alert('Car deleted successfully!');
+        toast.success('Car deleted successfully!');
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to delete car');
+        toast.error(errorData.message || 'Failed to delete car');
       }
     } catch (error) {
       console.error('Error deleting car:', error);
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     }
   };
 
@@ -113,10 +115,25 @@ const SellerDashboard = () => {
     return statusClasses[status] || 'status-badge';
   };
 
+  const getCarImage = (car) => {
+    const first = Array.isArray(car?.images) && car.images[0] ? car.images[0] : null;
+    if (first) return first;
+    // choose placeholder by listing type
+    if (car?.listingType === 'sale_old') return oldCarsImage;
+    if (car?.listingType === 'rent') return rentCarsImage;
+    return newCarsImage;
+  };
+
+  const inventoryRef = React.useRef(null);
+
+  const scrollToInventory = () => {
+    inventoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   if (loading) {
     return (
       <div className="dashboard-container">
-        <Navbar isLoggedIn={true} setIsLoggedIn={() => {}} />
+        <Navbar isLoggedIn={true} setIsLoggedIn={() => { }} />
         <Hero onSearch={() => { /* no-op for seller dashboard */ }} />
         <div className="loading-spinner">
           <div className="spinner"></div>
@@ -128,21 +145,31 @@ const SellerDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <Navbar isLoggedIn={true} setIsLoggedIn={() => {}} />
-      <Hero onSearch={() => { /* no-op for seller dashboard */ }} user={user} />
-      
+      <Navbar isLoggedIn={true} setIsLoggedIn={() => { }} />
+      <Hero
+        onSearch={() => { /* no-op for seller dashboard */ }}
+        user={user}
+        onLetsGo={scrollToInventory}
+      />
       {/* Dashboard Header */}
       <div className="dashboard-header">
         <div className="container">
           <div className="header-content">
             <div className="header-actions">
-              <button 
+              <button
                 className="btn btn-primary"
                 onClick={() => navigate('/seller/add-car')}
               >
                 <i className="fas fa-plus"></i> Add New Car
               </button>
-              <button 
+              <button
+                className="btn btn-secondary"
+                onClick={() => navigate('/profile')}
+                style={{ marginRight: '10px', marginLeft: '10px' }}
+              >
+                <i className="fas fa-user-edit"></i> Edit Profile
+              </button>
+              <button
                 className="btn btn-secondary"
                 onClick={handleLogout}
               >
@@ -198,7 +225,7 @@ const SellerDashboard = () => {
       </div>
 
       {/* Cars Inventory */}
-      <div className="dashboard-content">
+      <div className="dashboard-content" ref={inventoryRef}>
         <div className="container">
           <div className="section-header">
             <h2>Your Car Inventory</h2>
@@ -219,7 +246,7 @@ const SellerDashboard = () => {
               </div>
               <h3>No cars listed yet</h3>
               <p>Start by adding your first car to the inventory</p>
-              <button 
+              <button
                 className="btn btn-primary"
                 onClick={() => navigate('/seller/add-car')}
               >
@@ -242,20 +269,6 @@ const SellerDashboard = () => {
                         e.currentTarget.src = getCarImage({ listingType: car.listingType, images: [] });
                       }}
                     />
-                    {car.images && car.images.length > 0 ? (
-                      <img 
-                        src={car.images[0]} 
-                        alt={`${car.brand} ${car.model}`}
-                        className="car-image"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div className="car-image-placeholder">
-                        <i className="fas fa-car"></i>
-                      </div>
-                    )}
                     <span className={getStatusBadge(car.status)}>
                       {car.status}
                     </span>
@@ -265,13 +278,13 @@ const SellerDashboard = () => {
                       <h3>{car.year} {car.brand} {car.model}</h3>
                       <div className="listing-type">
                         <span className={`type-badge ${car.listingType}`}>
-                          {car.listingType === 'rent' ? 'For Rent' : 
-                           car.listingType === 'sale_new' ? 'For Sale (New)' : 
-                           car.listingType === 'sale_old' ? 'For Sale (Used)' : 'For Sale'}
+                          {car.listingType === 'rent' ? 'For Rent' :
+                            car.listingType === 'sale_new' ? 'For Sale (New)' :
+                              car.listingType === 'sale_old' ? 'For Sale (Used)' : 'For Sale'}
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="car-specs">
                       <div className="spec">
                         <i className="fas fa-users"></i>
@@ -296,13 +309,13 @@ const SellerDashboard = () => {
                         {formatPrice(car.price, car.listingType)}
                       </div>
                       <div className="car-actions">
-                        <button 
+                        <button
                           className="btn btn-sm btn-outline"
                           onClick={() => navigate(`/seller/edit-car/${car._id || car.id}`)}
                         >
                           <i className="fas fa-edit"></i> Edit
                         </button>
-                        <button 
+                        <button
                           className="btn btn-sm btn-danger"
                           onClick={() => handleDeleteCar(car._id || car.id)}
                         >
@@ -329,6 +342,6 @@ const SellerDashboard = () => {
       )}
     </div>
   );
-}
+};
 
 export default SellerDashboard;

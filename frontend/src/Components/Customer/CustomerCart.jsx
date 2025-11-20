@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import './CustomerCart.css';
+import { useToast } from '../../Hooks/useToast';
 
 const CustomerCart = () => {
+  const toast = useToast();
   const [cart, setCart] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -37,7 +39,8 @@ const CustomerCart = () => {
       });
       if (!res.ok) throw new Error('Failed to remove');
       await fetchCart();
-    } catch (err) { console.error(err); alert('Remove failed'); }
+      toast.success('🗑️ Item removed from cart');
+    } catch (err) { console.error(err); toast.error('Failed to remove item'); }
   };
 
   const checkout = async (method = 'online') => {
@@ -53,50 +56,139 @@ const CustomerCart = () => {
       if (!res.ok) throw new Error(data.message || 'Checkout failed');
       setCheckoutStatus('success');
       setCart({ items: [], total: 0 });
-      alert(`Checkout successful. Order: ${data.orderId} Total: ₹${data.total}`);
+      toast.success(`🎉 Order placed successfully! Total: ₹${data.total}`);
+      setTimeout(() => {
+        toast.info(`📦 Order ID: ${data.orderId}`);
+      }, 1500);
     } catch (err) {
       console.error('Checkout error', err);
       setCheckoutStatus('failed');
-      alert('Checkout failed: ' + (err.message || ''));
+      toast.error('❌ Checkout failed: ' + (err.message || 'Please try again'));
     }
   };
 
-  if (loading) return <div className="cart-container">Loading cart...</div>;
-  if (error) return <div className="cart-container">{error}</div>;
+  if (loading) return (
+    <div className="cart-page">
+      <div className="cart-header">
+        <h1>🛒 Shopping Cart</h1>
+      </div>
+      <div className="cart-loading">Loading your cart...</div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="cart-page">
+      <div className="cart-header">
+        <h1>🛒 Shopping Cart</h1>
+      </div>
+      <div className="cart-error">{error}</div>
+    </div>
+  );
 
   return (
-    <div className="cart-container">
-      <h2>Your Cart</h2>
+    <div className="cart-page">
+      <div className="cart-header">
+        <h1>🛒 Shopping Cart</h1>
+        <p className="cart-subtitle">
+          {cart.items.length} {cart.items.length === 1 ? 'item' : 'items'} in your cart
+        </p>
+      </div>
+
       {cart.items.length === 0 ? (
-        <div className="cart-empty">Your cart is empty.</div>
+        <div className="cart-empty-state">
+          <div className="empty-cart-icon">🛒</div>
+          <h2>Your cart is empty</h2>
+          <p>Add some amazing cars to get started!</p>
+          <a href="/dashboard" className="btn-primary">Browse Cars</a>
+        </div>
       ) : (
-        <div>
-          <ul className="cart-list">
-            {cart.items.map(it => (
-              <li key={it.car._id || it.car} className="cart-item">
-                <div className="cart-item-main">
-                  <img src={it.car.images?.[0] || '/placeholder.png'} alt="car" className="cart-thumb" />
-                  <div>
-                    <div className="cart-item-title">{it.car.brand} {it.car.model} ({it.car.year})</div>
-                    <div className="cart-item-owner">Owner: {it.owner?.firstName || ''} {it.owner?.lastName || ''} — {it.owner?.email || ''}</div>
-                    <div className="cart-item-price">Price: ₹{it.price}</div>
+        <div className="cart-content">
+          <div className="cart-items-section">
+            {cart.items.map(item => (
+              <div key={item.car._id || item.car} className="cart-card">
+                <div className="cart-card-image">
+                  <img
+                    src={item.car.images?.[0] || '/placeholder.png'}
+                    alt={`${item.car.brand} ${item.car.model}`}
+                  />
+                </div>
+                <div className="cart-card-details">
+                  <h3 className="car-title">
+                    {item.car.brand} {item.car.model}
+                  </h3>
+                  <p className="car-year">Year: {item.car.year}</p>
+                  <div className="car-seller">
+                    <span className="seller-label">Seller:</span>
+                    <span className="seller-name">
+                      {item.owner?.firstName || ''} {item.owner?.lastName || ''}
+                    </span>
+                  </div>
+                  <div className="car-contact">
+                    <span>📧 {item.owner?.email || 'N/A'}</span>
                   </div>
                 </div>
-                <div className="cart-item-actions">
-                  <button onClick={() => removeItem(it.car._id || it.car)}>Remove</button>
+                <div className="cart-card-actions">
+                  <div className="cart-price">₹{item.price.toLocaleString('en-IN')}</div>
+                  <button
+                    className="btn-remove"
+                    onClick={() => removeItem(item.car._id || item.car)}
+                  >
+                    Remove
+                  </button>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
 
-          <div className="cart-summary">
-            <div>Total: <strong>₹{cart.total}</strong></div>
-            <div className="payment-options">
-              <button onClick={() => checkout('online')}>Pay Online</button>
-              <button onClick={() => checkout('upi')}>Pay via UPI</button>
-              <button onClick={() => checkout('cod')}>Cash on Delivery</button>
+          <div className="cart-summary-section">
+            <div className="summary-card">
+              <h3>Order Summary</h3>
+              <div className="summary-row">
+                <span>Subtotal ({cart.items.length} items)</span>
+                <span>₹{cart.total.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="summary-row">
+                <span>Taxes</span>
+                <span>Calculated at checkout</span>
+              </div>
+              <div className="summary-divider"></div>
+              <div className="summary-total">
+                <span>Total</span>
+                <span>₹{cart.total.toLocaleString('en-IN')}</span>
+              </div>
+
+              <div className="payment-section">
+                <h4>Payment Method</h4>
+                <button
+                  className="payment-btn primary"
+                  onClick={() => checkout('online')}
+                  disabled={checkoutStatus === 'processing'}
+                >
+                  💳 Pay Online
+                </button>
+                <button
+                  className="payment-btn"
+                  onClick={() => checkout('upi')}
+                  disabled={checkoutStatus === 'processing'}
+                >
+                  📱 UPI Payment
+                </button>
+                <button
+                  className="payment-btn"
+                  onClick={() => checkout('cod')}
+                  disabled={checkoutStatus === 'processing'}
+                >
+                  💵 Cash on Delivery
+                </button>
+              </div>
+
+              {checkoutStatus === 'processing' && (
+                <div className="processing-indicator">
+                  <div className="spinner"></div>
+                  <span>Processing your order...</span>
+                </div>
+              )}
             </div>
-            {checkoutStatus === 'processing' && <div>Processing payment...</div>}
           </div>
         </div>
       )}

@@ -8,9 +8,11 @@ import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
 import car1 from '../../images/car1';
 import car2 from '../../images/car2';
 import car3 from '../../images/car3';
+import { useToast } from '../../Hooks/useToast';
 
 const SignIn = ({ onSwitchToSignUp }) => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -43,7 +45,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Auto-detect role when email changes
     if (name === 'email') {
       const detectedRole = detectRoleFromEmail(value);
@@ -58,7 +60,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
         [name]: value
       }));
     }
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -76,12 +78,12 @@ const SignIn = ({ onSwitchToSignUp }) => {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
-      if (!formData.password) {
-        newErrors.password = 'Password is required';
-      } else if (formData.password.length < 6) {
-        newErrors.password = 'Password must be at least 6 characters';
-      }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -90,17 +92,17 @@ const SignIn = ({ onSwitchToSignUp }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setLoading(true);
-    
+
     try {
       console.log('Attempting to sign in with:', { email: formData.email, role: formData.role });
-      
-  const response = await fetch(API_ENDPOINTS.SIGNIN, {
+
+      const response = await fetch(API_ENDPOINTS.SIGNIN, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -117,12 +119,12 @@ const SignIn = ({ onSwitchToSignUp }) => {
         // Store authentication data
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         console.log('User role:', data.user.role);
-        
+
         // Show success message
-        alert(`Welcome back, ${data.user.firstName}!`);
-        
+        toast.success(`👋 Welcome back, ${data.user.firstName}!`);
+
         // Redirect based on role
         if (data.user.role === 'seller') {
           console.log('Redirecting to seller dashboard...');
@@ -138,7 +140,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
         console.error('Login failed:', data);
         setErrors({ general: data.message || 'Login failed' });
       }
-      
+
     } catch (error) {
       console.error('Network error during login:', error);
       setErrors({ general: 'Network error. Please check if the server is running and try again.' });
@@ -146,26 +148,26 @@ const SignIn = ({ onSwitchToSignUp }) => {
       setLoading(false);
     }
   };
-  
+
 
   const handleForgotPassword = async (email) => {
     if (!email.trim()) {
-      alert('Please enter your email address');
+      toast.warning('Please enter your email address');
       return;
     }
-    
+
     if (!/\S+@\S+\.\S+/.test(email)) {
-      alert('Please enter a valid email address');
+      toast.warning('Please enter a valid email address');
       return;
     }
 
     try {
       // Simulate API call for password reset
       await new Promise(resolve => setTimeout(resolve, 1000));
-      alert('Password reset link sent to your email!');
+      toast.success('📧 Password reset link sent to your email!');
       setShowForgotPassword(false);
     } catch (error) {
-      alert('Failed to send reset link. Please try again.');
+      toast.error('Failed to send reset link. Please try again.');
     }
   };
 
@@ -198,16 +200,17 @@ const SignIn = ({ onSwitchToSignUp }) => {
       const email = formData.email?.trim() || 'customer@carcraze.com';
       const role = detectRoleFromEmail(email);
 
-      alert(`Signed in with Google as ${role.charAt(0).toUpperCase() + role.slice(1)} (${email}). Redirecting...`);
-      
-      // Redirect based on role
-      if (role === 'seller') {
-        navigate('/seller/dashboard');
-      } else if (role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      toast.success(`🎉 Signed in with Google as ${role.charAt(0).toUpperCase() + role.slice(1)}!`);
+      setTimeout(() => {
+        // Redirect based on role
+        if (role === 'seller') {
+          navigate('/seller/dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      }, 1000);
     } catch (err) {
       console.error('Google sign-in failed:', err);
       setErrors({ general: 'Google sign-in failed. Please try again.' });
@@ -226,16 +229,17 @@ const SignIn = ({ onSwitchToSignUp }) => {
       const email = formData.email?.trim() || 'customer@carcraze.com';
       const role = detectRoleFromEmail(email);
 
-      alert(`Signed in with Facebook as ${role.charAt(0).toUpperCase() + role.slice(1)} (${email}). Redirecting...`);
-      
-      // Redirect based on role
-      if (role === 'seller') {
-        navigate('/seller/dashboard');
-      } else if (role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      toast.success(`🎉 Signed in with Facebook as ${role.charAt(0).toUpperCase() + role.slice(1)}!`);
+      setTimeout(() => {
+        // Redirect based on role
+        if (role === 'seller') {
+          navigate('/seller/dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      }, 1000);
     } catch (err) {
       console.error('Facebook sign-in failed:', err);
       setErrors({ general: 'Facebook sign-in failed. Please try again.' });
@@ -260,43 +264,43 @@ const SignIn = ({ onSwitchToSignUp }) => {
             <div className="auth-overlay" />
           </div>
           <div className="auth-card">
-          <div className="auth-header">
-            <h2>Reset Password</h2>
-            <p>Enter your email to receive a reset link</p>
-          </div>
-
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleForgotPassword(formData.email);
-          }} className="auth-form">
-            <div className="form-group">
-              <label htmlFor="resetEmail">Email Address</label>
-              <div className="input-with-icon">
-                <input
-                  type="email"
-                  id="resetEmail"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter your email address"
-                  autoFocus
-                />
-                <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
-              </div>
+            <div className="auth-header">
+              <h2>Reset Password</h2>
+              <p>Enter your email to receive a reset link</p>
             </div>
 
-            <button type="submit" className="auth-button">
-              Send Reset Link
-            </button>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleForgotPassword(formData.email);
+            }} className="auth-form">
+              <div className="form-group">
+                <label htmlFor="resetEmail">Email Address</label>
+                <div className="input-with-icon">
+                  <input
+                    type="email"
+                    id="resetEmail"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter your email address"
+                    autoFocus
+                  />
+                  <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
+                </div>
+              </div>
 
-            <button 
-              type="button" 
-              className="auth-button secondary"
-              onClick={() => setShowForgotPassword(false)}
-            >
-              Back to Sign In
-            </button>
-          </form>
+              <button type="submit" className="auth-button">
+                Send Reset Link
+              </button>
+
+              <button
+                type="button"
+                className="auth-button secondary"
+                onClick={() => setShowForgotPassword(false)}
+              >
+                Back to Sign In
+              </button>
+            </form>
           </div>
         </div>
       </>
@@ -320,118 +324,118 @@ const SignIn = ({ onSwitchToSignUp }) => {
           <div className="auth-overlay" />
         </div>
         <div className="auth-card">
-        <div className="auth-header">
-          <h2>Welcome Back</h2>
-          <h4>Sign in to access your CarCraze account</h4>
-          <h5>BUILD TO MOVE YOU</h5>
-        </div>
-
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          {/* Email Field */}
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <div className="input-with-icon">
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={errors.email ? 'error' : ''}
-                placeholder="Enter your email address"
-                autoComplete="email"
-              />
-              <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
-            </div>
-            {errors.email && <span className="error-message">{errors.email}</span>}
+          <div className="auth-header">
+            <h2>Welcome Back</h2>
+            <h4>Sign in to access your CarCraze account</h4>
+            <h5>BUILD TO MOVE YOU</h5>
           </div>
 
-          {/* Password Field */}
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div className="input-with-icon">
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className={errors.password ? 'error' : ''}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-              />
-              <FontAwesomeIcon icon={faLock} className="input-icon" />
-            </div>
-            {errors.password && <span className="error-message">{errors.password}</span>}
-          </div>
 
-          {errors.general && (
-            <div className="error-message general-error">
-              {errors.general}
+          <form onSubmit={handleSubmit} className="auth-form">
+            {/* Email Field */}
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <div className="input-with-icon">
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={errors.email ? 'error' : ''}
+                  placeholder="Enter your email address"
+                  autoComplete="email"
+                />
+                <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
+              </div>
+              {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
-          )}
 
-          {/* Form Options */}
-          <div className="form-options">
-            <label className="checkbox-label">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              Remember me
-            </label>
-            
+            {/* Password Field */}
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <div className="input-with-icon">
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={errors.password ? 'error' : ''}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                />
+                <FontAwesomeIcon icon={faLock} className="input-icon" />
+              </div>
+              {errors.password && <span className="error-message">{errors.password}</span>}
+            </div>
+
+            {errors.general && (
+              <div className="error-message general-error">
+                {errors.general}
+              </div>
+            )}
+
+            {/* Form Options */}
+            <div className="form-options">
+              <label className="checkbox-label">
+                <input type="checkbox" />
+                <span className="checkmark"></span>
+                Remember me
+              </label>
+
+              <button
+                type="button"
+                className="forgot-password-link"
+                onClick={() => setShowForgotPassword(true)}
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              className={`auth-button small ${loading ? 'loading' : ''}`}
+              disabled={loading}
+            >
+              Sign In
+            </button>
+
+            {/* Divider */}
+            <div className="divider">or</div>
+
+            {/* Google Sign-In */}
             <button
               type="button"
-              className="forgot-password-link"
-              onClick={() => setShowForgotPassword(true)}
+              className="oauth-btn google"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              aria-label="Continue with Google"
             >
-              Forgot Password?
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.049,6.053,28.761,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,16.108,18.961,13,24,13c3.059,0,5.842,1.154,7.961,3.039 l5.657-5.657C33.049,6.053,28.761,4,24,4C16.318,4,9.656,8.338,6.306,14.691z" />
+                <path fill="#4CAF50" d="M24,44c4.717,0,9.005-1.807,12.247-4.747l-5.657-5.657C28.515,35.994,26.38,37,24,37 c-5.202,0-9.617-3.317-11.278-7.946l-6.5,5.005C8.505,39.556,15.717,44,24,44z" />
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.793,2.237-2.231,4.166-4.057,5.596 c0.001-0.001,0.002-0.001,0.003-0.002l5.657,5.657C35.697,40.087,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+              </svg>
+              Continue with Google
             </button>
-          </div>
 
-          <button 
-            type="submit" 
-            className={`auth-button small ${loading ? 'loading' : ''}`}
-            disabled={loading}
-          >
-            Sign In
-          </button>
-        
-          {/* Divider */}
-          <div className="divider">or</div>
-
-          {/* Google Sign-In */}
-          <button
-            type="button"
-            className="oauth-btn google"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            aria-label="Continue with Google"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
-              <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.049,6.053,28.761,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-              <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,16.108,18.961,13,24,13c3.059,0,5.842,1.154,7.961,3.039 l5.657-5.657C33.049,6.053,28.761,4,24,4C16.318,4,9.656,8.338,6.306,14.691z"/>
-              <path fill="#4CAF50" d="M24,44c4.717,0,9.005-1.807,12.247-4.747l-5.657-5.657C28.515,35.994,26.38,37,24,37 c-5.202,0-9.617-3.317-11.278-7.946l-6.5,5.005C8.505,39.556,15.717,44,24,44z"/>
-              <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.793,2.237-2.231,4.166-4.057,5.596 c0.001-0.001,0.002-0.001,0.003-0.002l5.657,5.657C35.697,40.087,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-            </svg>
-            Continue with Google
-          </button>
-
-          {/* Facebook Sign-In */}
-          <button
-            type="button"
-            className="oauth-btn facebook"
-            onClick={handleFacebookSignIn}
-            disabled={loading}
-            aria-label="Continue with Facebook"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078V12.07h3.047V9.412c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953h-1.513c-1.493 0-1.957.93-1.957 1.887v2.25h3.328l-.532 3.492h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
-              <path fill="#fff" d="M16.671 15.562l.532-3.492h-3.328v-2.25c0-.957.464-1.887 1.957-1.887h1.513V4.98s-1.374-.235-2.686-.235c-2.741 0-4.533 1.661-4.533 4.668v2.658H7.078v3.493h3.047V24h3.75v-8.437h2.796z"/>
-            </svg>
-            Continue with Facebook
-          </button>
-        </form>
+            {/* Facebook Sign-In */}
+            <button
+              type="button"
+              className="oauth-btn facebook"
+              onClick={handleFacebookSignIn}
+              disabled={loading}
+              aria-label="Continue with Facebook"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078V12.07h3.047V9.412c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953h-1.513c-1.493 0-1.957.93-1.957 1.887v2.25h3.328l-.532 3.492h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
+                <path fill="#fff" d="M16.671 15.562l.532-3.492h-3.328v-2.25c0-.957.464-1.887 1.957-1.887h1.513V4.98s-1.374-.235-2.686-.235c-2.741 0-4.533 1.661-4.533 4.668v2.658H7.078v3.493h3.047V24h3.75v-8.437h2.796z" />
+              </svg>
+              Continue with Facebook
+            </button>
+          </form>
         </div>
       </div>
     </>

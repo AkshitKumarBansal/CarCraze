@@ -10,7 +10,7 @@ const router = express.Router();
 router.post('/signup', async (req, res) => {
   try {
     console.log('Received signup request:', req.body);
-    
+
     const {
       firstName,
       lastName,
@@ -24,7 +24,7 @@ router.post('/signup', async (req, res) => {
 
     if (!email || !password || !firstName || !lastName || !phone || !role) {
       console.error('Missing required fields:', { email, firstName, lastName, phone, role });
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Missing required fields',
         errors: {
           email: !email ? 'Email is required' : null,
@@ -92,7 +92,7 @@ router.post('/signup', async (req, res) => {
   } catch (err) {
     console.error('Signup error:', err);
     // Send more detailed error information
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Registration failed',
       error: err.message,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
@@ -165,6 +165,58 @@ router.get('/profile', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Profile error:', err);
     res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+});
+
+// PUT /api/auth/profile - Update user profile
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    const { firstName, lastName, phone, businessInfo } = req.body;
+
+    // Find user
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Validate required fields
+    if (!firstName || !lastName || !phone) {
+      return res.status(400).json({
+        message: 'First name, last name, and phone are required'
+      });
+    }
+
+    // Update user fields
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.phone = phone;
+
+    // Update business info for sellers
+    if (user.role === 'seller' && businessInfo) {
+      user.businessInfo = businessInfo;
+    }
+
+    await user.save();
+
+    // Return updated user data (excluding password)
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        ...(user.role === 'seller' && {
+          businessInfo: user.businessInfo,
+          rating: user.rating
+        })
+      }
+    });
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ message: err.message || 'Failed to update profile' });
   }
 });
 

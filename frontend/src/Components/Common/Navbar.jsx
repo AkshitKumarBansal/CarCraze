@@ -13,7 +13,7 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
     // Check if user is logged in by checking token and user data
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
+
     if (token && userData) {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
@@ -56,8 +56,8 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
     console.log("Logging out... current isLoggedIn:", isLoggedIn); // before logout
     localStorage.removeItem("token");
     localStorage.removeItem("user"); // Also clear user data
-    setIsLoggedIn(false);             
-    navigate("/");                    
+    setIsLoggedIn(false);
+    navigate("/");
   };
 
   return (
@@ -100,6 +100,9 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                   <div className="user-profile">
                     <span className="user-name">Hello, {user.firstName}</span>
                     <div className="profile-dropdown">
+                      <Link to="/profile" className="auth-btn profile">
+                        <i className="fas fa-user"></i> Profile
+                      </Link>
                       <Link to="/seller/dashboard" className="auth-btn profile">
                         <i className="fas fa-tachometer-alt"></i> Dashboard
                       </Link>
@@ -120,13 +123,13 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                       <Link to="/profile" className="auth-btn profile">
                         <i className="fas fa-user"></i> Profile
                       </Link>
-                        <Link to="/cart" className="auth-btn profile cart-link">
-                          <i className="fas fa-shopping-cart"></i> Cart
-                          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-                        </Link>
-                        <Link to="/orders" className="auth-btn profile">
-                          <i className="fas fa-box"></i> Orders
-                        </Link>
+                      <Link to="/cart" className="auth-btn profile cart-link">
+                        <i className="fas fa-shopping-cart"></i> Cart
+                        {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                      </Link>
+                      <Link to="/orders" className="auth-btn profile">
+                        <i className="fas fa-box"></i> Orders
+                      </Link>
                       <Link to="/dashboard" className="auth-btn profile">
                         <i className="fas fa-tachometer-alt"></i> Dashboard
                       </Link>

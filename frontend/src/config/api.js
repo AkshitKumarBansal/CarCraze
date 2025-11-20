@@ -6,7 +6,7 @@ export const API_ENDPOINTS = {
   SIGNIN: `${API_BASE_URL}/api/auth/signin`,
   SIGNUP: `${API_BASE_URL}/api/auth/signup`,
   PROFILE: `${API_BASE_URL}/api/auth/profile`,
-  
+
   // Car endpoints
   CARS: `${API_BASE_URL}/api/cars`,
   SELLER_CARS: `${API_BASE_URL}/api/seller/cars`,
@@ -16,7 +16,10 @@ export const API_ENDPOINTS = {
   CART_CHECKOUT: `${API_BASE_URL}/api/cart/checkout`,
   ORDERS: `${API_BASE_URL}/api/orders`,
   UPLOAD_IMAGES: `${API_BASE_URL}/api/upload/car-images`,
-  
+
+  // Messages endpoint
+  MESSAGES: `${API_BASE_URL}/api/messages`,
+
   // Health check
   HEALTH: `${API_BASE_URL}/api/health`
 };
