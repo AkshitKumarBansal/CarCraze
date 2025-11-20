@@ -26,7 +26,7 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:59600',
 ];
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/carcraze';
+const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/carcraze';
 
 async function connectMongoDB() {
   try {

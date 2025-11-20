@@ -15,7 +15,8 @@ body {
 }
 
 /* Prevent unwanted horizontal scroll */
-html, body {
+html,
+body {
   width: 100%;
   overflow-x: hidden;
 }
@@ -34,7 +35,7 @@ code {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0;
 }
 
 /* Header styles moved to Components/Common/Navbar.css */
@@ -490,6 +491,7 @@ code {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -501,6 +503,7 @@ code {
     opacity: 0;
     transform: translateY(50px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -512,6 +515,7 @@ code {
     opacity: 0;
     transform: translateX(-50px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -523,6 +527,7 @@ code {
     opacity: 0;
     transform: translateX(50px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -534,6 +539,7 @@ code {
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -545,13 +551,16 @@ code {
     opacity: 0;
     transform: scale(0.3) translateY(-30px);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.05) translateY(0);
   }
+
   70% {
     transform: scale(0.98);
   }
+
   100% {
     transform: scale(1);
   }
@@ -562,6 +571,7 @@ code {
     opacity: 0;
     transform: perspective(400px) rotateY(90deg) scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: perspective(400px) rotateY(0deg) scale(1);
@@ -574,6 +584,7 @@ code {
     text-shadow: 0 0 0 rgba(251, 191, 36, 0);
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
@@ -582,10 +593,13 @@ code {
 }
 
 @keyframes pulseGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
     transform: scale(1);
   }
+
   50% {
     box-shadow: 0 0 30px rgba(37, 99, 235, 0.6);
     transform: scale(1.05);
@@ -638,9 +652,17 @@ code {
 }
 
 /* Delay Classes */
-.delay-1 { animation-delay: 0.2s; }
-.delay-2 { animation-delay: 0.4s; }
-.delay-3 { animation-delay: 0.6s; }
+.delay-1 {
+  animation-delay: 0.2s;
+}
+
+.delay-2 {
+  animation-delay: 0.4s;
+}
+
+.delay-3 {
+  animation-delay: 0.6s;
+}
 
 /* Initial States */
 .car-card-wrapper,
@@ -828,15 +850,15 @@ code {
   .nav-links {
     display: none;
   }
-  
+
   .hero h1 {
     font-size: 2.5rem;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .cars-grid {
     grid-template-columns: 1fr;
   }

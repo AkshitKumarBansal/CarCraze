@@ -1,10 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
-import './CustomerCart.css';
+import './CustomerOrders.css';
 
 const formatDate = (iso) => {
   if (!iso) return '-';
-  return new Date(iso).toLocaleDateString();
+  const date = new Date(iso);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+const getStatusColor = (status) => {
+  const statusColors = {
+    'pending': '#f59e0b',
+    'processing': '#3b82f6',
+    'confirmed': '#8b5cf6',
+    'shipped': '#06b6d4',
+    'delivered': '#10b981',
+    'cancelled': '#ef4444'
+  };
+  return statusColors[status?.toLowerCase()] || '#6b7280';
+};
+
+const getPaymentStatusColor = (status) => {
+  const paymentColors = {
+    'pending': '#f59e0b',
+    'paid': '#10b981',
+    'failed': '#ef4444',
+    'refunded': '#6b7280'
+  };
+  return paymentColors[status?.toLowerCase()] || '#6b7280';
 };
 
 const CustomerOrders = () => {
@@ -32,39 +59,113 @@ const CustomerOrders = () => {
 
   useEffect(() => { fetchOrders(); }, []);
 
-  if (loading) return <div className="cart-container">Loading orders...</div>;
-  if (error) return <div className="cart-container">{error}</div>;
+  if (loading) return (
+    <div className="orders-page">
+      <div className="orders-header">
+        <h1>📦 My Orders</h1>
+      </div>
+      <div className="orders-loading">Loading your orders...</div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="orders-page">
+      <div className="orders-header">
+        <h1>📦 My Orders</h1>
+      </div>
+      <div className="orders-error">{error}</div>
+    </div>
+  );
 
   return (
-    <div className="cart-container">
-      <h2>Your Orders</h2>
+    <div className="orders-page">
+      <div className="orders-header">
+        <h1>📦 My Orders</h1>
+        <p className="orders-subtitle">
+          Track and manage your orders
+        </p>
+      </div>
+
       {orders.length === 0 ? (
-        <div className="cart-empty">You have no orders yet.</div>
+        <div className="orders-empty-state">
+          <div className="empty-orders-icon">📦</div>
+          <h2>No orders yet</h2>
+          <p>Start shopping to see your orders here!</p>
+          <a href="/dashboard" className="btn-primary">Start Shopping</a>
+        </div>
       ) : (
-        <ul className="cart-list">
-          {orders.map(o => (
-            <li key={o._id} className="cart-item">
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700 }}>Order #{o._id}</div>
-                <div>Placed: {formatDate(o.createdAt)}</div>
-                <div>Delivery: {formatDate(o.deliveryDate)}</div>
-                <div>Status: {o.status} — Payment: {o.paymentStatus}</div>
-                <div style={{ marginTop: 8 }}>
-                  {o.items.map(it => (
-                    <div key={it.car?._id || it.car} style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                      <img src={it.car?.images?.[0] || '/placeholder.png'} alt="car" style={{ width: 100, height: 64, objectFit: 'cover', borderRadius: 6 }} />
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{it.car?.brand} {it.car?.model} ({it.car?.year})</div>
-                        <div>Owner: {it.owner || '-' }</div>
-                        <div>Price: ₹{it.price}</div>
-                      </div>
-                    </div>
-                  ))}
+        <div className="orders-list">
+          {orders.map(order => (
+            <div key={order._id} className="order-card">
+              <div className="order-card-header">
+                <div className="order-info">
+                  <h3>Order #{order._id.slice(-8).toUpperCase()}</h3>
+                  <p className="order-date">Placed on {formatDate(order.createdAt)}</p>
+                </div>
+                <div className="order-status-badges">
+                  <span
+                    className="status-badge"
+                    style={{ backgroundColor: getStatusColor(order.status) }}
+                  >
+                    {order.status || 'Pending'}
+                  </span>
+                  <span
+                    className="payment-badge"
+                    style={{ backgroundColor: getPaymentStatusColor(order.paymentStatus) }}
+                  >
+                    {order.paymentStatus || 'Pending'}
+                  </span>
                 </div>
               </div>
-            </li>
+
+              <div className="order-delivery-info">
+                <div className="delivery-item">
+                  <span className="delivery-label">Expected Delivery:</span>
+                  <span className="delivery-value">{formatDate(order.deliveryDate)}</span>
+                </div>
+                <div className="delivery-item">
+                  <span className="delivery-label">Payment Method:</span>
+                  <span className="delivery-value">{order.paymentMethod || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="order-items">
+                {order.items.map((item, idx) => (
+                  <div key={idx} className="order-item">
+                    <div className="order-item-image">
+                      <img
+                        src={item.car?.images?.[0] || '/placeholder.png'}
+                        alt={`${item.car?.brand} ${item.car?.model}`}
+                      />
+                    </div>
+                    <div className="order-item-details">
+                      <h4>{item.car?.brand} {item.car?.model} ({item.car?.year})</h4>
+                      <div className="seller-info">
+                        <span className="seller-icon">👤</span>
+                        <span className="seller-text">
+                          Seller: <strong>
+                            {item.owner?.firstName || ''} {item.owner?.lastName || 'Unknown Seller'}
+                          </strong>
+                        </span>
+                      </div>
+                      <div className="item-price">₹{item.price.toLocaleString('en-IN')}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="order-card-footer">
+                <div className="order-total">
+                  <span>Order Total:</span>
+                  <span className="total-amount">
+                    ₹{order.items.reduce((sum, item) => sum + (item.price || 0), 0).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <button className="btn-track">Track Order</button>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

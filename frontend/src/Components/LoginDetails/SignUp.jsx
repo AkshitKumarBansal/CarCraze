@@ -7,9 +7,11 @@ import car2 from '../../images/car2';
 import car3 from '../../images/car3';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faUser, faLock, faPhone, faBuilding, faMapMarkerAlt, faUserShield, faKey } from '@fortawesome/free-solid-svg-icons';
+import { useToast } from '../../Hooks/useToast';
 
 
 const SignUp = ({ onSwitchToSignIn }) => {
+  const toast = useToast();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -134,7 +136,7 @@ const SignUp = ({ onSwitchToSignIn }) => {
         requestBody.adminCode = formData.adminCode;
       }
 
-  const response = await fetch(API_ENDPOINTS.SIGNUP, {
+      const response = await fetch(API_ENDPOINTS.SIGNUP, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -143,9 +145,9 @@ const SignUp = ({ onSwitchToSignIn }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Registration failed");
+        toast.error(data.message || "Registration failed");
       } else {
-        alert(`${data.user.role} registered successfully!`);
+        toast.success(`🎉 ${data.user.role.charAt(0).toUpperCase() + data.user.role.slice(1)} account created successfully!`);
       }
 
       // Reset form
@@ -165,7 +167,7 @@ const SignUp = ({ onSwitchToSignIn }) => {
 
     } catch (error) {
       console.error("Registration error:", error);
-      alert("Registration failed. Please try again.");
+      toast.error("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
