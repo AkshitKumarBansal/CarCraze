@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Service.css';
 import { useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS } from '../../config/api';
 import useScrollAnimation from '../../Hooks/useScrollAnimation';
 
 const allServiceItems = [
@@ -73,24 +74,35 @@ const Service = ({ mode = 'all' }) => {
   const openDetails = (item) => setActive(item);
   const closeDetails = () => setActive(null);
 
-  const goToFlow = (id) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+  const goToFlow = async (id) => {
+    // Check authentication by calling backend
+    try {
+      const response = await fetch(API_ENDPOINTS.PROFILE, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        navigate('/signin');
+        return;
+      }
+
+      const userData = await response.json();
+
+      switch (id) {
+        case 'buy-new': navigate('/new-cars'); break;
+        case 'buy-old': navigate('/old-cars'); break;
+        case 'rent': navigate('/rent-cars'); break;
+        case 'sell-new':
+        case 'sell-old':
+        case 'put-on-rent':
+          if (userData.role === 'seller') navigate('/seller/dashboard');
+          else navigate('/signup', { state: { role: 'seller' } });
+          break;
+        default: navigate('/');
+      }
+    } catch (err) {
+      console.error('Auth check failed:', err);
       navigate('/signin');
-      return;
-    }
-    switch(id) {
-      case 'buy-new': navigate('/new-cars'); break;
-      case 'buy-old': navigate('/old-cars'); break;
-      case 'rent': navigate('/rent-cars'); break;
-      case 'sell-new':
-      case 'sell-old':
-      case 'put-on-rent':
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        if (userData.role === 'seller') navigate('/seller/dashboard');
-        else navigate('/signup', { state: { role: 'seller' } });
-        break;
-      default: navigate('/');
     }
   };
 

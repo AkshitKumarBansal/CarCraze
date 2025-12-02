@@ -10,52 +10,75 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    // Check if user is logged in by checking token and user data
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-
-    if (token && userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
-      setUserRole(parsedUser.role);
-      if (setIsLoggedIn) {
-        setIsLoggedIn(true);
-      }
-    } else {
-      setUser(null);
-      setUserRole(null);
-      if (setIsLoggedIn) {
-        setIsLoggedIn(false);
-      }
-    }
-    // Fetch cart count for customers
-    (async () => {
+    // Check if user is logged in by calling the backend
+    const checkAuth = async () => {
       try {
-        if (token && userData) {
-          const parsedUser = JSON.parse(userData);
-          if (parsedUser.role === 'customer') {
-            const res = await fetch(API_ENDPOINTS.CART, {
-              headers: { Authorization: `Bearer ${token}` }
+        const response = await fetch(API_ENDPOINTS.PROFILE, {
+          credentials: 'include' // Include cookies
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+          setUserRole(userData.role);
+          // Also store in localStorage for quick access
+          localStorage.setItem('user', JSON.stringify(userData));
+          if (setIsLoggedIn) {
+            setIsLoggedIn(true);
+          }
+
+          // Fetch cart count for customers
+          if (userData.role === 'customer') {
+            const cartRes = await fetch(API_ENDPOINTS.CART, {
+              credentials: 'include'
             });
-            if (res.ok) {
-              const d = await res.json();
-              setCartCount(Array.isArray(d.items) ? d.items.length : 0);
+            if (cartRes.ok) {
+              const cartData = await cartRes.json();
+              setCartCount(Array.isArray(cartData.items) ? cartData.items.length : 0);
             }
+          }
+        } else {
+          // Not authenticated
+          setUser(null);
+          setUserRole(null);
+          localStorage.removeItem('user');
+          if (setIsLoggedIn) {
+            setIsLoggedIn(false);
           }
         }
       } catch (err) {
-        console.error('Failed to fetch cart count', err);
+        console.error('Failed to check auth', err);
+        setUser(null);
+        setUserRole(null);
+        localStorage.removeItem('user');
+        if (setIsLoggedIn) {
+          setIsLoggedIn(false);
+        }
       }
-    })();
+    };
+
+    checkAuth();
   }, [setIsLoggedIn]);
 
   // Debug log to check current state
   console.log("Navbar rendered - isLoggedIn:", isLoggedIn);
 
-  const handleLogout = () => {
-    console.log("Logging out... current isLoggedIn:", isLoggedIn); // before logout
-    localStorage.removeItem("token");
-    localStorage.removeItem("user"); // Also clear user data
+  const handleLogout = async () => {
+    console.log("Logging out... current isLoggedIn:", isLoggedIn);
+    try {
+      // Call backend logout endpoint to clear cookie
+      await fetch(API_ENDPOINTS.LOGOUT, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+
+    // Clear local storage
+    localStorage.removeItem("user");
+    setUser(null);
+    setUserRole(null);
     setIsLoggedIn(false);
     navigate("/");
   };
