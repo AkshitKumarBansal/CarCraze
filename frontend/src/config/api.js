@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   SIGNIN: `${API_BASE_URL}/api/auth/signin`,
   SIGNUP: `${API_BASE_URL}/api/auth/signup`,
   PROFILE: `${API_BASE_URL}/api/auth/profile`,
+  LOGOUT: `${API_BASE_URL}/api/auth/logout`,
 
   // Car endpoints
   CARS: `${API_BASE_URL}/api/cars`,

@@ -102,6 +102,7 @@ const SignIn = ({ onSwitchToSignUp }) => {
 
       const response = await fetch(API_ENDPOINTS.SIGNIN, {
         method: 'POST',
+        credentials: 'include', // Important: send cookies
         headers: {
           'Content-Type': 'application/json'
         },
@@ -116,8 +117,8 @@ const SignIn = ({ onSwitchToSignUp }) => {
       console.log('Response data:', data);
 
       if (response.ok) {
-        // Store authentication data
-        localStorage.setItem('token', data.token);
+        // Token is now stored in HttpOnly cookie automatically
+        // Only store user data in localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
 
         console.log('User role:', data.user.role);

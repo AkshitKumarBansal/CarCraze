@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const { ALLOWED_ORIGINS } = require('./config');
 const { errorHandler } = require('./middleware/error');
@@ -30,6 +31,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Cookie parser - must be before routes
+app.use(cookieParser());
 
 // Body parsers
 app.use(express.json());
