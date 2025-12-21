@@ -41,7 +41,6 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
                 localStorage.setItem('token', 'sample_token');
                 setIsLoggedIn(true);
                 console.log(" User Logged In -> isLoggedIn: ON");
-                navigate('/');
               }}
             />
           }
@@ -55,7 +54,6 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
                 localStorage.setItem('token', 'sample_token');
                 setIsLoggedIn(true);
                 console.log(" User Signed Up & Logged In -> isLoggedIn: ON");
-                navigate('/');
               }}
             />
           }

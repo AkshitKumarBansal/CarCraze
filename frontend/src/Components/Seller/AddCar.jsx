@@ -34,10 +34,10 @@ const AddCar = () => {
 
   useEffect(() => {
     // Check if user is authenticated and is a seller
-    const token = localStorage.getItem('token');
+    // const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
-    if (!token || !userData) {
+
+    if (!userData) {
       navigate('/signin');
       return;
     }
@@ -51,7 +51,7 @@ const AddCar = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name.startsWith('availability.')) {
       const field = name.split('.')[1];
       setFormData(prev => ({
@@ -79,7 +79,7 @@ const AddCar = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    
+
     if (files.length > 5) {
       setErrors(prev => ({
         ...prev,
@@ -101,7 +101,7 @@ const AddCar = () => {
         }));
         return;
       }
-      
+
       if (file.size > maxSize) {
         setErrors(prev => ({
           ...prev,
@@ -109,16 +109,16 @@ const AddCar = () => {
         }));
         return;
       }
-      
+
       validFiles.push(file);
     }
 
     setSelectedImages(validFiles);
-    
+
     // Create preview URLs
     const previewUrls = validFiles.map(file => URL.createObjectURL(file));
     setImagePreview(previewUrls);
-    
+
     // Clear any previous errors
     if (errors.images) {
       setErrors(prev => ({
@@ -131,10 +131,10 @@ const AddCar = () => {
   const removeImage = (index) => {
     const newImages = selectedImages.filter((_, i) => i !== index);
     const newPreviews = imagePreview.filter((_, i) => i !== index);
-    
+
     // Revoke the URL to free memory
     URL.revokeObjectURL(imagePreview[index]);
-    
+
     setSelectedImages(newImages);
     setImagePreview(newPreviews);
   };
@@ -143,18 +143,19 @@ const AddCar = () => {
     if (selectedImages.length === 0) return [];
 
     setUploadingImages(true);
-    
+
     try {
-      const token = localStorage.getItem('token');
+      // const token = localStorage.getItem('token');
       const formData = new FormData();
-      
+
       selectedImages.forEach((image, index) => {
         formData.append('images', image);
       });
       const response = await fetch(API_ENDPOINTS.UPLOAD_IMAGES, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`
+          // 'Authorization': `Bearer ${token}`
         },
         body: formData
       });
@@ -228,14 +229,14 @@ const AddCar = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setLoading(true);
-    
+
     try {
-      const token = localStorage.getItem('token');
-      
+      // const token = localStorage.getItem('token');
+
       // Upload images first
       let imageUrls = [];
       if (selectedImages.length > 0) {
@@ -247,7 +248,7 @@ const AddCar = () => {
           return;
         }
       }
-      
+
       const submitData = {
         ...formData,
         year: parseInt(formData.year),
@@ -266,8 +267,9 @@ const AddCar = () => {
 
       const response = await fetch(API_ENDPOINTS.SELLER_CARS, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          // 'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(submitData)
@@ -295,11 +297,11 @@ const AddCar = () => {
   return (
     <div className="add-car-container">
       <Navbar />
-      
+
       <div className="add-car-header">
         <div className="container">
           <div className="header-content">
-            <button 
+            <button
               className="back-btn"
               onClick={() => navigate('/seller/dashboard')}
             >
@@ -609,15 +611,15 @@ const AddCar = () => {
 
             {/* Form Actions */}
             <div className="form-actions">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => navigate('/seller/dashboard')}
               >
                 Cancel
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className={`btn btn-primary ${loading || uploadingImages ? 'loading' : ''}`}
                 disabled={loading || uploadingImages}
               >
