@@ -58,7 +58,7 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
     };
 
     checkAuth();
-  }, [setIsLoggedIn]);
+  }, [setIsLoggedIn, isLoggedIn]);
 
   // Debug log to check current state
   console.log("Navbar rendered - isLoggedIn:", isLoggedIn);
@@ -98,7 +98,7 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
           {/* Nav Links */}
           <ul className="nav-links">
             <li>
-              <Link to={isLoggedIn && userRole === 'customer' ? "/dashboard" : "/#home"}>Home</Link>
+              <Link to={isLoggedIn ? (userRole === 'customer' ? "/dashboard" : userRole === 'seller' ? "/seller/dashboard" : "/#home") : "/#home"}>Home</Link>
             </li>
             <li>
               <Link to={isLoggedIn && userRole === 'customer' ? "/dashboard#catalog" : "/#cars"}>

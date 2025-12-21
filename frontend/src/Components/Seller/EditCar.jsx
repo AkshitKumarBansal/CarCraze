@@ -32,10 +32,10 @@ const EditCar = () => {
 
   useEffect(() => {
     // Check if user is authenticated and is a seller
-    const token = localStorage.getItem('token');
+    // const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
-    if (!token || !userData) {
+
+    if (!userData) {
       navigate('/signin');
       return;
     }
@@ -52,18 +52,19 @@ const EditCar = () => {
 
   const fetchCarData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      // const token = localStorage.getItem('token');
       const response = await fetch(API_ENDPOINTS.SELLER_CARS, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          // 'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
       if (response.ok) {
         const data = await response.json();
-  const car = data.cars.find(c => (c._id === carId || c.id === carId));
-        
+        const car = data.cars.find(c => (c._id === carId || c.id === carId));
+
         if (car) {
           setFormData({
             brand: car.brand || '',
@@ -100,7 +101,7 @@ const EditCar = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name.startsWith('availability.')) {
       const field = name.split('.')[1];
       setFormData(prev => ({
@@ -180,13 +181,13 @@ const EditCar = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setLoading(true);
-    
+
     try {
-      const token = localStorage.getItem('token');
+      // const token = localStorage.getItem('token');
       const submitData = {
         ...formData,
         year: parseInt(formData.year),
@@ -204,8 +205,9 @@ const EditCar = () => {
 
       const response = await fetch(`${API_ENDPOINTS.SELLER_CARS}/${carId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          // 'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(submitData)
@@ -245,11 +247,11 @@ const EditCar = () => {
   return (
     <div className="add-car-container">
       <Navbar />
-      
+
       <div className="add-car-header">
         <div className="container">
           <div className="header-content">
-            <button 
+            <button
               className="back-btn"
               onClick={() => navigate('/seller/dashboard')}
             >
@@ -516,15 +518,15 @@ const EditCar = () => {
 
             {/* Form Actions */}
             <div className="form-actions">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => navigate('/seller/dashboard')}
               >
                 Cancel
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className={`btn btn-primary ${loading ? 'loading' : ''}`}
                 disabled={loading}
               >

@@ -42,9 +42,10 @@ const CustomerOrders = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      // const token = localStorage.getItem('token');
       const res = await fetch(API_ENDPOINTS.ORDERS, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include'
+        // headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch orders');
       const data = await res.json();
@@ -140,14 +141,7 @@ const CustomerOrders = () => {
                     </div>
                     <div className="order-item-details">
                       <h4>{item.car?.brand} {item.car?.model} ({item.car?.year})</h4>
-                      <div className="seller-info">
-                        <span className="seller-icon">👤</span>
-                        <span className="seller-text">
-                          Seller: <strong>
-                            {item.owner?.firstName || ''} {item.owner?.lastName || 'Unknown Seller'}
-                          </strong>
-                        </span>
-                      </div>
+
                       <div className="item-price">₹{item.price.toLocaleString('en-IN')}</div>
                     </div>
                   </div>

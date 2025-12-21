@@ -13,9 +13,10 @@ const CustomerCart = () => {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      // const token = localStorage.getItem('token'); // Legacy
       const res = await fetch(API_ENDPOINTS.CART, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include'
+        // headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch cart');
       const data = await res.json();
@@ -32,10 +33,11 @@ const CustomerCart = () => {
 
   const removeItem = async (carId) => {
     try {
-      const token = localStorage.getItem('token');
+      // const token = localStorage.getItem('token');
       const res = await fetch(`${API_ENDPOINTS.CART}/${carId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include'
+        // headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to remove');
       await fetchCart();
@@ -46,10 +48,11 @@ const CustomerCart = () => {
   const checkout = async (method = 'online') => {
     try {
       setCheckoutStatus('processing');
-      const token = localStorage.getItem('token');
+      // const token = localStorage.getItem('token');
       const res = await fetch(API_ENDPOINTS.CART_CHECKOUT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentMethod: method })
       });
       const data = await res.json();

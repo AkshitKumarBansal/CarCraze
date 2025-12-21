@@ -128,17 +128,20 @@ const CustomerDashboard = () => {
                     <button
                       className="option-button small"
                       onClick={async () => {
-                        const token = localStorage.getItem('token');
-                        if (!token) {
-                          navigate('/signin');
-                          return;
-                        }
+                        // REMOVED blocking token check to allow cookie-based auth
                         try {
                           const res = await fetch(API_ENDPOINTS.CART, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            credentials: 'include', // Use cookies
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ carId: car._id || car.id })
                           });
+
+                          if (res.status === 401) {
+                            navigate('/signin');
+                            return;
+                          }
+
                           const data = await res.json();
                           if (!res.ok) {
                             throw new Error(data.message || 'Add to cart failed');

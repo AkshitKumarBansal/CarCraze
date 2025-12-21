@@ -22,10 +22,10 @@ const SellerDashboard = () => {
 
     useEffect(() => {
         // Check if user is authenticated and is a seller
-        const token = localStorage.getItem('token');
+        // const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
 
-        if (!token || !userData) {
+        if (!userData) {
             navigate('/signin');
             return;
         }
@@ -42,10 +42,11 @@ const SellerDashboard = () => {
 
     const fetchSellerCars = async () => {
         try {
-            const token = localStorage.getItem('token');
+            // const token = localStorage.getItem('token');
             const response = await fetch('http://localhost:5001/api/seller/cars', {
+                credentials: 'include',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    // 'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -71,11 +72,12 @@ const SellerDashboard = () => {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            // const token = localStorage.getItem('token');
             const response = await fetch(`http://localhost:5001/api/seller/cars/${carId}`, {
                 method: 'DELETE',
+                credentials: 'include',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    // 'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -101,9 +103,9 @@ const SellerDashboard = () => {
 
     const formatPrice = (price, listingType) => {
         if (listingType === 'rent') {
-            return `$${price}/day`;
+            return `₹${price}/day`;
         }
-        return `$${price.toLocaleString()}`;
+        return `₹${price.toLocaleString('en-IN')}`;
     };
 
     const getStatusBadge = (status) => {
@@ -269,6 +271,13 @@ const SellerDashboard = () => {
                                                 e.currentTarget.src = getCarImage({ listingType: car.listingType, images: [] });
                                             }}
                                         />
+                                        <div className="listing-type">
+                                            <span className={`type-badge ${car.listingType}`}>
+                                                {car.listingType === 'rent' ? 'Rent' :
+                                                    car.listingType === 'sale_new' ? 'New' :
+                                                        car.listingType === 'sale_old' ? 'Used' : 'Sale'}
+                                            </span>
+                                        </div>
                                         <span className={getStatusBadge(car.status)}>
                                             {car.status}
                                         </span>
@@ -276,33 +285,22 @@ const SellerDashboard = () => {
                                     <div className="car-details">
                                         <div className="car-header">
                                             <h3>{car.year} {car.brand} {car.model}</h3>
-                                            <div className="listing-type">
-                                                <span className={`type-badge ${car.listingType}`}>
-                                                    {car.listingType === 'rent' ? 'For Rent' :
-                                                        car.listingType === 'sale_new' ? 'For Sale (New)' :
-                                                            car.listingType === 'sale_old' ? 'For Sale (Used)' : 'For Sale'}
-                                                </span>
-                                            </div>
                                         </div>
 
                                         <div className="car-specs">
-                                            <div className="spec">
+                                            <div className="spec" title="Capacity">
                                                 <i className="fas fa-users"></i>
-                                                <span>{car.capacity} seats</span>
+                                                <span>{car.capacity}</span>
                                             </div>
-                                            <div className="spec">
+                                            <div className="spec" title="Transmission">
                                                 <i className="fas fa-cog"></i>
                                                 <span>{car.transmission}</span>
                                             </div>
-                                            <div className="spec">
+                                            <div className="spec" title="Fuel Type">
                                                 <i className="fas fa-gas-pump"></i>
                                                 <span>{car.fuelType}</span>
                                             </div>
                                         </div>
-
-                                        {car.description && (
-                                            <p className="car-description">{car.description}</p>
-                                        )}
 
                                         <div className="car-footer">
                                             <div className="price">
@@ -310,16 +308,18 @@ const SellerDashboard = () => {
                                             </div>
                                             <div className="car-actions">
                                                 <button
-                                                    className="btn btn-sm btn-outline"
+                                                    className="btn-sm btn-outline"
                                                     onClick={() => navigate(`/seller/edit-car/${car._id || car.id}`)}
+                                                    title="Edit"
                                                 >
-                                                    <i className="fas fa-edit"></i> Edit
+                                                    <i className="fas fa-pencil-alt"></i>
                                                 </button>
                                                 <button
-                                                    className="btn btn-sm btn-danger"
+                                                    className="btn-sm btn-danger"
                                                     onClick={() => handleDeleteCar(car._id || car.id)}
+                                                    title="Delete"
                                                 >
-                                                    <i className="fas fa-trash"></i> Delete
+                                                    <i className="fas fa-trash-alt"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -337,10 +337,12 @@ const SellerDashboard = () => {
                     )}
                 </div>
             </div>
-            {showImage && (
-                <ImageModal src={imageSrc} alt="Car image" onClose={() => setShowImage(false)} />
-            )}
-        </div>
+            {
+                showImage && (
+                    <ImageModal src={imageSrc} alt="Car image" onClose={() => setShowImage(false)} />
+                )
+            }
+        </div >
     );
 };
 
