@@ -10,7 +10,7 @@ import car2 from '../../images/car2';
 import car3 from '../../images/car3';
 import { useToast } from '../../Hooks/useToast';
 
-const SignIn = ({ onSwitchToSignUp }) => {
+const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
   const navigate = useNavigate();
   const toast = useToast();
   const [formData, setFormData] = useState({
@@ -112,14 +112,26 @@ const SignIn = ({ onSwitchToSignUp }) => {
         })
       });
 
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        data = { message: text || 'Unknown error occurred' };
+      }
+
       console.log('Response status:', response.status);
-      const data = await response.json();
       console.log('Response data:', data);
 
       if (response.ok) {
         // Token is now stored in HttpOnly cookie automatically
         // Only store user data in localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
+        // Legacy support for App.jsx isLoggedIn check
+        localStorage.setItem('token', 'sample_token');
+
+        if (onLoginSuccess) onLoginSuccess();
 
         console.log('User role:', data.user.role);
 

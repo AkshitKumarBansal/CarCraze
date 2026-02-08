@@ -60,7 +60,7 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
     };
 
     checkAuth();
-  }, [setIsLoggedIn]);
+  }, [setIsLoggedIn, isLoggedIn]);
 
   // Debug log to check current state
   console.log("Navbar rendered - isLoggedIn:", isLoggedIn);
@@ -108,6 +108,7 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
           {/* Nav Links (Desktop) */}
           <ul className="hidden sm:flex items-center gap-10">
             <li>
+
               <Link
                 to={isLoggedIn && userRole === 'customer' ? "/dashboard" : "/#home"}
                 className="relative font-semibold text-gray-600 text-sm py-2 transition hover:text-indigo-500
@@ -117,6 +118,8 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
               >
                 Home
               </Link>
+
+              //<Link to={isLoggedIn ? (userRole === 'customer' ? "/dashboard" : userRole === 'seller' ? "/seller/dashboard" : "/#home") : "/#home"}>Home</Link>
             </li>
 
             <li>
