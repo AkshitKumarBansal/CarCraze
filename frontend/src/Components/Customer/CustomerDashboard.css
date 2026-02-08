@@ -1,19 +1,28 @@
+/* Premium Dashboard Container */
 .dashboard-container {
-  padding: 2rem;
-  background-color: #f4f7f6;
+  padding: 2.5rem 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
   min-height: 100vh;
-  margin-top: 3.25rem;
+  margin-top: 4.5rem;
 }
 
 .dashboard-header {
-  color: #333;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 1rem;
-  display: flex;
   text-align: center;
-  align-items: center;
-  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.5rem 0;
 }
 
 .dashboard-content {
@@ -21,114 +30,191 @@
   text-align: center;
   align-items: center;
   justify-content: center;
-  font-size: 2.1rem;
-  color: #555;
+  font-size: 1.3rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
-/* Options Grid */
+/* Premium Options Grid */
 .options-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
+  margin-bottom: 3rem;
 }
 
 .option-card {
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 2rem;
+  background: white;
+  border-radius: 20px;
+  padding: 2.5rem;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid #e0e0e0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.option-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .option-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-10px);
+  box-shadow: 0 15px 50px rgba(102, 126, 234, 0.2);
+  border-color: #667eea;
+}
+
+.option-card:hover::before {
+  opacity: 1;
 }
 
 .option-icon {
-  font-size: 3rem;
-  color: #007bff; /* A nice blue color */
-  margin-bottom: 1rem;
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 4px 10px rgba(102, 126, 234, 0.2));
 }
 
 .option-title {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 0.5rem;
+  font-size: 1.6rem;
+  color: #1f2937;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
 }
 
 .option-description {
   font-size: 1rem;
-  color: #666;
-  margin-bottom: 1.5rem;
-  min-height: 40px; /* Ensures cards have a similar height */
+  color: #6b7280;
+  margin-bottom: 1.8rem;
+  line-height: 1.6;
+  min-height: 48px;
 }
 
 .option-button {
-  background-color: #007bff;
-  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 5px;
+  padding: 0.85rem 2rem;
+  border-radius: 12px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .option-button:hover {
-  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* Option card image */
+.option-button.small {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+}
+
 .option-image {
   width: 100%;
-  height: 140px;
+  height: 160px;
   object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
-  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Catalog Section */
+/* Premium Catalog Section */
 .catalog-section {
   margin-top: 3rem;
 }
 
 .catalog-title {
-  font-size: 1.8rem;
-  color: #222;
-  margin-bottom: 1rem;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 2rem;
   text-align: center;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.catalog-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
 }
 
 .catalog-status,
 .catalog-error {
   text-align: center;
-  color: #666;
-  padding: 1rem 0;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+
+.catalog-status {
+  color: #6b7280;
 }
 
 .catalog-error {
-  color: #c62828;
+  color: #ef4444;
+  background: #fef2f2;
+  border-radius: 12px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
+/* Premium Car Cards Grid */
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
 }
 
 .car-card {
-  background: #fff;
-  border: 1px solid #e9e9e9;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  background: white;
+  border: none;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.car-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
+
+.car-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  transition: transform 0.3s ease;
+}
+
+.car-card:hover .car-image {
+  transform: scale(1.05);
+}
+
+/* Car Card Content */
+.car-card>div {
+  padding: 1.2rem 1.5rem;
 }
 
 .car-card-header {
@@ -139,70 +225,126 @@
 }
 
 .car-brand {
-  font-weight: 600;
-  color: #333;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1f2937;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .car-year {
-  font-size: 0.95rem;
-  color: #777;
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: 600;
 }
 
 .car-model {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0.25rem 0 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0.3rem 0 0.8rem;
+  line-height: 1.3;
 }
 
+/* Car Metadata Pills */
 .car-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.8rem;
 }
 
 .chip {
-  background: #f1f5ff;
-  color: #1a73e8;
-  border: 1px solid #e0e7ff;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+  color: #667eea;
+  border: 1px solid #dae2ff;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
   font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .car-description {
-  color: #555;
-  font-size: 0.95rem;
-  margin-bottom: 0.75rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
+/* Car Footer with Price and Actions */
 .car-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
 }
 
 .price {
-  font-weight: 700;
-  color: #0b8043;
+  font-weight: 800;
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.option-button.small {
-  padding: 0.5rem 0.9rem;
-  font-size: 0.9rem;
+.car-footer-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
-/* Catalog car thumbnail */
-.car-image {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
-  background: #f7f7f7;
-  border: 1px solid #eee;
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1.5rem 0;
+  }
+
+  .dashboard-header h1 {
+    font-size: 2rem;
+  }
+
+  .options-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .catalog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .car-footer {
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: stretch;
+  }
+
+  .car-footer-actions {
+    width: 100%;
+  }
+
+  .option-button.small {
+    width: 100%;
+  }
 }

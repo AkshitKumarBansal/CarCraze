@@ -20,6 +20,8 @@ import About from './Components/Common/About';
 import Contact from './Components/Common/Contact';
 import Service from './Components/Common/Service';
 import Footer from './Components/Common/Footer';
+import { MessageProvider } from './Components/Message/MessageContext';
+import MessageDisplay from './Components/Message/MessageDisplay';
 
 const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
@@ -27,6 +29,7 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
   return (
     <div className="App">
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+      <MessageDisplay />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route
@@ -92,7 +95,7 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute requiredRole="customer">
+            <ProtectedRoute>
               <Profile />
             </ProtectedRoute>
           }
@@ -165,9 +168,11 @@ const App = () => {
     console.log(" User login state:", isLoggedIn ? "ON (Logged In)" : "OFF (Logged Out)");
   }, [isLoggedIn]);
   return (
-    <Router>
-      <AppWithRouter isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-    </Router>
+    <MessageProvider>
+      <Router>
+        <AppWithRouter isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+      </Router>
+    </MessageProvider>
   );
 };
 

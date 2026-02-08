@@ -48,13 +48,15 @@ const ALLOWED_ORIGINS = [
 
 ];
 
-
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://abhishekarora866:Abhi2511@carcraze.e6b6rl3.mongodb.net/carCraze?retryWrites=true&w=majority';
-
-
+const MONGO_URI = process.env.MONGO_URI;
 
 async function connectMongoDB() {
+
+  if (!MONGO_URI) {
+
+    throw new Error('MONGO_URI environment variable is not set. Please set it in your .env file.');
+
+  }
 
   try {
 

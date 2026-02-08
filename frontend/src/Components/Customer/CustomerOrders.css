@@ -1,0 +1,337 @@
+/* Orders Page Container */
+.orders-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    padding: 40px 20px;
+}
+
+.orders-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.orders-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 10px 0;
+}
+
+.orders-subtitle {
+    color: #6b7280;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Loading and Error States */
+.orders-loading,
+.orders-error {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 1.1rem;
+    color: #6b7280;
+}
+
+.orders-error {
+    color: #ef4444;
+}
+
+/* Empty State */
+.orders-empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.empty-orders-icon {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    opacity: 0.6;
+}
+
+.orders-empty-state h2 {
+    font-size: 1.8rem;
+    color: #1f2937;
+    margin: 0 0 10px 0;
+}
+
+.orders-empty-state p {
+    color: #6b7280;
+    font-size: 1.1rem;
+    margin: 0 0 30px 0;
+}
+
+/* Orders List */
+.orders-list {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Order Card */
+.order-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.order-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Order Card Header */
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f3f4f6;
+    margin-bottom: 20px;
+}
+
+.order-info h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 6px 0;
+}
+
+.order-date {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.order-status-badges {
+    display: flex;
+    gap: 10px;
+}
+
+.status-badge,
+.payment-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    text-transform: capitalize;
+}
+
+/* Delivery Info */
+.order-delivery-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.delivery-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.delivery-label {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.delivery-value {
+    font-size: 1rem;
+    color: #374151;
+    font-weight: 600;
+}
+
+/* Order Items */
+.order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.order-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.order-item:hover {
+    background: #f3f4f6;
+}
+
+.order-item-image {
+    flex-shrink: 0;
+    width: 140px;
+    height: 100px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.order-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.order-item-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.order-item-details h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.seller-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 8px;
+    width: fit-content;
+}
+
+.seller-icon {
+    font-size: 1.1rem;
+}
+
+.seller-text {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.seller-text strong {
+    color: #374151;
+    font-weight: 600;
+}
+
+.item-price {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-top: auto;
+}
+
+/* Order Card Footer */
+.order-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 20px;
+    border-top: 2px solid #f3f4f6;
+}
+
+.order-total {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.order-total span:first-child {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.total-amount {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.btn-track {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-track:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Primary Button (for empty state) */
+.btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 14px 32px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .orders-header h1 {
+        font-size: 2rem;
+    }
+
+    .order-card-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .order-status-badges {
+        align-self: flex-start;
+    }
+
+    .order-item {
+        flex-direction: column;
+    }
+
+    .order-item-image {
+        width: 100%;
+        height: 180px;
+    }
+
+    .order-card-footer {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+
+    .btn-track {
+        width: 100%;
+    }
+}
