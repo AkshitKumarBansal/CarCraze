@@ -1,5 +1,5 @@
 /* Premium Navbar Styles */
-.header {
+/* .header {
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
   position: fixed;
@@ -9,17 +9,17 @@
   z-index: 1000;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
   border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-}
+} */
 
-.nav {
+/* .nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1.2rem 0;
-}
+} */
 
 /* Logo with Gradient */
-.logo {
+/* .logo {
   font-size: 1.9rem;
   font-weight: 800;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -31,18 +31,18 @@
   align-items: center;
   gap: 0.6rem;
   transition: all 0.3s ease;
-}
+} */
 
-.logo:hover {
+/* .logo:hover {
   transform: translateY(-2px);
-}
+} */
 
-.logo-icon {
+/* .logo-icon {
   display: flex;
   align-items: center;
   font-size: 2rem;
   filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.3));
-}
+} */
 
 /* Nav Links with Modern Styling */
 .nav-links {
