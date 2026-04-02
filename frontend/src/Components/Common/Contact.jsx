@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Contact.css';
+import { API_ENDPOINTS } from '../../config/api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -24,18 +25,31 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitMessage('Thank you for your message! We\'ll get back to you soon.');
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: ''
+    try {
+      // Use API_ENDPOINTS.CONTACT if defined, otherwise fallback to standard local backend URL
+      const endpoint = API_ENDPOINTS?.CONTACT || 'http://localhost:5001/api/contact';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
       });
-    }, 1000);
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitMessage(data.message || 'Thank you for your message! We\'ll get back to you soon.');
+        setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      } else {
+        setSubmitMessage(`Error: ${data.message || 'Failed to send message.'}`);
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      setSubmitMessage('Error: Unable to connect to the server. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -123,8 +137,8 @@ const Contact = () => {
             <div className="contact-form">
               <h2>Send us a Message</h2>
               {submitMessage && (
-                <div className="success-message">
-                  <i className="fas fa-check-circle"></i>
+              <div className={`success-message ${submitMessage.startsWith('Error') ? 'error' : ''}`}>
+                <i className={`fas ${submitMessage.startsWith('Error') ? 'fa-exclamation-circle' : 'fa-check-circle'}`}></i>
                   {submitMessage}
                 </div>
               )}
