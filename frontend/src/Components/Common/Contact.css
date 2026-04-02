@@ -4,7 +4,7 @@
 }
 
 .contact-hero {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   color: white;
   padding: 4rem 0;
   text-align: center;
@@ -41,7 +41,7 @@
 
 .contact-info p {
   font-size: 1.1rem;
-  color: #666;
+  color: #4b5563;
   line-height: 1.6;
   margin-bottom: 2rem;
 }
@@ -59,7 +59,7 @@
 .contact-icon {
   width: 50px;
   height: 50px;
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  background: linear-gradient(135deg, #6366f1, #a855f7);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -98,27 +98,28 @@
 .social-icon {
   width: 40px;
   height: 40px;
-  background: #f8f9fa;
+  background: #f3f4f6;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #007bff;
+  color: #6366f1;
   text-decoration: none;
   transition: all 0.3s ease;
 }
 
 .social-icon:hover {
-  background: #007bff;
+  background: #6366f1;
   color: white;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .contact-form {
   background: white;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
 .success-message {
@@ -130,6 +131,18 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.success-message.error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .form-row {
@@ -155,9 +168,10 @@
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e9ecef;
+  border: 2px solid #e5e7eb;
   border-radius: 8px;
   font-size: 1rem;
+  color: #1f2937;
   transition: border-color 0.3s ease;
 }
 
@@ -165,7 +179,8 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .form-group textarea {
@@ -174,7 +189,7 @@
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -192,7 +207,7 @@
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
 .submit-btn:disabled {

@@ -9,6 +9,11 @@ import Service from '../Common/Service';
 import ImageModal from '../Common/ImageModal';
 import { useToast } from '../../Hooks/useToast';
 
+// TODO: Replace these with proper imports from your assets folder if available
+const newCarsImage = '/images/placeholder-new.png';
+const oldCarsImage = '/images/placeholder-old.png';
+const rentCarsImage = '/images/placeholder-rent.png';
+
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -65,9 +70,9 @@ const CustomerDashboard = () => {
     <div className="dashboard-container">
       <Hero
         onLetsGo={() => {
-          const el = document.getElementById('options');
+          const el = document.getElementById('catalog');
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          else window.location.hash = 'options';
+          else window.location.hash = 'catalog';
         }}
         onSearch={({ serviceType }) => {
           if (serviceType === 'rent') {

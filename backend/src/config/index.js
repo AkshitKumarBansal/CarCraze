@@ -60,6 +60,8 @@ async function connectMongoDB() {
 
   try {
 
+    console.log("Mongo URI:", MONGO_URI);
+
     const options = {
 
       useNewUrlParser: true,

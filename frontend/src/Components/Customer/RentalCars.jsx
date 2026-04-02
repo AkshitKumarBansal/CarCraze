@@ -10,6 +10,12 @@ const RentalCars = () => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
+  // Helper function to fix image URLs with correct port
+  const fixImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    return imageUrl.replace(/localhost:\d+/, 'localhost:5001');
+  };
+
   useEffect(() => {
     const fetchCars = async () => {
       try {
@@ -62,7 +68,7 @@ const RentalCars = () => {
         {!loading && !error && (
           <div className="catalog-grid">
             {filteredCars.map(car => (
-              <div className="car-card" key={car.id}>
+              <div className="car-card" key={car._id || car.id}>
                 <div className="car-image-container">
                   {car.images && car.images.length > 0 ? (
                     <img 
