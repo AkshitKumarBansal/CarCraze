@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import './CustomerDashboard.css';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../Hooks/useToast';
 
 const OldCars = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,17 +49,16 @@ const OldCars = () => {
     <div className="dashboard-container">
       <h1 className="dashboard-header">Old Cars</h1>
       <p className="dashboard-content">Find certified pre-owned vehicles at great prices.</p>
-      <button className="option-button small back-button" onClick={() => navigate(-1)}>← Back</button>
+      <button className="back-button" onClick={() => navigate(-1)}>← Back</button>
       
       {/* Search */}
-      <div className="catalog-controls" style={{margin: '0 0 1rem 0'}}>
+      <div className="catalog-controls">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by car name (brand or model)..."
           className="search-input"
-          style={{width:'100%', maxWidth: '420px', padding:'10px 12px', borderRadius:'8px', border:'1px solid #ddd'}}
         />
       </div>
 
@@ -68,7 +69,7 @@ const OldCars = () => {
         {!loading && !error && (
           <div className="catalog-grid">
             {filteredCars.map(car => (
-              <div className="car-card" key={car.id}>
+              <div className="car-card" key={car._id || car.id}>
                 <div className="car-image-container">
                   {car.images && car.images.length > 0 ? (
                     <img 
@@ -106,7 +107,38 @@ const OldCars = () => {
                 </div>
                 <div className="car-footer">
                   <span className="price">₹{car.price.toLocaleString('en-IN')}</span>
-                  <button className="option-button small">View Details</button>
+                  <div className="car-footer-actions">
+                    <button className="option-button small">View Details</button>
+                    <button
+                      className="option-button small"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(API_ENDPOINTS.CART, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ carId: car._id || car.id })
+                          });
+
+                          if (res.status === 401) {
+                            navigate('/signin');
+                            return;
+                          }
+
+                          const data = await res.json();
+                          if (!res.ok) {
+                            throw new Error(data.message || 'Add to cart failed');
+                          }
+                          toast.success(`🚗 ${car.brand} ${car.model} added to cart!`);
+                        } catch (err) {
+                          console.error('Add to cart error', err);
+                          toast.error('❌ Failed to add to cart: ' + (err.message || 'Please try again'));
+                        }
+                      }}
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

@@ -133,6 +133,13 @@ const CustomerDashboard = () => {
                     <button
                       className="option-button small"
                       onClick={async () => {
+                        // Redirect to the Rental page to select dates if it's a rental car
+                        if (car.listingType === 'rent') {
+                          toast.info('📅 Please select pickup and return dates first!');
+                          navigate('/rent-cars');
+                          return;
+                        }
+
                         // REMOVED blocking token check to allow cookie-based auth
                         try {
                           const res = await fetch(API_ENDPOINTS.CART, {
