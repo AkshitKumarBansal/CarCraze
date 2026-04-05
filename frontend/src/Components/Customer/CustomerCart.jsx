@@ -10,6 +10,21 @@ const CustomerCart = () => {
   const [error, setError] = useState('');
   const [checkoutStatus, setCheckoutStatus] = useState(null);
 
+  const formatDate = (iso) => {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const calculateDays = (start, end) => {
+    if (!start || !end) return 0;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const msPerDay = 1000 * 60 * 60 * 24;
+    // Use Math.round to avoid timezone/DST issues
+    const days = Math.round((endDate.getTime() - startDate.getTime()) / msPerDay);
+    return days > 0 ? days : 1;
+  };
+
   const fetchCart = async () => {
     try {
       setLoading(true);
@@ -130,6 +145,18 @@ const CustomerCart = () => {
                     <span>📧 {item.owner?.email || 'N/A'}</span>
                   </div>
                 </div>
+                {/* Rental Information Display */}
+                {item.car.listingType === 'rent' && item.startDate && item.endDate && (
+                  <div className="cart-card-rental-info">
+                    <div className="rental-date-item">
+                      <strong>From:</strong> {formatDate(item.startDate)}
+                    </div>
+                    <div className="rental-date-item">
+                      <strong>To:</strong> {formatDate(item.endDate)}
+                    </div>
+                    <div className="rental-duration">({calculateDays(item.startDate, item.endDate)} days)</div>
+                  </div>
+                )}
                 <div className="cart-card-actions">
                   <div className="cart-price">₹{item.price.toLocaleString('en-IN')}</div>
                   <button

@@ -25,12 +25,30 @@ router.get('/', authenticateToken, async (req, res) => {
 // POST /api/cart - add an item to cart { carId }
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { carId } = req.body;
+    const { carId, startDate, endDate } = req.body;
     if (!carId) return res.status(400).json({ message: 'carId is required' });
 
     const car = await Car.findById(carId);
     if (!car) return res.status(404).json({ message: 'Car not found' });
     if (car.status !== 'active') return res.status(400).json({ message: 'Car is not available' });
+
+    let calculatedPrice = car.price;
+    let validStartDate = null;
+    let validEndDate = null;
+
+    // If it's a rental, calculate the total price based on the number of days
+    if (car.listingType === 'rent') {
+      if (!startDate || !endDate) return res.status(400).json({ message: 'Pickup and Return dates are required for rentals' });
+      
+      validStartDate = new Date(startDate);
+      validEndDate = new Date(endDate);
+      if (validEndDate <= validStartDate) return res.status(400).json({ message: 'Return date must be after pickup date' });
+
+      const msPerDay = 1000 * 60 * 60 * 24;
+      // Use getTime() and Math.round() to prevent Daylight Saving Time edge cases
+      const days = Math.round((validEndDate.getTime() - validStartDate.getTime()) / msPerDay) || 1;
+      calculatedPrice = Number(car.price) * days;
+    }
 
     let cart = await Cart.findOne({ userId: req.user.userId });
     if (!cart) {
@@ -40,7 +58,13 @@ router.post('/', authenticateToken, async (req, res) => {
     const exists = cart.items.some(it => it.car.toString() === car._id.toString());
     if (exists) return res.status(409).json({ message: 'Car already in cart' });
 
-    cart.items.push({ car: car._id, owner: car.sellerId, price: car.price });
+    cart.items.push({ 
+      car: car._id, 
+      owner: car.sellerId, 
+      price: calculatedPrice,
+      startDate: validStartDate,
+      endDate: validEndDate
+    });
     await cart.save();
 
     res.status(201).json({ message: 'Added to cart', item: cart.items[cart.items.length - 1] });

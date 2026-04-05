@@ -4,6 +4,8 @@ const cartItemSchema = new mongoose.Schema({
   car: { type: mongoose.Schema.Types.ObjectId, ref: 'Car', required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   price: { type: Number, required: true },
+  startDate: { type: Date },
+  endDate: { type: Date },
   addedAt: { type: Date, default: Date.now }
 });
 
