@@ -13,11 +13,6 @@ const RentalCars = () => {
   const [search, setSearch] = useState('');
   const [rentalDates, setRentalDates] = useState({ startDate: '', endDate: '' });
 
-  // Helper function to fix image URLs with correct port
-  const fixImageUrl = (imageUrl) => {
-    if (!imageUrl) return null;
-    return imageUrl.replace(/localhost:\d+/, 'localhost:5001');
-  };
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -94,7 +89,7 @@ const RentalCars = () => {
                 <div className="car-image-container">
                   {car.images && car.images.length > 0 ? (
                     <img 
-                      src={fixImageUrl(car.images[0])} 
+                    src={car.images[0]} 
                       alt={`${car.brand} ${car.model}`}
                       className="car-image"
                       onError={(e) => {

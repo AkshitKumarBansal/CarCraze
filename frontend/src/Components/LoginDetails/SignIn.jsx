@@ -8,6 +8,10 @@ import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
 import car1 from '../../images/car1';
 import car2 from '../../images/car2';
 import car3 from '../../images/car3';
+
+// Bug #11 fix: defined outside component so the array reference is stable
+const SLIDESHOW_IMAGES = [car1, car2, car3];
+
 import { useToast } from '../../Hooks/useToast';
 
 const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
@@ -22,15 +26,14 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const images = [car1, car2, car3];
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      setCurrentImageIndex((prev) => (prev + 1) % SLIDESHOW_IMAGES.length);
     }, 5000);
     return () => clearInterval(id);
-  }, [images.length]);
+  }, []);
 
   // Function to detect role based on email
   const detectRoleFromEmail = (email) => {
@@ -125,11 +128,8 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
       console.log('Response data:', data);
 
       if (response.ok) {
-        // Token is now stored in HttpOnly cookie automatically
-        // Only store user data in localStorage
+        // Store user data in localStorage for quick access
         localStorage.setItem('user', JSON.stringify(data.user));
-        // Legacy support for App.jsx isLoggedIn check
-        localStorage.setItem('token', 'sample_token');
 
         if (onLoginSuccess) onLoginSuccess();
 
@@ -140,13 +140,10 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
 
         // Redirect based on role
         if (data.user.role === 'seller') {
-          console.log('Redirecting to seller dashboard...');
           navigate('/seller/dashboard');
         } else if (data.user.role === 'admin') {
-          console.log('Redirecting to admin dashboard...');
           navigate('/admin/dashboard');
         } else {
-          console.log('Redirecting to customer dashboard...');
           navigate('/dashboard');
         }
       } else {
@@ -163,25 +160,15 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
   };
 
 
-  const handleForgotPassword = async (email) => {
-    if (!email.trim()) {
-      toast.warning('Please enter your email address');
-      return;
-    }
-
-    if (!/\S+@\S+\.\S+/.test(email)) {
+  // Bug #6 fix: Forgot password is not yet implemented.
+  // Show an informative message instead of a fake 'success'.
+  const handleForgotPassword = (email) => {
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
       toast.warning('Please enter a valid email address');
       return;
     }
-
-    try {
-      // Simulate API call for password reset
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('📧 Password reset link sent to your email!');
-      setShowForgotPassword(false);
-    } catch (error) {
-      toast.error('Failed to send reset link. Please try again.');
-    }
+    toast.info('📧 Password reset is not yet available. Please contact support.');
+    setShowForgotPassword(false);
   };
 
   const getRoleDescription = (role) => {
@@ -202,63 +189,14 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
     return icons[role];
   };
 
-  // Simulated Google Sign-In handler
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      // Simulate Google auth popup + response
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      // If email already typed, infer role; else use a demo email
-      const email = formData.email?.trim() || 'customer@carcraze.com';
-      const role = detectRoleFromEmail(email);
-
-      toast.success(`🎉 Signed in with Google as ${role.charAt(0).toUpperCase() + role.slice(1)}!`);
-      setTimeout(() => {
-        // Redirect based on role
-        if (role === 'seller') {
-          navigate('/seller/dashboard');
-        } else if (role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/dashboard');
-        }
-      }, 1000);
-    } catch (err) {
-      console.error('Google sign-in failed:', err);
-      setErrors({ general: 'Google sign-in failed. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
+  // Bug #5 fix: Google/Facebook OAuth is not yet implemented.
+  const handleGoogleSignIn = () => {
+    toast.info('🚧 Google Sign-In coming soon! Please use email & password for now.');
   };
 
-  // Simulated Facebook Sign-In handler
-  const handleFacebookSignIn = async () => {
-    try {
-      setLoading(true);
-      // Simulate Facebook auth popup + response
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      const email = formData.email?.trim() || 'customer@carcraze.com';
-      const role = detectRoleFromEmail(email);
-
-      toast.success(`🎉 Signed in with Facebook as ${role.charAt(0).toUpperCase() + role.slice(1)}!`);
-      setTimeout(() => {
-        // Redirect based on role
-        if (role === 'seller') {
-          navigate('/seller/dashboard');
-        } else if (role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/dashboard');
-        }
-      }, 1000);
-    } catch (err) {
-      console.error('Facebook sign-in failed:', err);
-      setErrors({ general: 'Facebook sign-in failed. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
+  // Bug #5 fix: Facebook OAuth is not yet implemented.
+  const handleFacebookSignIn = () => {
+    toast.info('🚧 Facebook Sign-In coming soon! Please use email & password for now.');
   };
 
   if (showForgotPassword) {
@@ -267,7 +205,7 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
         <Navbar />
         <div className="auth-container">
           <div className="auth-bg">
-            {images.map((img, idx) => (
+            {SLIDESHOW_IMAGES.map((img, idx) => (
               <div
                 key={idx}
                 className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`}
@@ -327,7 +265,7 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
         className="auth-container"
       >
         <div className="auth-bg">
-          {images.map((img, idx) => (
+          {SLIDESHOW_IMAGES.map((img, idx) => (
             <div
               key={idx}
               className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`}
@@ -391,12 +329,6 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
 
             {/* Form Options */}
             <div className="form-options">
-              <label className="checkbox-label">
-                <input type="checkbox" />
-                <span className="checkmark"></span>
-                Remember me
-              </label>
-
               <button
                 type="button"
                 className="forgot-password-link"

@@ -18,9 +18,6 @@ export const API_ENDPOINTS = {
   ORDERS: `${API_BASE_URL}/api/orders`,
   UPLOAD_IMAGES: `${API_BASE_URL}/api/upload/car-images`,
 
-  // Messages endpoint
-  MESSAGES: `${API_BASE_URL}/api/messages`,
-
   // Health check
   HEALTH: `${API_BASE_URL}/api/health`
 };

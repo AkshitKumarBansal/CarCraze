@@ -12,14 +12,14 @@ const formatDate = (iso) => {
   });
 };
 
+// Bug #28 fix: these statuses now match the Order model enum
+// ('created','processing','completed','cancelled')
 const getStatusColor = (status) => {
   const statusColors = {
-    'pending': '#f59e0b',
+    'created':    '#6366f1',
     'processing': '#3b82f6',
-    'confirmed': '#8b5cf6',
-    'shipped': '#06b6d4',
-    'delivered': '#10b981',
-    'cancelled': '#ef4444'
+    'completed':  '#10b981',
+    'cancelled':  '#ef4444'
   };
   return statusColors[status?.toLowerCase()] || '#6b7280';
 };
@@ -149,12 +149,13 @@ const CustomerOrders = () => {
               </div>
 
               <div className="order-card-footer">
-                <div className="order-total">
-                  <span>Order Total:</span>
-                  <span className="total-amount">
-                    ₹{order.items.reduce((sum, item) => sum + (item.price || 0), 0).toLocaleString('en-IN')}
-                  </span>
-                </div>
+                {/* Bug #15 fix: use the stored order.total instead of recalculating */}
+              <div className="order-total">
+                <span>Order Total:</span>
+                <span className="total-amount">
+                  ₹{(order.total || 0).toLocaleString('en-IN')}
+                </span>
+              </div>
                 <button className="btn-track">Track Order</button>
               </div>
             </div>

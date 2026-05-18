@@ -2,86 +2,38 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from '../../config/api';
 import "./Navbar.css";
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { Bars3Icon, BellIcon, XMarkIcon, HomeIcon, TruckIcon, InformationCircleIcon, PhoneIcon, MapPinIcon} from '@heroicons/react/24/outline';
+import { useAuth } from '../../context/AuthContext';
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
+import { Bars3Icon, BellIcon, XMarkIcon, HomeIcon, TruckIcon, InformationCircleIcon, PhoneIcon, MapPinIcon } from '@heroicons/react/24/outline';
 
-const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
+// Bug #26 fix: removed debug console.log statements
+// Bug #12 fix: reads user from AuthContext instead of making a separate fetch
+const Navbar = ({ isLoggedIn }) => {
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState(null);
-  const [user, setUser] = useState(null);
+  const { user, logout } = useAuth();
+  const userRole = user?.role ?? null;
   const [cartCount, setCartCount] = useState(0);
 
+  // Fetch cart count for customers whenever the user changes
   useEffect(() => {
-    // Check if user is logged in by calling the backend
-    const checkAuth = async () => {
+    if (user?.role !== 'customer') {
+      setCartCount(0);
+      return;
+    }
+    const fetchCartCount = async () => {
       try {
-        const response = await fetch(API_ENDPOINTS.PROFILE, {
-          credentials: 'include' // Include cookies
-        });
-
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          setUserRole(userData.role);
-          // Also store in localStorage for quick access
-          localStorage.setItem('user', JSON.stringify(userData));
-          if (setIsLoggedIn) {
-            setIsLoggedIn(true);
-          }
-
-          // Fetch cart count for customers
-          if (userData.role === 'customer') {
-            const cartRes = await fetch(API_ENDPOINTS.CART, {
-              credentials: 'include'
-            });
-            if (cartRes.ok) {
-              const cartData = await cartRes.json();
-              setCartCount(Array.isArray(cartData.items) ? cartData.items.length : 0);
-            }
-          }
-        } else {
-          // Not authenticated
-          setUser(null);
-          setUserRole(null);
-          localStorage.removeItem('user');
-          if (setIsLoggedIn) {
-            setIsLoggedIn(false);
-          }
+        const cartRes = await fetch(API_ENDPOINTS.CART, { credentials: 'include' });
+        if (cartRes.ok) {
+          const cartData = await cartRes.json();
+          setCartCount(Array.isArray(cartData.items) ? cartData.items.length : 0);
         }
-      } catch (err) {
-        console.error('Failed to check auth', err);
-        setUser(null);
-        setUserRole(null);
-        localStorage.removeItem('user');
-        if (setIsLoggedIn) {
-          setIsLoggedIn(false);
-        }
-      }
+      } catch { /* silently ignore */ }
     };
-
-    checkAuth();
-  }, [setIsLoggedIn, isLoggedIn]);
-
-  // Debug log to check current state
-  console.log("Navbar rendered - isLoggedIn:", isLoggedIn);
+    fetchCartCount();
+  }, [user]);
 
   const handleLogout = async () => {
-    console.log("Logging out... current isLoggedIn:", isLoggedIn);
-    try {
-      // Call backend logout endpoint to clear cookie
-      await fetch(API_ENDPOINTS.LOGOUT, {
-        method: 'POST',
-        credentials: 'include'
-      });
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
-
-    // Clear local storage
-    localStorage.removeItem("user");
-    setUser(null);
-    setUserRole(null);
-    setIsLoggedIn(false);
+    await logout();
     navigate("/");
   };
 
@@ -99,7 +51,6 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
           </div>
           {/* Logo */}
           <div className="flex items-center">
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-gray-900">
               <span className="text-3xl">🚗</span>
               CarCraze
@@ -108,7 +59,6 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
           {/* Nav Links (Desktop) */}
           <ul className="hidden sm:flex items-center gap-10">
             <li>
-
               <Link
                 to={isLoggedIn && userRole === 'customer' ? "/dashboard" : "/#home"}
                 className="relative font-semibold text-gray-600 text-sm py-2 transition hover:text-indigo-500
@@ -118,8 +68,6 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
               >
                 Home
               </Link>
-
-              {/* <Link to={isLoggedIn ? (userRole === 'customer' ? "/dashboard" : userRole === 'seller' ? "/seller/dashboard" : "/#home") : "/#home"}>Home</Link> */}
             </li>
 
             <li>
@@ -159,7 +107,6 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
             </li>
           </ul>
           <div className="hidden sm:flex items-center gap-4">
-            {/*Location*/}
             {user && (
               <button
                 type="button"
@@ -169,7 +116,6 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                 <span>Delhi</span>
               </button>
             )}
-            {/*Notifications*/}
             {user && (
               <button
                 type="button"
@@ -179,93 +125,97 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                 <BellIcon className="h-6 w-6" />
               </button>
             )}
-
-            {/* Profile / Auth buttons */}
           </div>
 
-
-            {/* Auth Buttons */}
-            {!user ? (
-              <div className="auth-buttons">
-                <Link to="/signup" className="auth-btn sign-up">Sign Up</Link>
-                <Link to="/signin" className="auth-btn sign-in">Sign In</Link>
-              </div>
-            ) : (
-              <div className="auth-buttons">
-                {userRole === 'seller' ? (
-                  <>
-                    <div className="user-profile">
-                      <span className="user-name">Hello, {user.firstName}</span>
-                      <div className="profile-dropdown">
-                        <Link to="/profile" className="auth-btn profile">
-                          <i className="fas fa-user"></i> Profile
-                        </Link>
-                        <Link to="/seller/dashboard" className="auth-btn profile">
-                          <i className="fas fa-tachometer-alt"></i> Dashboard
-                        </Link>
-                        <Link to="/seller/add-car" className="auth-btn profile">
-                          <i className="fas fa-plus"></i> Add Car
-                        </Link>
-                        <button onClick={handleLogout} className="auth-btn sign-out">
-                          <i className="fas fa-sign-out-alt"></i> Sign Out
-                        </button>
-                      </div>
+          {/* Auth Buttons */}
+          {!user ? (
+            <div className="auth-buttons">
+              <Link to="/signup" className="auth-btn sign-up">Sign Up</Link>
+              <Link to="/signin" className="auth-btn sign-in">Sign In</Link>
+            </div>
+          ) : (
+            <div className="auth-buttons">
+              {userRole === 'seller' ? (
+                <>
+                  <div className="user-profile">
+                    <span className="user-name">Hello, {user.firstName}</span>
+                    <div className="profile-dropdown">
+                      <Link to="/profile" className="auth-btn profile">
+                        <i className="fas fa-user"></i> Profile
+                      </Link>
+                      <Link to="/seller/dashboard" className="auth-btn profile">
+                        <i className="fas fa-tachometer-alt"></i> Dashboard
+                      </Link>
+                      <Link to="/seller/add-car" className="auth-btn profile">
+                        <i className="fas fa-plus"></i> Add Car
+                      </Link>
+                      <button onClick={handleLogout} className="auth-btn sign-out">
+                        <i className="fas fa-sign-out-alt"></i> Sign Out
+                      </button>
                     </div>
-                  </>
-                ) : userRole === 'customer' ? (
-                  <>
-                    <div className="user-profile">
-                      <span className="user-name">Hello, {user.firstName}</span>
-                      <div className="profile-dropdown">
-                        <Link to="/profile" className="auth-btn profile">
-                          <i className="fas fa-user"></i> Profile
-                        </Link>
-                        <Link to="/cart" className="auth-btn profile cart-link">
-                          <i className="fas fa-shopping-cart"></i> Cart
-                          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-                        </Link>
-                        <Link to="/orders" className="auth-btn profile">
-                          <i className="fas fa-box"></i> Orders
-                        </Link>
-                        <Link to="/dashboard" className="auth-btn profile">
-                          <i className="fas fa-tachometer-alt"></i> Dashboard
-                        </Link>
-                        <button onClick={handleLogout} className="auth-btn sign-out">
-                          <i className="fas fa-sign-out-alt"></i> Sign Out
-                        </button>
-                      </div>
+                  </div>
+                </>
+              ) : userRole === 'customer' ? (
+                <>
+                  <div className="user-profile">
+                    <span className="user-name">Hello, {user.firstName}</span>
+                    <div className="profile-dropdown">
+                      <Link to="/profile" className="auth-btn profile">
+                        <i className="fas fa-user"></i> Profile
+                      </Link>
+                      <Link to="/cart" className="auth-btn profile cart-link">
+                        <i className="fas fa-shopping-cart"></i> Cart
+                        {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                      </Link>
+                      <Link to="/orders" className="auth-btn profile">
+                        <i className="fas fa-box"></i> Orders
+                      </Link>
+                      <Link to="/dashboard" className="auth-btn profile">
+                        <i className="fas fa-tachometer-alt"></i> Dashboard
+                      </Link>
+                      <button onClick={handleLogout} className="auth-btn sign-out">
+                        <i className="fas fa-sign-out-alt"></i> Sign Out
+                      </button>
                     </div>
-                  </>
-                ) : (
-                  <button onClick={handleLogout} className="auth-btn sign-out">
-                    Sign Out
-                  </button>
-                )}
-              </div>
-            )}
-          {/* </nav> */}
+                  </div>
+                </>
+              ) : userRole === 'admin' ? (
+                <div className="user-profile">
+                  <span className="user-name">Admin: {user.firstName}</span>
+                  <div className="profile-dropdown">
+                    <Link to="/admin/dashboard" className="auth-btn profile">
+                      <i className="fas fa-tachometer-alt"></i> Dashboard
+                    </Link>
+                    <button onClick={handleLogout} className="auth-btn sign-out">
+                      <i className="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={handleLogout} className="auth-btn sign-out">
+                  Sign Out
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
       {/* Mobile Menu Panel */}
       <DisclosurePanel className="sm:hidden">
         <div className="space-y-1 px-2 pb-4 pt-2">
-          {/* Home */}
-          <Link to={isLoggedIn && userRole === 'customer' ? "/dashboard" : "/#home"} className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600" >
+          <Link to={isLoggedIn && userRole === 'customer' ? "/dashboard" : "/#home"} className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">
             <HomeIcon className="h-5 w-5" />
             Home
           </Link>
-          {/* Cars */}
-          <Link to={isLoggedIn && userRole === 'customer' ? "/dashboard#catalog" : "/#cars"} className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600" >
+          <Link to={isLoggedIn && userRole === 'customer' ? "/dashboard#catalog" : "/#cars"} className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">
             <TruckIcon className="h-5 w-5" />
             Cars
           </Link>
-          {/* About */}
-          <Link to="/about" className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600" >
+          <Link to="/about" className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">
             <InformationCircleIcon className="h-5 w-5" />
             About
           </Link>
-          {/* Contact */}
-          <Link to="/contact" className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600" >
+          <Link to="/contact" className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">
             <PhoneIcon className="h-5 w-5" />
             Contact
           </Link>

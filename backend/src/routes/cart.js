@@ -50,6 +50,12 @@ router.post('/', authenticateToken, async (req, res) => {
       calculatedPrice = Number(car.price) * days;
     }
 
+    // Re-fetch with a fresh query to reduce the race-condition window
+    const freshCar = await Car.findById(carId);
+    if (!freshCar || freshCar.status !== 'active') {
+      return res.status(400).json({ message: 'Car is no longer available' });
+    }
+
     let cart = await Cart.findOne({ userId: req.user.userId });
     if (!cart) {
       cart = new Cart({ userId: req.user.userId, items: [] });
@@ -106,7 +112,13 @@ router.post('/checkout', authenticateToken, async (req, res) => {
 
     const order = new Order({
       userId: req.user.userId,
-      items: cart.items.map(it => ({ car: it.car._id, owner: it.owner, price: it.price })),
+      items: cart.items.map(it => ({
+        car: it.car._id,
+        owner: it.owner,
+        price: it.price,
+        startDate: it.startDate || null,
+        endDate: it.endDate || null
+      })),
       total,
       paymentMethod,
       paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
@@ -115,6 +127,14 @@ router.post('/checkout', authenticateToken, async (req, res) => {
     });
 
     await order.save();
+
+    // Update car statuses: sale → 'sold', rental → 'rented'
+    await Promise.all(
+      cart.items.map(it => {
+        const newStatus = it.car.listingType === 'rent' ? 'rented' : 'sold';
+        return Car.findByIdAndUpdate(it.car._id, { status: newStatus });
+      })
+    );
 
     // Clear cart
     cart.items = [];
