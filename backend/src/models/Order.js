@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const orderItemSchema = new mongoose.Schema({
   car: { type: mongoose.Schema.Types.ObjectId, ref: 'Car', required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  price: { type: Number, required: true }
+  price: { type: Number, required: true },
+  // Rental-specific date range (null for sale listings)
+  startDate: { type: Date, default: null },
+  endDate: { type: Date, default: null }
 });
 
 const orderSchema = new mongoose.Schema({

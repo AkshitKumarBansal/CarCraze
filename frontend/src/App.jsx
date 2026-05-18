@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import HomePage from './Components/Home/HomePage';
 import SignIn from './Components/LoginDetails/SignIn';
 import SignUp from './Components/LoginDetails/SignUp';
@@ -22,13 +23,17 @@ import Service from './Components/Common/Service';
 import Footer from './Components/Common/Footer';
 import { MessageProvider } from './Components/Message/MessageContext';
 import MessageDisplay from './Components/Message/MessageDisplay';
+import AdminDashboard from './Components/Admin/AdminDashboard';
 
-const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
+// Bug #12 fix: isLoggedIn is now derived from AuthContext (no more fake sentinel token).
+const AppWithRouter = () => {
   const navigate = useNavigate();
+  const { user, refreshAuth } = useAuth();
+  const isLoggedIn = !!user;
 
   return (
     <div className="App">
-      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+      <Navbar isLoggedIn={isLoggedIn} />
       <MessageDisplay />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -37,11 +42,7 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           element={
             <SignIn
               onSwitchToSignUp={() => navigate('/signup')}
-              onLoginSuccess={() => {
-                localStorage.setItem('token', 'sample_token');
-                setIsLoggedIn(true);
-                console.log(" User Logged In -> isLoggedIn: ON");
-              }}
+              onLoginSuccess={refreshAuth}
             />
           }
         />
@@ -50,11 +51,7 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           element={
             <SignUp
               onSwitchToSignIn={() => navigate('/signin')}
-              onSignupSuccess={() => {
-                localStorage.setItem('token', 'sample_token');
-                setIsLoggedIn(true);
-                console.log(" User Signed Up & Logged In -> isLoggedIn: ON");
-              }}
+              onSignupSuccess={refreshAuth}
             />
           }
         />
@@ -115,13 +112,9 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
           }
         />
 
-        {/* Services Route */}
+        {/* Public Routes */}
         <Route path="/services" element={<Service />} />
-
-        {/* About Route */}
         <Route path="/about" element={<About />} />
-
-        {/* Contact Route */}
         <Route path="/contact" element={<Contact />} />
 
         {/* Seller Routes */}
@@ -149,6 +142,16 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
             </ProtectedRoute>
           }
         />
+
+        {/* Bug #1 fix: Admin route now exists */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
       <Footer />
     </div>
@@ -156,21 +159,14 @@ const AppWithRouter = ({ isLoggedIn, setIsLoggedIn }) => {
 };
 
 const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  useEffect(() => {
-    if (localStorage.getItem("token")) {
-      setIsLoggedIn(true);
-    }
-  }, []);
-  useEffect(() => {
-    console.log(" User login state:", isLoggedIn ? "ON (Logged In)" : "OFF (Logged Out)");
-  }, [isLoggedIn]);
   return (
-    <MessageProvider>
-      <Router>
-        <AppWithRouter isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-      </Router>
-    </MessageProvider>
+    <AuthProvider>
+      <MessageProvider>
+        <Router>
+          <AppWithRouter />
+        </Router>
+      </MessageProvider>
+    </AuthProvider>
   );
 };
 

@@ -269,7 +269,6 @@ const AddCar = () => {
         method: 'POST',
         credentials: 'include',
         headers: {
-          // 'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(submitData)
@@ -281,6 +280,18 @@ const AddCar = () => {
         alert('Car added successfully!');
         navigate('/seller/dashboard');
       } else {
+        // Bug #19 fix: if car creation fails but images were uploaded,
+        // delete them from Cloudinary to prevent orphaned assets.
+        if (imageUrls.length > 0) {
+          try {
+            await fetch(`${API_ENDPOINTS.SELLER_CARS}/images-cleanup`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ images: imageUrls })
+            });
+          } catch { /* best-effort cleanup */ }
+        }
         setErrors({ general: data.message || 'Failed to add car' });
       }
     } catch (error) {

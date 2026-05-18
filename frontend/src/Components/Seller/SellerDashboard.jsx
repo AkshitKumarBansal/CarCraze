@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../Hooks/useToast';
+import { API_ENDPOINTS } from '../../config/api';
 import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
 import Hero from '../Home/Hero';
@@ -43,7 +44,7 @@ const SellerDashboard = () => {
     const fetchSellerCars = async () => {
         try {
             // const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5001/api/seller/cars', {
+            const response = await fetch(API_ENDPOINTS.SELLER_CARS, {
                 credentials: 'include',
                 headers: {
                     // 'Authorization': `Bearer ${token}`,
@@ -73,7 +74,7 @@ const SellerDashboard = () => {
 
         try {
             // const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5001/api/seller/cars/${carId}`, {
+            const response = await fetch(`${API_ENDPOINTS.SELLER_CARS}/${carId}`, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: {
@@ -95,8 +96,14 @@ const SellerDashboard = () => {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
+    // Bug #7 fix: call backend logout to clear the HttpOnly cookie,
+    // then clear local state.
+    const handleLogout = async () => {
+        try {
+            await fetch(API_ENDPOINTS.LOGOUT, { method: 'POST', credentials: 'include' });
+        } catch (err) {
+            console.error('Logout error:', err);
+        }
         localStorage.removeItem('user');
         navigate('/');
     };

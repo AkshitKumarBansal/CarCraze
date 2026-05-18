@@ -41,8 +41,10 @@ router.post('/', authenticateToken, async (req, res) => {
 
     await rental.save();
 
-    // Optionally, update car availability - for now we leave it as-is but log
-    console.log('Rental created:', rental._id);
+    // Mark car as rented so it no longer appears in active listings
+    car.status = 'rented';
+    await car.save();
+
     res.status(201).json({ message: 'Rental booked successfully', rental });
   } catch (err) {
     console.error('Create rental error:', err);

@@ -9,7 +9,7 @@ const router = express.Router();
 // POST /api/auth/signup
 router.post('/signup', async (req, res) => {
     try {
-        console.log('Received signup request:', req.body);
+        if (process.env.NODE_ENV === 'development') console.log('Received signup request body keys:', Object.keys(req.body));
 
         const {
             firstName,
@@ -23,7 +23,7 @@ router.post('/signup', async (req, res) => {
         } = req.body;
 
         if (!email || !password || !firstName || !lastName || !phone || !role) {
-            console.error('Missing required fields:', { email, firstName, lastName, phone, role });
+            console.error('Signup: missing required fields');
             return res.status(400).json({
                 message: 'Missing required fields',
                 errors: {
@@ -40,13 +40,13 @@ router.post('/signup', async (req, res) => {
         // Check if user already exists
         const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
-            console.log('User already exists:', email);
+
             return res.status(409).json({ message: 'User already exists with this email' });
         }
 
         // Validate admin code if registering as admin
-        if (role === 'admin' && adminCode !== 'CARCRAZE_ADMIN_2024') {
-            console.log('Invalid admin code attempt:', adminCode);
+        const validAdminCode = process.env.ADMIN_CODE || 'CARCRAZE_ADMIN_2024';
+        if (role === 'admin' && adminCode !== validAdminCode) {
             return res.status(403).json({ message: 'Invalid admin code' });
         }
 
@@ -62,11 +62,11 @@ router.post('/signup', async (req, res) => {
 
         // Add business info for sellers
         if (role === 'seller' && businessInfo) {
-            console.log('Adding business info for seller:', businessInfo);
+
             userData.businessInfo = businessInfo;
         }
 
-        console.log('Creating new user:', { ...userData, password: '[REDACTED]' });
+
         const user = new User(userData);
         await user.save();
 
@@ -85,7 +85,7 @@ router.post('/signup', async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
-        console.log('User created successfully:', user._id);
+
         res.status(201).json({
             message: 'Signup successful',
             user: {
@@ -111,6 +111,10 @@ router.post('/signup', async (req, res) => {
 router.post('/signin', async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required' });
+        }
 
         const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
