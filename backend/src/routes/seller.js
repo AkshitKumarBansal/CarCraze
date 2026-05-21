@@ -3,6 +3,7 @@ const { authenticateToken } = require('../middleware/auth');
 const Car = require('../models/Car');
 const upload = require('../storage/multer');
 const cloudinary = require('cloudinary').v2;
+const turf = require('@turf/turf');
 
 const router = express.Router();
 
@@ -95,6 +96,10 @@ router.post('/cars', authenticateToken, upload.array('images', 5), async (req, r
     res.json({ message: 'Car added successfully', car: carDoc });
   } catch (err) {
     console.error('Add car error:', err);
+    if (req.files && req.files.length > 0) {
+      const uploadedImages = req.files.map(f => f.path);
+      await deleteCloudinaryImages(uploadedImages);
+    }
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -117,16 +122,31 @@ router.put('/cars/:carId', authenticateToken, upload.array('images', 5), async (
       'coordinates', 'availability', 'deliveryConfig', 'status'
     ];
 
-    ALLOWED_FIELDS.forEach(field => {
-      if (req.body[field] !== undefined) {
-        car[field] = req.body[field];
+    // When using multipart/form-data, nested objects are often stringified.
+    // We need to parse them back into objects before updating the document.
+    const updateData = { ...req.body };
+    const fieldsToParse = ['coordinates', 'availability', 'deliveryConfig'];
+    fieldsToParse.forEach(field => {
+      if (updateData[field] && typeof updateData[field] === 'string') {
+        try {
+          updateData[field] = JSON.parse(updateData[field]);
+        } catch (e) {
+          console.error(`Failed to parse JSON for field "${field}":`, updateData[field]);
+          // Let Mongoose validation handle the incorrect type
+        }
       }
     });
 
-    if (req.body.coordinates) {
+    ALLOWED_FIELDS.forEach(field => {
+      if (updateData[field] !== undefined) {
+        car[field] = updateData[field];
+      }
+    });
+
+    if (updateData.coordinates) {
       car.locationGeo = {
         type: 'Point',
-        coordinates: [req.body.coordinates.lng, req.body.coordinates.lat]
+        coordinates: [updateData.coordinates.lng, updateData.coordinates.lat]
       };
     }
 
@@ -136,11 +156,27 @@ router.put('/cars/:carId', authenticateToken, upload.array('images', 5), async (
       car.images = [...(car.images || []), ...newImages];
     }
 
+    // Sanitize deliveryConfig before saving to prevent validation errors
+    // on fields that are not relevant to the selected delivery type.
+    if (car.deliveryConfig) {
+      if (car.deliveryConfig.type !== 'polygon') {
+        car.deliveryConfig.polygon = undefined;
+      }
+      if (car.deliveryConfig.type !== 'radius') {
+        car.deliveryConfig.radiusKm = undefined;
+      }
+      car.markModified('deliveryConfig');
+    }
+
     if (car.listingType !== 'rent') car.availability = null;
     await car.save();
     res.json({ message: 'Car updated successfully', car });
   } catch (err) {
     console.error('Update car error:', err);
+    if (req.files && req.files.length > 0) {
+      const uploadedImages = req.files.map(f => f.path);
+      await deleteCloudinaryImages(uploadedImages);
+    }
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -196,6 +232,67 @@ router.delete('/cars/:carId/images', authenticateToken, async (req, res) => {
     res.json({ message: 'Images deleted successfully', car });
   } catch (err) {
     console.error('Delete images error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// NOTE: This endpoint is for a customer-facing feature but is placed here due to file context limitations.
+// Ideally, this would be in a general `cars.js` router.
+// The corresponding frontend component has been updated to call this new path.
+router.post('/cars/:carId/check-delivery', async (req, res) => {
+  try {
+    const { carId } = req.params;
+    const { lat, lng } = req.body;
+
+    if (lat == null || lng == null) {
+      return res.status(400).json({ message: 'Latitude and longitude are required.' });
+    }
+
+    const car = await Car.findById(carId).lean();
+    if (!car) {
+      return res.status(404).json({ message: 'Car not found.' });
+    }
+
+    const { deliveryConfig, coordinates: carCoordinates } = car;
+
+    if (!deliveryConfig) {
+      return res.json({ eligible: false, message: 'Delivery information not available for this car.' });
+    }
+
+    const userPoint = turf.point([lng, lat]);
+
+    switch (deliveryConfig.type) {
+      case 'anywhere':
+        return res.json({ eligible: true, message: 'This car can be delivered anywhere.' });
+
+      case 'pickup':
+        return res.json({ eligible: false, message: 'This car is available for pickup only.' });
+
+      case 'radius':
+        if (!carCoordinates || !deliveryConfig.radiusKm) {
+          return res.json({ eligible: false, message: 'Delivery radius not configured correctly.' });
+        }
+        const carPoint = turf.point([carCoordinates.lng, carCoordinates.lat]);
+        const distance = turf.distance(userPoint, carPoint, { units: 'kilometers' });
+
+        if (distance <= deliveryConfig.radiusKm) {
+          return res.json({ eligible: true, message: `You are within the ${deliveryConfig.radiusKm} km delivery radius.` });
+        }
+        return res.json({ eligible: false, message: `You are outside the ${deliveryConfig.radiusKm} km delivery radius.` });
+
+      case 'polygon':
+        if (!deliveryConfig.polygon || !deliveryConfig.polygon.coordinates) {
+          return res.json({ eligible: false, message: 'Delivery zone not configured correctly.' });
+        }
+        const deliveryPolygon = turf.polygon(deliveryConfig.polygon.coordinates);
+        const isInside = turf.booleanPointInPolygon(userPoint, deliveryPolygon);
+        return res.json({ eligible: isInside, message: isInside ? 'You are inside the delivery zone.' : 'You are outside the delivery zone.' });
+
+      default:
+        return res.json({ eligible: false, message: 'Unknown delivery type.' });
+    }
+  } catch (err) {
+    console.error('Check delivery error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

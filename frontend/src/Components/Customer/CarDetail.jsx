@@ -7,6 +7,8 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './CarDetail.css';
+import WishlistButton from '../Common/WishlistButton';
+import CompareButton from '../Common/CompareButton';
 
 // Fix for default marker icon in Leaflet + Vite
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -517,7 +519,11 @@ const CarDetail = () => {
             </div>
 
             {/* Title */}
-            <h1 className="cd-car-title">{car.brand} {car.model}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <h1 className="cd-car-title" style={{ margin: 0 }}>{car.brand} {car.model}</h1>
+              <WishlistButton carId={car._id} size="md" />
+              <CompareButton car={car} size="md" />
+            </div>
             <p className="cd-car-subtitle">
               {car.year} &middot; {car.transmission} &middot; {car.fuelType}
             </p>
@@ -563,9 +569,13 @@ const CarDetail = () => {
                   </div>
                 </div>
                 {rentalDates.startDate && rentalDates.endDate && (() => {
-                  const days = Math.ceil(
-                    (new Date(rentalDates.endDate) - new Date(rentalDates.startDate)) / 86400000
-                  );
+                  // Use UTC dates to avoid timezone issues
+                  const start = new Date(rentalDates.startDate + 'T00:00:00Z');
+                  const end = new Date(rentalDates.endDate + 'T00:00:00Z');
+                  if (end < start) return null;
+                  // Calculate inclusive number of days. +1 because a 1-day rental (e.g., 10th-10th) has a 0ms difference.
+                  const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+
                   return days > 0 ? (
                     <p style={{ margin: '0.6rem 0 0', fontSize: '0.82rem', color: '#6366f1', fontWeight: 600 }}>
                       🗓️ {days} day{days > 1 ? 's' : ''} &nbsp;→&nbsp; ₹{(days * car.price).toLocaleString('en-IN')} total

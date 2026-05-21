@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './Service.css';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api';
+import { useAuth } from '../../context/AuthContext';
 import useScrollAnimation from '../../Hooks/useScrollAnimation';
 
 const allServiceItems = [
@@ -57,6 +58,7 @@ const allServiceItems = [
 
 const Service = ({ mode = 'all' }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [active, setActive] = useState(null);
   const [sectionRef, sectionVisible] = useScrollAnimation(0.2);
 
@@ -74,35 +76,23 @@ const Service = ({ mode = 'all' }) => {
   const openDetails = (item) => setActive(item);
   const closeDetails = () => setActive(null);
 
-  const goToFlow = async (id) => {
-    // Check authentication by calling backend
-    try {
-      const response = await fetch(API_ENDPOINTS.PROFILE, {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        navigate('/signin');
-        return;
-      }
-
-      const userData = await response.json();
-
-      switch (id) {
-        case 'buy-new': navigate('/new-cars'); break;
-        case 'buy-old': navigate('/old-cars'); break;
-        case 'rent': navigate('/rent-cars'); break;
-        case 'sell-new':
-        case 'sell-old':
-        case 'put-on-rent':
-          if (userData.role === 'seller') navigate('/seller/dashboard');
-          else navigate('/signup', { state: { role: 'seller' } });
-          break;
-        default: navigate('/');
-      }
-    } catch (err) {
-      console.error('Auth check failed:', err);
+  const goToFlow = (id) => {
+    if (!user) {
       navigate('/signin');
+      return;
+    }
+
+    switch (id) {
+      case 'buy-new': navigate('/new-cars'); break;
+      case 'buy-old': navigate('/old-cars'); break;
+      case 'rent': navigate('/rent-cars'); break;
+      case 'sell-new':
+      case 'sell-old':
+      case 'put-on-rent':
+        if (user.role === 'seller') navigate('/seller/dashboard');
+        else navigate('/signup', { state: { role: 'seller' } });
+        break;
+      default: navigate('/');
     }
   };
 

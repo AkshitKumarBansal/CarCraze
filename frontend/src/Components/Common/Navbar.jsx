@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from '../../config/api';
 import "./Navbar.css";
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { Bars3Icon, BellIcon, XMarkIcon, HomeIcon, TruckIcon, InformationCircleIcon, PhoneIcon, MapPinIcon } from '@heroicons/react/24/outline';
 
@@ -13,6 +14,7 @@ const Navbar = ({ isLoggedIn }) => {
   const { user, logout } = useAuth();
   const userRole = user?.role ?? null;
   const [cartCount, setCartCount] = useState(0);
+  const { wishlistCount } = useWishlist();
 
   // Fetch cart count for customers whenever the user changes
   useEffect(() => {
@@ -166,6 +168,10 @@ const Navbar = ({ isLoggedIn }) => {
                       <Link to="/cart" className="auth-btn profile cart-link">
                         <i className="fas fa-shopping-cart"></i> Cart
                         {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                      </Link>
+                      <Link to="/wishlist" className="auth-btn profile cart-link">
+                        <i className="fas fa-heart"></i> Wishlist
+                        {wishlistCount > 0 && <span className="cart-badge" style={{background:'#ef4444'}}>{wishlistCount}</span>}
                       </Link>
                       <Link to="/orders" className="auth-btn profile">
                         <i className="fas fa-box"></i> Orders

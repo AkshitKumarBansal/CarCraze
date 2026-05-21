@@ -69,6 +69,9 @@ const userSchema = new mongoose.Schema({
     isVerified: { type: Boolean, default: false },
     documents: [String]
   },
+  // Wishlist - saved/favourite cars
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Car' }],
+
   // Password reset token fields
   passwordResetToken: { type: String },
   passwordResetExpires: { type: Date }

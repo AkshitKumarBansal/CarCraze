@@ -28,6 +28,11 @@ import CarDetail from './Components/Customer/CarDetail';
 
 import ForgotPassword from './Components/LoginDetails/ForgotPassword';
 import ResetPassword from './Components/LoginDetails/ResetPassword';
+import { WishlistProvider } from './context/WishlistContext';
+import Wishlist from './Components/Customer/Wishlist';
+import { CompareProvider } from './context/CompareContext';
+import ComparePage from './Components/Customer/ComparePage';
+import CompareBar from './Components/Common/CompareBar';
 
 // Bug #12 fix: isLoggedIn is now derived from AuthContext (no more fake sentinel token).
 const AppWithRouter = () => {
@@ -123,6 +128,22 @@ const AppWithRouter = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <Wishlist />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compare"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <ComparePage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Public Routes */}
         <Route path="/services" element={<Service />} />
@@ -167,6 +188,7 @@ const AppWithRouter = () => {
           }
         />
       </Routes>
+      <CompareBar />
       <Footer />
     </div>
   );
@@ -175,11 +197,15 @@ const AppWithRouter = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <MessageProvider>
-        <Router>
-          <AppWithRouter />
-        </Router>
-      </MessageProvider>
+      <WishlistProvider>
+        <MessageProvider>
+          <CompareProvider>
+            <Router>
+              <AppWithRouter />
+            </Router>
+          </CompareProvider>
+        </MessageProvider>
+      </WishlistProvider>
     </AuthProvider>
   );
 };

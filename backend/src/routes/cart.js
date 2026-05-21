@@ -42,13 +42,14 @@ router.post('/', authenticateToken, async (req, res) => {
     if (car.listingType === 'rent') {
       if (!startDate || !endDate) return res.status(400).json({ message: 'Pickup and Return dates are required for rentals' });
       
-      validStartDate = new Date(startDate);
-      validEndDate = new Date(endDate);
-      if (validEndDate <= validStartDate) return res.status(400).json({ message: 'Return date must be after pickup date' });
+      // Parse dates as UTC to avoid timezone issues
+      validStartDate = new Date(startDate + 'T00:00:00.000Z');
+      validEndDate = new Date(endDate + 'T00:00:00.000Z');
+      if (validEndDate < validStartDate) return res.status(400).json({ message: 'Return date cannot be before pickup date' });
 
       const msPerDay = 1000 * 60 * 60 * 24;
-      // Use getTime() and Math.round() to prevent Daylight Saving Time edge cases
-      const days = Math.round((validEndDate.getTime() - validStartDate.getTime()) / msPerDay) || 1;
+      // Calculate inclusive number of days. +1 because a 1-day rental (e.g., 10th-10th) has a 0ms difference.
+      const days = Math.round((validEndDate.getTime() - validStartDate.getTime()) / msPerDay) + 1;
       calculatedPrice = Number(car.price) * days;
     }
 
