@@ -25,7 +25,6 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -160,16 +159,7 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
   };
 
 
-  // Bug #6 fix: Forgot password is not yet implemented.
-  // Show an informative message instead of a fake 'success'.
-  const handleForgotPassword = (email) => {
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
-      toast.warning('Please enter a valid email address');
-      return;
-    }
-    toast.info('📧 Password reset is not yet available. Please contact support.');
-    setShowForgotPassword(false);
-  };
+
 
   const getRoleDescription = (role) => {
     const descriptions = {
@@ -199,64 +189,6 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
     toast.info('🚧 Facebook Sign-In coming soon! Please use email & password for now.');
   };
 
-  if (showForgotPassword) {
-    return (
-      <>
-        <Navbar />
-        <div className="auth-container">
-          <div className="auth-bg">
-            {SLIDESHOW_IMAGES.map((img, idx) => (
-              <div
-                key={idx}
-                className={`auth-bg-image ${idx === currentImageIndex ? 'active' : ''}`}
-                style={{ backgroundImage: `url(${img})` }}
-              />
-            ))}
-            <div className="auth-overlay" />
-          </div>
-          <div className="auth-card">
-            <div className="auth-header">
-              <h2>Reset Password</h2>
-              <p>Enter your email to receive a reset link</p>
-            </div>
-
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleForgotPassword(formData.email);
-            }} className="auth-form">
-              <div className="form-group">
-                <label htmlFor="resetEmail">Email Address</label>
-                <div className="input-with-icon">
-                  <input
-                    type="email"
-                    id="resetEmail"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="Enter your email address"
-                    autoFocus
-                  />
-                  <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
-                </div>
-              </div>
-
-              <button type="submit" className="auth-button">
-                Send Reset Link
-              </button>
-
-              <button
-                type="button"
-                className="auth-button secondary"
-                onClick={() => setShowForgotPassword(false)}
-              >
-                Back to Sign In
-              </button>
-            </form>
-          </div>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
@@ -332,7 +264,7 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
               <button
                 type="button"
                 className="forgot-password-link"
-                onClick={() => setShowForgotPassword(true)}
+                onClick={() => navigate('/forgot-password')}
               >
                 Forgot Password?
               </button>

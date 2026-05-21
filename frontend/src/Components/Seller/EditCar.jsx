@@ -1,8 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import { useNavigate, useParams } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, useMapEvents, FeatureGroup } from 'react-leaflet';
+import { EditControl } from 'react-leaflet-draw';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
+import L from 'leaflet';
 import './AddCar.css';
 import Navbar from '../Common/Navbar';
+
+// Fix for default marker icon in Leaflet + Vite
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Component to handle map clicks
+function LocationMarker({ position, setPosition }) {
+  useMapEvents({
+    click(e) {
+      setPosition(e.latlng);
+    },
+  });
+
+  return position === null ? null : (
+    <Marker position={position}></Marker>
+  );
+}
 
 const EditCar = () => {
   const navigate = useNavigate();
@@ -23,34 +53,20 @@ const EditCar = () => {
     color: '',
     mileage: '',
     location: '',
+    coordinates: { lat: 28.6139, lng: 77.2090 }, // Default New Delhi
     // Rental specific fields
     availability: {
       startDate: '',
       endDate: ''
+    },
+    deliveryConfig: {
+      type: 'anywhere',
+      radiusKm: '',
+      polygon: null
     }
   });
 
-  useEffect(() => {
-    // Check if user is authenticated and is a seller
-    // const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-
-    if (!userData) {
-      navigate('/signin');
-      return;
-    }
-
-    const parsedUser = JSON.parse(userData);
-    if (parsedUser.role !== 'seller') {
-      navigate('/');
-      return;
-    }
-
-    // Fetch car data for editing
-    fetchCarData();
-  }, [navigate, carId]);
-
-  const fetchCarData = async () => {
+  const fetchCarData = useCallback(async () => {
     try {
       // const token = localStorage.getItem('token');
       const response = await fetch(API_ENDPOINTS.SELLER_CARS, {
@@ -79,9 +95,15 @@ const EditCar = () => {
             color: car.color || '',
             mileage: car.mileage || '',
             location: car.location || '',
+            coordinates: car.coordinates || { lat: 28.6139, lng: 77.2090 },
             availability: car.availability || {
               startDate: '',
               endDate: ''
+            },
+            deliveryConfig: car.deliveryConfig || {
+              type: 'anywhere',
+              radiusKm: '',
+              polygon: null
             }
           });
         } else {
@@ -97,7 +119,27 @@ const EditCar = () => {
     } finally {
       setInitialLoading(false);
     }
-  };
+  }, [carId]);
+
+  useEffect(() => {
+    // Check if user is authenticated and is a seller
+    // const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+
+    if (!userData) {
+      navigate('/signin');
+      return;
+    }
+
+    const parsedUser = JSON.parse(userData);
+    if (parsedUser.role !== 'seller') {
+      navigate('/');
+      return;
+    }
+
+    // Fetch car data for editing
+    fetchCarData();
+  }, [navigate, fetchCarData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -193,7 +235,8 @@ const EditCar = () => {
         year: parseInt(formData.year),
         capacity: parseInt(formData.capacity),
         price: parseFloat(formData.price),
-        mileage: formData.mileage ? parseInt(formData.mileage) : 0
+        mileage: formData.mileage ? parseInt(formData.mileage) : 0,
+        coordinates: formData.coordinates
       };
 
       // Only include availability for rental cars
@@ -458,6 +501,109 @@ const EditCar = () => {
                   />
                 </div>
               </div>
+
+              <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                <label>Pin Exact Location on Map</label>
+                <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '2px solid #e5e7eb', position: 'relative', zIndex: 1 }}>
+                  <MapContainer 
+                    center={[formData.coordinates.lat, formData.coordinates.lng]} 
+                    zoom={13} 
+                    style={{ height: '100%', width: '100%', zIndex: 1 }}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; OpenStreetMap contributors'
+                    />
+                    <LocationMarker 
+                      position={formData.coordinates} 
+                      setPosition={(pos) => setFormData(prev => ({ ...prev, coordinates: { lat: pos.lat, lng: pos.lng } }))} 
+                    />
+                    {formData.deliveryConfig.type === 'polygon' && (
+                      <FeatureGroup>
+                        <EditControl
+                          position='topright'
+                          onCreated={(e) => {
+                             const layer = e.layer;
+                             if (layer instanceof L.Polygon) {
+                               const latlngs = layer.getLatLngs()[0];
+                               // GeoJSON expects [lng, lat] and first/last point must be identical
+                               const coordinates = latlngs.map(ll => [ll.lng, ll.lat]);
+                               coordinates.push([...coordinates[0]]);
+                               setFormData(prev => ({
+                                  ...prev,
+                                  deliveryConfig: {
+                                    ...prev.deliveryConfig,
+                                    polygon: { type: 'Polygon', coordinates: [coordinates] }
+                                  }
+                               }));
+                             }
+                          }}
+                          onDeleted={() => {
+                             setFormData(prev => ({
+                                  ...prev,
+                                  deliveryConfig: {
+                                    ...prev.deliveryConfig,
+                                    polygon: null
+                                  }
+                             }));
+                          }}
+                          draw={{
+                            rectangle: false,
+                            circle: false,
+                            circlemarker: false,
+                            marker: false,
+                            polyline: false,
+                            polygon: true
+                          }}
+                        />
+                      </FeatureGroup>
+                    )}
+                  </MapContainer>
+                </div>
+                <p className="form-help" style={{ marginTop: '0.5rem' }}>Click on the map to update the exact location.</p>
+              </div>
+            </div>
+
+            {/* Delivery Configuration */}
+            <div className="form-section">
+              <h3>Delivery Configuration</h3>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="deliveryConfig.type">Delivery Type</label>
+                  <select
+                    id="deliveryConfig.type"
+                    name="deliveryConfig.type"
+                    value={formData.deliveryConfig.type}
+                    onChange={(e) => setFormData(prev => ({ ...prev, deliveryConfig: { ...prev.deliveryConfig, type: e.target.value } }))}
+                  >
+                    <option value="anywhere">Anywhere</option>
+                    <option value="pickup">Pickup Only</option>
+                    <option value="radius">Specific Radius</option>
+                    <option value="polygon">Custom Polygon Zone</option>
+                  </select>
+                </div>
+
+                {formData.deliveryConfig.type === 'radius' && (
+                  <div className="form-group">
+                    <label htmlFor="deliveryConfig.radiusKm">Delivery Radius (km)</label>
+                    <input
+                      type="number"
+                      id="deliveryConfig.radiusKm"
+                      value={formData.deliveryConfig.radiusKm}
+                      onChange={(e) => setFormData(prev => ({ ...prev, deliveryConfig: { ...prev.deliveryConfig, radiusKm: e.target.value } }))}
+                      min="1"
+                      placeholder="e.g., 25"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {formData.deliveryConfig.type === 'polygon' && (
+                 <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                   <label>Draw Delivery Zone</label>
+                   <p className="form-help">Use the polygon tool (pentagon icon) on the map above to draw the delivery boundary.</p>
+                 </div>
+              )}
             </div>
 
             {/* Rental Availability */}

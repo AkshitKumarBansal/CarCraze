@@ -23,11 +23,6 @@ const CustomerDashboard = () => {
   const [showImage, setShowImage] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
 
-  // Helper function to fix image URLs with correct port
-  const fixImageUrl = (imageUrl) => {
-    if (!imageUrl) return null;
-    return imageUrl.replace(/localhost:\d+/, 'localhost:5001');
-  };
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -37,8 +32,6 @@ const CustomerDashboard = () => {
         const res = await fetch(API_ENDPOINTS.CARS);
         if (!res.ok) throw new Error(`Failed to fetch cars: ${res.status}`);
         const data = await res.json();
-        console.log('Fetched cars data:', data.cars); // DEBUG: See what data we get
-        console.log('First car images:', data.cars[0]?.images); // DEBUG: See image URLs
         setCars(Array.isArray(data?.cars) ? data.cars.slice(0, 9) : []);
       } catch (err) {
         console.error('Error fetching cars:', err);
@@ -129,7 +122,12 @@ const CustomerDashboard = () => {
                     {car.listingType === 'rent' ? `₹${car.price}/day` : `₹${car.price.toLocaleString('en-IN')}`}
                   </span>
                   <div className="car-footer-actions">
-                    <button className="option-button small">View Details</button>
+                    <button
+                      className="option-button small"
+                      onClick={() => navigate(`/cars/${car._id || car.id}`)}
+                    >
+                      View Details
+                    </button>
                     <button
                       className="option-button small"
                       onClick={async () => {

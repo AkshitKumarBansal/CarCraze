@@ -14,6 +14,29 @@ const carSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   mileage: Number,
   location: String,
+  coordinates: {
+    lat: Number,
+    lng: Number
+  },
+  locationGeo: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      index: '2dsphere'
+    }
+  },
+  deliveryConfig: {
+    type: { type: String, enum: ['pickup', 'anywhere', 'radius', 'polygon'], default: 'anywhere' },
+    radiusKm: { type: Number },
+    polygon: {
+      type: { type: String, enum: ['Polygon'], default: 'Polygon' },
+      coordinates: { type: [[[Number]]], index: '2dsphere' } // [longitude, latitude] arrays
+    }
+  },
   images: [String], // URLs or file paths
   availability: {
     startDate: Date,

@@ -63,7 +63,7 @@ router.post('/cars', authenticateToken, upload.array('images', 5), async (req, r
     const {
       brand, model, year, capacity, fuelType, transmission,
       description, listingType, price, color, mileage, location,
-      availability, images: bodyImages
+      coordinates, availability, deliveryConfig, images: bodyImages
     } = req.body;
 
     // Handle file uploads (Cloudinary URLs) - can come from req.files or req.body.images
@@ -83,6 +83,9 @@ router.post('/cars', authenticateToken, upload.array('images', 5), async (req, r
       color,
       mileage,
       location,
+      coordinates,
+      locationGeo: coordinates ? { type: 'Point', coordinates: [coordinates.lng, coordinates.lat] } : undefined,
+      deliveryConfig,
       availability: listingType === 'rent' ? availability || null : null,
       images,
       status: 'active'
@@ -111,7 +114,7 @@ router.put('/cars/:carId', authenticateToken, upload.array('images', 5), async (
     const ALLOWED_FIELDS = [
       'brand', 'model', 'year', 'capacity', 'fuelType', 'transmission',
       'description', 'listingType', 'price', 'color', 'mileage', 'location',
-      'availability', 'status'
+      'coordinates', 'availability', 'deliveryConfig', 'status'
     ];
 
     ALLOWED_FIELDS.forEach(field => {
@@ -119,6 +122,13 @@ router.put('/cars/:carId', authenticateToken, upload.array('images', 5), async (
         car[field] = req.body[field];
       }
     });
+
+    if (req.body.coordinates) {
+      car.locationGeo = {
+        type: 'Point',
+        coordinates: [req.body.coordinates.lng, req.body.coordinates.lat]
+      };
+    }
 
     // Handle new file uploads (Cloudinary URLs) — append to existing
     const newImages = req.files ? req.files.map(file => file.path) : [];

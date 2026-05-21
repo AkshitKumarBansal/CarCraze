@@ -165,6 +165,18 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
+.catalog-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.catalog-filters > * {
+  flex: 1 1 calc(33.333% - 10px);
+  min-width: 140px;
+}
+
 .rental-dates-selector {
   display: flex;
   gap: 1rem;
