@@ -31,6 +31,7 @@ const carSchema = new mongoose.Schema({
   },
   deliveryConfig: {
     type: { type: String, enum: ['pickup', 'anywhere', 'radius', 'polygon'], default: 'anywhere' },
+    pickupAvailable: { type: Boolean, default: true },
     radiusKm: { type: Number },
     polygon: {
       type: { type: String, enum: ['Polygon'], default: 'Polygon' },

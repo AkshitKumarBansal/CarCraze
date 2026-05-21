@@ -20,9 +20,9 @@ const CustomerCart = () => {
     const startDate = new Date(start);
     const endDate = new Date(end);
     const msPerDay = 1000 * 60 * 60 * 24;
-    // Use Math.round to avoid timezone/DST issues
-    const days = Math.round((endDate.getTime() - startDate.getTime()) / msPerDay);
-    return days > 0 ? days : 1;
+    // Calculate inclusive number of days. +1 because a 1-day rental has a 0ms difference.
+    const days = Math.round((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
+    return days > 0 ? days : 0;
   };
 
   const fetchCart = async () => {

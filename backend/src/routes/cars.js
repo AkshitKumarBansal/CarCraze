@@ -2,6 +2,7 @@ const express = require('express');
 const Car = require('../models/Car');
 const Review = require('../models/Review');
 const { authenticateToken } = require('../middleware/auth');
+const turf = require('@turf/turf');
 
 const router = express.Router();
 
@@ -9,18 +10,22 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const { lat, lng, radius } = req.query;
-    let query = { status: 'active' };
+    let cars = await Car.find({ status: 'active' }).lean();
 
     if (lat && lng && radius) {
-      query.locationGeo = {
-        $near: {
-          $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
-          $maxDistance: parseFloat(radius) * 1000 // Convert km to meters
+      const userPoint = turf.point([parseFloat(lng), parseFloat(lat)]);
+      const searchRadius = parseFloat(radius);
+
+      cars = cars.filter(car => {
+        if (!car.locationGeo || !car.locationGeo.coordinates) {
+          return false;
         }
-      };
+        const carPoint = turf.point(car.locationGeo.coordinates);
+        const distance = turf.distance(userPoint, carPoint, { units: 'kilometers' });
+        return distance <= searchRadius;
+      });
     }
 
-    const cars = await Car.find(query).lean();
     res.json({ cars });
   } catch (err) {
     console.error('Get cars error:', err);
@@ -101,55 +106,51 @@ router.post('/:id/check-delivery', async (req, res) => {
     const car = await Car.findById(req.params.id);
     if (!car) return res.status(404).json({ message: 'Car not found' });
 
-    const config = car.deliveryConfig;
-    if (!config || config.type === 'anywhere') {
-      return res.json({ eligible: true, message: 'Delivery available anywhere' });
-    }
-    if (config.type === 'pickup') {
-      return res.json({ eligible: false, message: 'This car is pickup only' });
+    const { deliveryConfig } = car;
+
+    if (!deliveryConfig) {
+      return res.json({ eligible: false, message: 'Delivery information not available for this car.' });
     }
 
-    const userPoint = { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] };
+    const userPoint = turf.point([parseFloat(lng), parseFloat(lat)]);
 
-    if (config.type === 'radius' && config.radiusKm && car.locationGeo) {
-      const isWithin = await Car.exists({
-        _id: car._id,
-        locationGeo: {
-          $near: {
-            $geometry: userPoint,
-            $maxDistance: config.radiusKm * 1000
-          }
+    switch (deliveryConfig.type) {
+      case 'anywhere':
+        return res.json({ eligible: true, message: 'Delivery available anywhere' });
+
+      case 'pickup':
+        return res.json({ eligible: false, message: 'This car is pickup only' });
+
+      case 'radius':
+        if (!car.locationGeo || !deliveryConfig.radiusKm) {
+          return res.json({ eligible: false, message: 'Delivery radius not configured correctly.' });
         }
-      });
-      if (isWithin) {
-        return res.json({ eligible: true, message: `Within ${config.radiusKm}km delivery radius` });
-      } else {
-        return res.json({ eligible: false, message: `Outside ${config.radiusKm}km delivery radius` });
-      }
-    }
+        const carPoint = turf.point(car.locationGeo.coordinates);
+        const distance = turf.distance(userPoint, carPoint, { units: 'kilometers' });
 
-    if (config.type === 'polygon' && config.polygon && config.polygon.coordinates) {
-      const intersects = await Car.exists({
-        _id: car._id,
-        'deliveryConfig.polygon': {
-          $geoIntersects: {
-            $geometry: userPoint
-          }
+        if (distance <= deliveryConfig.radiusKm) {
+          return res.json({ eligible: true, message: `Within ${deliveryConfig.radiusKm}km delivery radius` });
         }
-      });
-      
-      if (intersects) {
-        return res.json({ eligible: true, message: 'Inside custom delivery zone' });
-      } else {
-        return res.json({ eligible: false, message: 'Outside custom delivery zone' });
-      }
-    }
+        return res.json({ eligible: false, message: `Outside ${deliveryConfig.radiusKm}km delivery radius` });
 
-    return res.json({ eligible: true, message: 'Delivery eligibility verified' });
+      case 'polygon':
+        if (!deliveryConfig.polygon || !deliveryConfig.polygon.coordinates) {
+          return res.json({ eligible: false, message: 'Delivery zone not configured correctly.' });
+        }
+        const deliveryPolygon = turf.polygon(deliveryConfig.polygon.coordinates);
+        const isInside = turf.booleanPointInPolygon(userPoint, deliveryPolygon);
+        return res.json({
+          eligible: isInside,
+          message: isInside ? 'Inside custom delivery zone' : 'Outside custom delivery zone'
+        });
+
+      default:
+        return res.json({ eligible: false, message: 'Unknown delivery type.' });
+    }
   } catch (err) {
     console.error('Check delivery error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-module.exports = router;
+module.exports = router;

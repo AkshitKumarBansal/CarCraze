@@ -59,6 +59,7 @@ const AddCar = () => {
     },
     deliveryConfig: {
       type: 'anywhere',
+      pickupAvailable: true,
       radiusKm: '',
       polygon: null
     }
@@ -629,7 +630,10 @@ const AddCar = () => {
                     id="deliveryConfig.type"
                     name="deliveryConfig.type"
                     value={formData.deliveryConfig.type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, deliveryConfig: { ...prev.deliveryConfig, type: e.target.value } }))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, deliveryConfig: { ...prev.deliveryConfig, type: val, pickupAvailable: val === 'pickup' ? true : prev.deliveryConfig.pickupAvailable } }));
+                    }}
                   >
                     <option value="anywhere">Anywhere</option>
                     <option value="pickup">Pickup Only</option>
@@ -637,6 +641,20 @@ const AddCar = () => {
                     <option value="polygon">Custom Polygon Zone</option>
                   </select>
                 </div>
+
+                {formData.deliveryConfig.type !== 'pickup' && (
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1.5rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.deliveryConfig.pickupAvailable !== false}
+                        onChange={(e) => setFormData(prev => ({ ...prev, deliveryConfig: { ...prev.deliveryConfig, pickupAvailable: e.target.checked } }))}
+                        style={{ width: 'auto', marginBottom: 0 }}
+                      />
+                      <span>Pickup Available</span>
+                    </label>
+                  </div>
+                )}
 
                 {formData.deliveryConfig.type === 'radius' && (
                   <div className="form-group">

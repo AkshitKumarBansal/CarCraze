@@ -16,6 +16,7 @@ const rentalsRouter = require('./routes/rentals');
 const cartRouter = require('./routes/cart');
 const ordersRouter = require('./routes/orders');
 const contactRouter = require('./routes/contact');
+const wishlistRouter = require('./routes/wishlist');
 
 // Rate limiting
 const limiter = rateLimit({
@@ -62,6 +63,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/contact', contactRouter);
+app.use('/api/wishlist', wishlistRouter);
 
 // 404 Handler
 app.use((req, res, next) => {

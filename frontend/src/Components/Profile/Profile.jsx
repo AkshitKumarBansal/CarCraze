@@ -8,7 +8,7 @@ const ProfileContent = () => {
   const toast = useToast();
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -21,16 +21,8 @@ const ProfileContent = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      setLoading(true);
       try {
-        // First try to get from localStorage for immediate display
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-          updateFormData(parsedUser);
-        }
-
-        // Then fetch fresh data from backend
         const response = await fetch(API_ENDPOINTS.PROFILE, {
           credentials: 'include'
         });
@@ -39,36 +31,37 @@ const ProfileContent = () => {
           const userData = await response.json();
           setUser(userData);
           updateFormData(userData);
-          // Update localStorage
           localStorage.setItem('user', JSON.stringify(userData));
+        } else {
+          // Handle cases where the session might be invalid
+          toast.error('Could not fetch profile. Please sign in again.');
+          // Consider redirecting to sign-in page
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
+        toast.error('Network error while fetching profile.');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [toast]); // Add toast to dependency array
 
   const updateFormData = (userData) => {
-    // Handle businessInfo safely (it might be an object or missing)
-    const biz = userData.businessInfo || {};
-    // If it's a string (legacy data), just put it in description or ignore
-    const bizName = typeof biz === 'object' ? biz.name : '';
-    const bizEmail = typeof biz === 'object' ? biz.email : '';
-    const bizPhone = typeof biz === 'object' ? biz.phone : '';
-    const bizAddress = typeof biz === 'object' ? biz.address : '';
+    const biz = (userData.businessInfo && typeof userData.businessInfo === 'object')
+      ? userData.businessInfo
+      : {};
 
-    setFormData(prev => ({
-      ...prev,
+    setFormData({
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
       phone: userData.phone || '',
-      businessName: bizName || '',
-      businessEmail: bizEmail || '',
-      businessPhone: bizPhone || '',
-      businessAddress: bizAddress || ''
-    }));
+      businessName: biz.name || '',
+      businessEmail: biz.email || '',
+      businessPhone: biz.phone || '',
+      businessAddress: biz.address || ''
+    });
   };
 
   const handleChange = (e) => {
@@ -94,14 +87,16 @@ const ProfileContent = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
-        businessInfo: {
+      };
+
+      if (user.role === 'seller') {
+        payload.businessInfo = {
           name: formData.businessName,
           email: formData.businessEmail,
           phone: formData.businessPhone,
           address: formData.businessAddress
-        }
-      };
-
+        };
+      }
       const response = await fetch(API_ENDPOINTS.PROFILE, {
         method: 'PUT',
         credentials: 'include',
@@ -140,16 +135,26 @@ const ProfileContent = () => {
 
   // Helper to safely get business info fields
   const getBizField = (field) => {
-    if (user && user.businessInfo && typeof user.businessInfo === 'object') {
-      return user.businessInfo[field] || 'Not Provided';
-    }
-    return 'Not Provided';
+    return (user?.businessInfo?.[field] && typeof user.businessInfo === 'object')
+      ? user.businessInfo[field]
+      : 'Not Provided';
   };
+
+  if (loading) {
+    return (
+      <div className="profile-page">
+        <div className="profile-loading">Loading profile...</div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
       <div className="profile-page">
-        <div className="profile-loading">Loading profile...</div>
+        <div className="profile-error">
+          <h2>Could not load profile</h2>
+          <p>Please try signing in again.</p>
+        </div>
       </div>
     );
   }

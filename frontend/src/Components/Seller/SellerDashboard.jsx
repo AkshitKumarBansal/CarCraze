@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../Hooks/useToast';
 import { API_ENDPOINTS } from '../../config/api';
+import { useAuth } from '../../context/AuthContext';
 import './SellerDashboard.css';
 import Navbar from '../Common/Navbar';
 import Hero from '../Home/Hero';
@@ -14,40 +15,36 @@ import rentCarsImage from '../../images/RentalCars.png';
 const SellerDashboard = () => {
     const navigate = useNavigate();
     const toast = useToast();
+    const { user, authLoading, logout: authLogout } = useAuth();
+
     const [cars, setCars] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [carsLoading, setCarsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [user, setUser] = useState(null);
     const [showImage, setShowImage] = useState(false);
     const [imageSrc, setImageSrc] = useState(null);
 
     useEffect(() => {
-        // Check if user is authenticated and is a seller
-        // const token = localStorage.getItem('token');
-        const userData = localStorage.getItem('user');
-
-        if (!userData) {
+        if (authLoading) {
+            return; // Wait for auth context to initialize
+        }
+        if (!user) {
             navigate('/signin');
             return;
         }
-
-        const parsedUser = JSON.parse(userData);
-        if (parsedUser.role !== 'seller') {
+        if (user.role !== 'seller') {
             navigate('/');
             return;
         }
 
-        setUser(parsedUser);
         fetchSellerCars();
-    }, [navigate]);
+    }, [user, authLoading, navigate]);
 
     const fetchSellerCars = async () => {
+        setCarsLoading(true);
         try {
-            // const token = localStorage.getItem('token');
             const response = await fetch(API_ENDPOINTS.SELLER_CARS, {
                 credentials: 'include',
                 headers: {
-                    // 'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -63,7 +60,7 @@ const SellerDashboard = () => {
             console.error('Error fetching cars:', error);
             setError('Network error. Please try again.');
         } finally {
-            setLoading(false);
+            setCarsLoading(false);
         }
     };
 
@@ -73,12 +70,10 @@ const SellerDashboard = () => {
         }
 
         try {
-            // const token = localStorage.getItem('token');
             const response = await fetch(`${API_ENDPOINTS.SELLER_CARS}/${carId}`, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: {
-                    // 'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -96,15 +91,9 @@ const SellerDashboard = () => {
         }
     };
 
-    // Bug #7 fix: call backend logout to clear the HttpOnly cookie,
-    // then clear local state.
     const handleLogout = async () => {
-        try {
-            await fetch(API_ENDPOINTS.LOGOUT, { method: 'POST', credentials: 'include' });
-        } catch (err) {
-            console.error('Logout error:', err);
-        }
-        localStorage.removeItem('user');
+        // Use the logout function from AuthContext
+        await authLogout();
         navigate('/');
     };
 
@@ -139,7 +128,7 @@ const SellerDashboard = () => {
         inventoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    if (loading) {
+    if (authLoading || carsLoading) {
         return (
             <div className="dashboard-container">
                 <Navbar isLoggedIn={true} setIsLoggedIn={() => { }} />

@@ -4,6 +4,8 @@ import './CustomerDashboard.css';
 import { useNavigate } from 'react-router-dom';
 import './NewCars.css';
 import { useToast } from '../../Hooks/useToast';
+import WishlistButton from '../Common/WishlistButton';
+import CompareButton from '../Common/CompareButton';
 
 const NewCars = () => {
   const navigate = useNavigate();
@@ -18,7 +20,8 @@ const NewCars = () => {
     priceMax: '',
     fuelType: '',
     transmission: '',
-    capacity: ''
+    capacity: '',
+    pickupAvailable: false
   });
 
 
@@ -82,8 +85,11 @@ const NewCars = () => {
     const matchesFuel = filters.fuelType ? car.fuelType === filters.fuelType : true;
     const matchesTransmission = filters.transmission ? car.transmission === filters.transmission : true;
     const matchesCapacity = filters.capacity ? car.capacity === Number(filters.capacity) : true;
+    const matchesPickup = filters.pickupAvailable 
+      ? (car.deliveryConfig?.type === 'pickup' || car.deliveryConfig?.pickupAvailable !== false) 
+      : true;
 
-    return matchesSearch && matchesMinPrice && matchesMaxPrice && matchesFuel && matchesTransmission && matchesCapacity;
+    return matchesSearch && matchesMinPrice && matchesMaxPrice && matchesFuel && matchesTransmission && matchesCapacity && matchesPickup;
   });
 
   return (
@@ -150,6 +156,15 @@ const NewCars = () => {
             <option value="7">7 Seats</option>
             <option value="8">8 Seats</option>
           </select>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'black', fontWeight: 'bold' }}>
+            <input 
+              type="checkbox" 
+              checked={filters.pickupAvailable} 
+              onChange={e => setFilters({...filters, pickupAvailable: e.target.checked})} 
+              style={{ width: 'auto', marginBottom: 0 }}
+            />
+            Pickup Available
+          </label>
         </div>
       </div>
       <div className="catalog-section">
@@ -160,28 +175,31 @@ const NewCars = () => {
           <div className="catalog-grid">
             {filteredCars.map(car => (
                <div className="car-card" key={car._id || car.id}>
-                 <div className="car-image-container">
-                   {car.images && car.images.length > 0 ? (
-                     <img 
-                       src={car.images[0]} 
-                       alt={`${car.brand} ${car.model}`}
-                       className="car-image"
-                       onError={(e) => {
-                         e.target.style.display = 'none';
-                         e.target.nextSibling.style.display = 'flex';
-                       }}
-                     />
-                   ) : null}
-                   <div className={`car-image-placeholder ${car.images && car.images.length > 0 ? 'has-image' : ''}`}>
-                     <i className="fas fa-car"></i>
-                   </div>
-                   {car.images && car.images.length > 1 && (
-                     <div className="image-count">
-                       <i className="fas fa-images"></i>
-                       {car.images.length}
-                     </div>
-                   )}
-                 </div>
+                  <div className="car-image-container" style={{ position: 'relative' }}>
+                    {car.images && car.images.length > 0 ? (
+                      <img 
+                        src={car.images[0]} 
+                        alt={`${car.brand} ${car.model}`}
+                        className="car-image"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className={`car-image-placeholder ${car.images && car.images.length > 0 ? 'has-image' : ''}`}>
+                      <i className="fas fa-car"></i>
+                    </div>
+                    {car.images && car.images.length > 1 && (
+                      <div className="image-count">
+                        <i className="fas fa-images"></i>
+                        {car.images.length}
+                      </div>
+                    )}
+                    <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 2 }}>
+                      <WishlistButton carId={car._id || car.id} size="sm" />
+                    </div>
+                  </div>
                  <div className="car-card-header">
                    <span className="car-brand">{car.brand}</span>
                    <span className="car-year">{car.year}</span>
@@ -194,46 +212,47 @@ const NewCars = () => {
                  </div>
                  <div className="car-description" title={car.description}>
                    {car.description}
-                 </div>
-                 <div className="car-footer">
-                   <span className="price">₹{car.price.toLocaleString('en-IN')}</span>
-                   <div className="car-footer-actions">
+                   <div className="car-footer">
+                    <span className="price">₹{car.price.toLocaleString('en-IN')}</span>
+                    <div className="car-footer-actions">
+                       <button
+                         className="option-button small"
+                         onClick={() => navigate(`/cars/${car._id || car.id}`)}
+                       >
+                         View Details
+                       </button>
                       <button
                         className="option-button small"
-                        onClick={() => navigate(`/cars/${car._id || car.id}`)}
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(API_ENDPOINTS.CART, {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ carId: car._id || car.id })
+                            });
+
+                            if (res.status === 401) {
+                              navigate('/signin');
+                              return;
+                            }
+
+                            const data = await res.json();
+                            if (!res.ok) {
+                              throw new Error(data.message || 'Add to cart failed');
+                            }
+                            toast.success(`🚗 ${car.brand} ${car.model} added to cart!`);
+                          } catch (err) {
+                            console.error('Add to cart error', err);
+                            toast.error('❌ Failed to add to cart: ' + (err.message || 'Please try again'));
+                          }
+                        }}
                       >
-                        View Details
+                        Add to Cart
                       </button>
-                     <button
-                       className="option-button small"
-                       onClick={async () => {
-                         try {
-                           const res = await fetch(API_ENDPOINTS.CART, {
-                             method: 'POST',
-                             credentials: 'include',
-                             headers: { 'Content-Type': 'application/json' },
-                             body: JSON.stringify({ carId: car._id || car.id })
-                           });
-
-                           if (res.status === 401) {
-                             navigate('/signin');
-                             return;
-                           }
-
-                           const data = await res.json();
-                           if (!res.ok) {
-                             throw new Error(data.message || 'Add to cart failed');
-                           }
-                           toast.success(`🚗 ${car.brand} ${car.model} added to cart!`);
-                         } catch (err) {
-                           console.error('Add to cart error', err);
-                           toast.error('❌ Failed to add to cart: ' + (err.message || 'Please try again'));
-                         }
-                       }}
-                     >
-                       Add to Cart
-                     </button>
-                   </div>
+                      <CompareButton car={car} size="sm" />
+                    </div>
+                  </div>
                  </div>
                </div>
              ))}

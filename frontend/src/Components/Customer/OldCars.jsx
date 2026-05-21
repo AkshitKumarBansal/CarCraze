@@ -3,6 +3,8 @@ import { API_ENDPOINTS } from '../../config/api';
 import './CustomerDashboard.css';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../Hooks/useToast';
+import WishlistButton from '../Common/WishlistButton';
+import CompareButton from '../Common/CompareButton';
 
 const OldCars = () => {
   const navigate = useNavigate();
@@ -17,7 +19,8 @@ const OldCars = () => {
     priceMax: '',
     fuelType: '',
     transmission: '',
-    capacity: ''
+    capacity: '',
+    pickupAvailable: false
   });
 
 
@@ -81,8 +84,11 @@ const OldCars = () => {
     const matchesFuel = filters.fuelType ? car.fuelType === filters.fuelType : true;
     const matchesTransmission = filters.transmission ? car.transmission === filters.transmission : true;
     const matchesCapacity = filters.capacity ? car.capacity === Number(filters.capacity) : true;
+    const matchesPickup = filters.pickupAvailable 
+      ? (car.deliveryConfig?.type === 'pickup' || car.deliveryConfig?.pickupAvailable !== false) 
+      : true;
 
-    return matchesSearch && matchesMinPrice && matchesMaxPrice && matchesFuel && matchesTransmission && matchesCapacity;
+    return matchesSearch && matchesMinPrice && matchesMaxPrice && matchesFuel && matchesTransmission && matchesCapacity && matchesPickup;
   });
 
   return (
@@ -150,6 +156,15 @@ const OldCars = () => {
             <option value="7">7 Seats</option>
             <option value="8">8 Seats</option>
           </select>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'black', fontWeight: 'bold' }}>
+            <input 
+              type="checkbox" 
+              checked={filters.pickupAvailable} 
+              onChange={e => setFilters({...filters, pickupAvailable: e.target.checked})} 
+              style={{ width: 'auto', marginBottom: 0 }}
+            />
+            Pickup Available
+          </label>
         </div>
       </div>
 
@@ -161,7 +176,7 @@ const OldCars = () => {
           <div className="catalog-grid">
             {filteredCars.map(car => (
               <div className="car-card" key={car._id || car.id}>
-                <div className="car-image-container">
+              <div className="car-image-container" style={{ position: 'relative' }}>
                   {car.images && car.images.length > 0 ? (
                     <img 
                       src={car.images[0]} 
@@ -182,6 +197,9 @@ const OldCars = () => {
                       {car.images.length}
                     </div>
                   )}
+                  <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 2 }}>
+                    <WishlistButton carId={car._id || car.id} size="sm" />
+                  </div>
                 </div>
                 <div className="car-card-header">
                   <span className="car-brand">{car.brand}</span>
@@ -234,6 +252,7 @@ const OldCars = () => {
                     >
                       Add to Cart
                     </button>
+                    <CompareButton car={car} size="sm" />
                   </div>
                 </div>
               </div>
