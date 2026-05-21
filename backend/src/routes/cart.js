@@ -4,6 +4,8 @@ const { authenticateToken } = require('../middleware/auth');
 const Cart = require('../models/Cart');
 const Car = require('../models/Car');
 const Order = require('../models/Order');
+const { sendOrderConfirmation } = require('../utils/emailService');
+const User = require('../models/User');
 
 // GET /api/cart - get current user's cart
 router.get('/', authenticateToken, async (req, res) => {
@@ -139,6 +141,17 @@ router.post('/checkout', authenticateToken, async (req, res) => {
     // Clear cart
     cart.items = [];
     await cart.save();
+
+    // Send order confirmation email asynchronously
+    try {
+      const populatedOrder = await Order.findById(order._id).populate('items.car');
+      const user = await User.findById(req.user.userId);
+      if (user && populatedOrder) {
+        sendOrderConfirmation(user, populatedOrder).catch(err => console.error('Failed to send order email:', err));
+      }
+    } catch (emailErr) {
+      console.error('Error preparing order email:', emailErr);
+    }
 
     res.status(201).json({ message: 'Checkout successful', orderId: order._id, total });
   } catch (err) {

@@ -24,6 +24,10 @@ import Footer from './Components/Common/Footer';
 import { MessageProvider } from './Components/Message/MessageContext';
 import MessageDisplay from './Components/Message/MessageDisplay';
 import AdminDashboard from './Components/Admin/AdminDashboard';
+import CarDetail from './Components/Customer/CarDetail';
+
+import ForgotPassword from './Components/LoginDetails/ForgotPassword';
+import ResetPassword from './Components/LoginDetails/ResetPassword';
 
 // Bug #12 fix: isLoggedIn is now derived from AuthContext (no more fake sentinel token).
 const AppWithRouter = () => {
@@ -88,6 +92,14 @@ const AppWithRouter = () => {
           }
         />
         <Route
+          path="/cars/:carId"
+          element={
+            <ProtectedRoute requiredRole="customer">
+              <CarDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/profile"
           element={
             <ProtectedRoute>
@@ -116,6 +128,8 @@ const AppWithRouter = () => {
         <Route path="/services" element={<Service />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Seller Routes */}
         <Route

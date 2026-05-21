@@ -68,7 +68,10 @@ const userSchema = new mongoose.Schema({
   verification: {
     isVerified: { type: Boolean, default: false },
     documents: [String]
-  }
+  },
+  // Password reset token fields
+  passwordResetToken: { type: String },
+  passwordResetExpires: { type: Date }
 }, {
   timestamps: true // Automatically add createdAt and updatedAt fields
 });

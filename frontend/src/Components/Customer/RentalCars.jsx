@@ -11,7 +11,15 @@ const RentalCars = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [geoSearch, setGeoSearch] = useState({ active: false, lat: null, lng: null, radius: 10 });
   const [rentalDates, setRentalDates] = useState({ startDate: '', endDate: '' });
+  const [filters, setFilters] = useState({
+    priceMin: '',
+    priceMax: '',
+    fuelType: '',
+    transmission: '',
+    capacity: ''
+  });
 
 
   useEffect(() => {
@@ -19,7 +27,11 @@ const RentalCars = () => {
       try {
         setLoading(true);
         setError('');
-  const res = await fetch(API_ENDPOINTS.CARS);
+        let url = API_ENDPOINTS.CARS;
+        if (geoSearch.active && geoSearch.lat && geoSearch.lng) {
+          url += `?lat=${geoSearch.lat}&lng=${geoSearch.lng}&radius=${geoSearch.radius}`;
+        }
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`Failed to fetch cars: ${res.status}`);
         const data = await res.json();
         console.log('Fetched rental cars data:', data.cars); // DEBUG: See what data we get
@@ -35,11 +47,45 @@ const RentalCars = () => {
     };
 
     fetchCars();
-  }, []);
+  }, [geoSearch.active, geoSearch.lat, geoSearch.lng, geoSearch.radius]);
 
-  const filteredCars = cars.filter(car =>
-    `${car.brand ?? ''} ${car.model ?? ''}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleGeoSearch = () => {
+    if (geoSearch.active) {
+      setGeoSearch({ ...geoSearch, active: false, lat: null, lng: null });
+      return;
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setGeoSearch({
+            ...geoSearch,
+            active: true,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          toast.success("Location found! Showing cars near you.");
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast.error("Could not get your location. Please check browser permissions.");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser.");
+    }
+  };
+
+  const filteredCars = cars.filter(car => {
+    const matchesSearch = `${car.brand ?? ''} ${car.model ?? ''}`.toLowerCase().includes(search.toLowerCase());
+    const matchesMinPrice = filters.priceMin ? car.price >= Number(filters.priceMin) : true;
+    const matchesMaxPrice = filters.priceMax ? car.price <= Number(filters.priceMax) : true;
+    const matchesFuel = filters.fuelType ? car.fuelType === filters.fuelType : true;
+    const matchesTransmission = filters.transmission ? car.transmission === filters.transmission : true;
+    const matchesCapacity = filters.capacity ? car.capacity === Number(filters.capacity) : true;
+
+    return matchesSearch && matchesMinPrice && matchesMaxPrice && matchesFuel && matchesTransmission && matchesCapacity;
+  });
 
   return (
     <div className="dashboard-container">
@@ -75,6 +121,57 @@ const RentalCars = () => {
               min={rentalDates.startDate || new Date().toISOString().split('T')[0]}
             />
           </div>
+        </div>
+
+        {/* Location Radius Search */}
+        <div className="catalog-filters" style={{ marginTop: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button 
+            className={`btn ${geoSearch.active ? 'btn-primary' : 'btn-secondary'}`} 
+            onClick={handleGeoSearch}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            📍 {geoSearch.active ? 'Clear Location' : 'Search Near Me'}
+          </button>
+          
+          {geoSearch.active && (
+            <select 
+              value={geoSearch.radius} 
+              onChange={e => setGeoSearch({...geoSearch, radius: e.target.value})} 
+              className="search-input"
+              style={{ width: 'auto' }}
+            >
+              <option value="5">Within 5 km</option>
+              <option value="10">Within 10 km</option>
+              <option value="25">Within 25 km</option>
+              <option value="50">Within 50 km</option>
+              <option value="100">Within 100 km</option>
+            </select>
+          )}
+        </div>
+        
+        <div className="catalog-filters" style={{ marginTop: '1rem' }}>
+          <input type="number" placeholder="Min Price (₹)" value={filters.priceMin} onChange={e => setFilters({...filters, priceMin: e.target.value})} className="search-input" />
+          <input type="number" placeholder="Max Price (₹)" value={filters.priceMax} onChange={e => setFilters({...filters, priceMax: e.target.value})} className="search-input" />
+          <select value={filters.fuelType} onChange={e => setFilters({...filters, fuelType: e.target.value})} className="search-input">
+            <option value="">Any Fuel</option>
+            <option value="Petrol">Petrol</option>
+            <option value="Diesel">Diesel</option>
+            <option value="Electric">Electric</option>
+            <option value="Hybrid">Hybrid</option>
+          </select>
+          <select value={filters.transmission} onChange={e => setFilters({...filters, transmission: e.target.value})} className="search-input">
+            <option value="">Any Transmission</option>
+            <option value="Manual">Manual</option>
+            <option value="Automatic">Automatic</option>
+          </select>
+          <select value={filters.capacity} onChange={e => setFilters({...filters, capacity: e.target.value})} className="search-input">
+            <option value="">Any Seating</option>
+            <option value="2">2 Seats</option>
+            <option value="4">4 Seats</option>
+            <option value="5">5 Seats</option>
+            <option value="7">7 Seats</option>
+            <option value="8">8 Seats</option>
+          </select>
         </div>
       </div>
 
@@ -124,7 +221,12 @@ const RentalCars = () => {
                 <div className="car-footer">
                   <span className="price">₹{car.price.toLocaleString('en-IN')}/day</span>
                   <div className="car-footer-actions">
-                    <button className="option-button small">View Details</button>
+                    <button
+                    className="option-button small"
+                    onClick={() => navigate(`/cars/${car._id || car.id}`)}
+                  >
+                    View Details
+                  </button>
                     <button
                       className="option-button small"
                       onClick={async () => {

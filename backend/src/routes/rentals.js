@@ -2,6 +2,8 @@ const express = require('express');
 const Rental = require('../models/Rental');
 const Car = require('../models/Car');
 const { authenticateToken } = require('../middleware/auth');
+const User = require('../models/User');
+const { sendRentalReminder } = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -44,6 +46,15 @@ router.post('/', authenticateToken, async (req, res) => {
     // Mark car as rented so it no longer appears in active listings
     car.status = 'rented';
     await car.save();
+
+    try {
+      const user = await User.findById(req.user.userId);
+      if (user) {
+        sendRentalReminder(user, rental, car).catch(err => console.error('Failed to send rental reminder email:', err));
+      }
+    } catch (emailErr) {
+      console.error('Error preparing rental email:', emailErr);
+    }
 
     res.status(201).json({ message: 'Rental booked successfully', rental });
   } catch (err) {
