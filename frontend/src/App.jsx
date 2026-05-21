@@ -2,11 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import HomePage from './Components/Home/HomePage';
 import SignIn from './Components/LoginDetails/SignIn';
 import SignUp from './Components/LoginDetails/SignUp';
-import ProtectedRoute from './Components/Auth/ProtectedRoute';
-import Navbar from './Components/Common/Navbar';
+import UserManagement from './UserManagement'; // Import UserManagement
+import UserDetail from './UserDetail'; // Import UserDetail
 import SellerDashboard from './Components/Seller/SellerDashboard';
 import AddCar from './Components/Seller/AddCar';
 import EditCar from './Components/Seller/EditCar';
@@ -21,6 +22,7 @@ import About from './Components/Common/About';
 import Contact from './Components/Common/Contact';
 import Service from './Components/Common/Service';
 import Footer from './Components/Common/Footer';
+import Navbar from './Components/Common/Navbar'; // Moved Navbar import here
 import { MessageProvider } from './Components/Message/MessageContext';
 import MessageDisplay from './Components/Message/MessageDisplay';
 import AdminDashboard from './Components/Admin/AdminDashboard';
@@ -187,6 +189,8 @@ const AppWithRouter = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><UserManagement /></ProtectedRoute>} />
+        <Route path="/admin/users/:userId" element={<ProtectedRoute requiredRole="admin"><UserDetail /></ProtectedRoute>} />
       </Routes>
       <CompareBar />
       <Footer />

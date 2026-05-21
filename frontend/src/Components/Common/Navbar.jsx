@@ -192,6 +192,9 @@ const Navbar = ({ isLoggedIn }) => {
                     <Link to="/admin/dashboard" className="auth-btn profile">
                       <i className="fas fa-tachometer-alt"></i> Dashboard
                     </Link>
+                    <Link to="/admin/users" className="auth-btn profile">
+                      <i className="fas fa-users"></i> User Management
+                    </Link>
                     <button onClick={handleLogout} className="auth-btn sign-out">
                       <i className="fas fa-sign-out-alt"></i> Sign Out
                     </button>

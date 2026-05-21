@@ -39,9 +39,18 @@ const userSchema = new mongoose.Schema({
     type: Boolean, 
     default: true 
   },
+  isBanned: {
+    type: Boolean,
+    default: false
+  },
   lastLogin: { 
     type: Date 
   },
+  loginHistory: [{
+    timestamp: { type: Date, default: Date.now },
+    ip: String,
+    success: Boolean
+  }],
   businessInfo: {
     name: String,
     email: String,
@@ -67,6 +76,7 @@ const userSchema = new mongoose.Schema({
   },
   verification: {
     isVerified: { type: Boolean, default: false },
+    status: { type: String, enum: ['unverified', 'pending', 'approved', 'rejected'], default: 'unverified' },
     documents: [String]
   },
   // Wishlist - saved/favourite cars
