@@ -126,13 +126,30 @@ router.post('/signin', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
+        if (user.isBanned) {
+            return res.status(403).json({ message: 'Your account has been permanently banned.' });
+        }
+        
+        if (!user.isActive) {
+            return res.status(403).json({ message: 'Your account is currently deactivated.' });
+        }
+
         const isValid = await user.comparePassword(password);
         if (!isValid) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Update last login
+        // Update last login and history
         user.lastLogin = new Date();
+        user.loginHistory.push({
+            timestamp: new Date(),
+            ip: req.ip || req.connection.remoteAddress,
+            success: true
+        });
+        // Keep only the last 20 logins to avoid blowing up the document size
+        if (user.loginHistory.length > 20) {
+            user.loginHistory = user.loginHistory.slice(-20);
+        }
         await user.save();
 
         const token = jwt.sign(
