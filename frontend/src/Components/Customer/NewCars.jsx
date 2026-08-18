@@ -212,47 +212,47 @@ const NewCars = () => {
                  </div>
                  <div className="car-description" title={car.description}>
                    {car.description}
-                   <div className="car-footer">
-                    <span className="price">₹{car.price.toLocaleString('en-IN')}</span>
-                    <div className="car-footer-actions">
-                       <button
-                         className="option-button small"
-                         onClick={() => navigate(`/cars/${car._id || car.id}`)}
-                       >
-                         View Details
-                       </button>
-                      <button
-                        className="option-button small"
-                        onClick={async () => {
-                          try {
-                            const res = await fetch(API_ENDPOINTS.CART, {
-                              method: 'POST',
-                              credentials: 'include',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ carId: car._id || car.id })
-                            });
+                 </div>
+                 <div className="car-footer">
+                   <span className="price">₹{car.price.toLocaleString('en-IN')}</span>
+                   <div className="car-footer-actions">
+                     <button
+                       className="option-button small"
+                       onClick={() => navigate(`/cars/${car._id || car.id}`)}
+                     >
+                       View Details
+                     </button>
+                     <button
+                       className="option-button small"
+                       onClick={async () => {
+                         try {
+                           const res = await fetch(API_ENDPOINTS.CART, {
+                             method: 'POST',
+                             credentials: 'include',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ carId: car._id || car.id })
+                           });
 
-                            if (res.status === 401) {
-                              navigate('/signin');
-                              return;
-                            }
+                           if (res.status === 401) {
+                             navigate('/signin');
+                             return;
+                           }
 
-                            const data = await res.json();
-                            if (!res.ok) {
-                              throw new Error(data.message || 'Add to cart failed');
-                            }
-                            toast.success(`🚗 ${car.brand} ${car.model} added to cart!`);
-                          } catch (err) {
-                            console.error('Add to cart error', err);
-                            toast.error('❌ Failed to add to cart: ' + (err.message || 'Please try again'));
-                          }
-                        }}
-                      >
-                        Add to Cart
-                      </button>
-                      <CompareButton car={car} size="sm" />
-                    </div>
-                  </div>
+                           const data = await res.json();
+                           if (!res.ok) {
+                             throw new Error(data.message || 'Add to cart failed');
+                           }
+                           toast.success(`🚗 ${car.brand} ${car.model} added to cart!`);
+                         } catch (err) {
+                           console.error('Add to cart error', err);
+                           toast.error('❌ Failed to add to cart: ' + (err.message || 'Please try again'));
+                         }
+                       }}
+                     >
+                       Add to Cart
+                     </button>
+                     <CompareButton car={car} size="sm" />
+                   </div>
                  </div>
                </div>
              ))}

@@ -137,8 +137,10 @@
 }
 
 .option-button.small {
-  padding: 0.6rem 1.2rem;
-  font-size: 0.9rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 /* Catalog Controls (Search, Filters, etc.) */
@@ -271,6 +273,7 @@
   flex-direction: column;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
 }
 
 .car-card:hover {
@@ -312,8 +315,13 @@
 }
 
 /* Car Card Content */
-.car-card>div {
+.car-card>div:not(.car-image-container) {
   padding: 1.2rem 1.5rem;
+}
+
+/* Description grows to fill space, pushing footer down */
+.car-description {
+  flex: 1;
 }
 
 .car-card-header {
@@ -380,22 +388,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid #f3f4f6;
+  margin-top: auto;
 }
 
 .price {
   font-weight: 800;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  white-space: nowrap;
 }
 
 .car-footer-actions {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 .image-count {
