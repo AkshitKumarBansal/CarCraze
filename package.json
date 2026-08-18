@@ -1,6 +1,17 @@
 {
-  "dependencies": {
-    "mongodb": "^6.21.0",
-    "mongoose": "^8.19.3"
+  "name": "carcraze-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "start": "concurrently \"npm run dev --workspace=frontend\" \"npm run start --workspace=backend\"",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }
+
