@@ -2,12 +2,15 @@ const path = require('path');
 const mongoose = require('mongoose');
 
 const PORT = process.env.PORT || 5001;
-
 const ROOT_DIR = path.join(__dirname, '..', '..');
-
 const UPLOADS_DIR = path.join(ROOT_DIR, 'uploads');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_change_me';
+if(!process.env.JWT_SECRET) {
+  console.warn('Warning: JWT_SECRET environment variable is not set. Using default secret. Please set it in your .env file for production.');
+  process.exit(1);
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
@@ -19,9 +22,6 @@ const ALLOWED_ORIGINS = [
 
 const MONGO_URI = process.env.MONGO_URI;
 
-// Bug #20 fix: removed internal process.exit so errors propagate to Server.js
-// Bug #21 fix: removed deprecated useNewUrlParser / useUnifiedTopology options
-// Bug #22 fix: removed console.log of the Mongo URI
 async function connectMongoDB() {
   if (!MONGO_URI) {
     throw new Error('MONGO_URI environment variable is not set. Please set it in your .env file.');

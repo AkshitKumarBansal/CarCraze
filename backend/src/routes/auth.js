@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
+const { validateSignup, validateLogin } = require('../middleware/validation');
 const { JWT_SECRET } = require('../config');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
 const crypto = require('crypto');
@@ -9,7 +10,8 @@ const crypto = require('crypto');
 const router = express.Router();
 
 // POST /api/auth/signup
-router.post('/signup', async (req, res) => {
+// Added validateSignup middleware here
+router.post('/signup', validateSignup, async (req, res) => {
     try {
         if (process.env.NODE_ENV === 'development') console.log('Received signup request body keys:', Object.keys(req.body));
 
@@ -24,25 +26,11 @@ router.post('/signup', async (req, res) => {
             adminCode,
         } = req.body;
 
-        if (!email || !password || !firstName || !lastName || !phone || !role) {
-            console.error('Signup: missing required fields');
-            return res.status(400).json({
-                message: 'Missing required fields',
-                errors: {
-                    email: !email ? 'Email is required' : null,
-                    password: !password ? 'Password is required' : null,
-                    firstName: !firstName ? 'First name is required' : null,
-                    lastName: !lastName ? 'Last name is required' : null,
-                    phone: !phone ? 'Phone is required' : null,
-                    role: !role ? 'Role is required' : null
-                }
-            });
-        }
+        // Note: Manual required fields check was removed because validateSignup handles it.
 
         // Check if user already exists
         const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
-
             return res.status(409).json({ message: 'User already exists with this email' });
         }
 
@@ -64,10 +52,8 @@ router.post('/signup', async (req, res) => {
 
         // Add business info for sellers
         if (role === 'seller' && businessInfo) {
-
             userData.businessInfo = businessInfo;
         }
-
 
         const user = new User(userData);
         await user.save();
@@ -82,14 +68,13 @@ router.post('/signup', async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        // Set token as HttpOnly cookie
+        // Set token as HttpOnly cookie (Upgraded to strict if front/back end share the same domain)
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-            sameSite: 'lax',
+            sameSite: 'strict', // Changed from lax to strict for better CSRF protection
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
-
 
         res.status(201).json({
             message: 'Signup successful',
@@ -113,13 +98,12 @@ router.post('/signup', async (req, res) => {
 });
 
 // POST /api/auth/signin
-router.post('/signin', async (req, res) => {
+// Added validateLogin middleware here
+router.post('/signin', validateLogin, async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
-        }
+        // Note: Manual email/password check was removed because validateLogin handles it.
 
         const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
@@ -139,18 +123,20 @@ router.post('/signin', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Update last login and history
-        user.lastLogin = new Date();
-        user.loginHistory.push({
-            timestamp: new Date(),
-            ip: req.ip || req.connection.remoteAddress,
-            success: true
+        // Optimized login history update using Mongoose $push and $slice
+        await User.findByIdAndUpdate(user._id, {
+            lastLogin: new Date(),
+            $push: {
+                loginHistory: {
+                    $each: [{
+                        timestamp: new Date(),
+                        ip: req.ip || req.connection.remoteAddress,
+                        success: true
+                    }],
+                    $slice: -20 // Keeps only the 20 most recent elements
+                }
+            }
         });
-        // Keep only the last 20 logins to avoid blowing up the document size
-        if (user.loginHistory.length > 20) {
-            user.loginHistory = user.loginHistory.slice(-20);
-        }
-        await user.save();
 
         const token = jwt.sign(
             { userId: user._id, role: user.role },
@@ -158,11 +144,11 @@ router.post('/signin', async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        // Set token as HttpOnly cookie
+        // Set token as HttpOnly cookie (Upgraded to strict)
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-            sameSite: 'lax',
+            sameSite: 'strict', // Changed from lax to strict
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
@@ -265,7 +251,7 @@ router.post('/logout', (req, res) => {
     res.clearCookie('authToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
+        sameSite: 'strict'
     });
     res.json({ message: 'Logout successful' });
 });
