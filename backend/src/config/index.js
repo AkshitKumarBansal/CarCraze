@@ -1,16 +1,25 @@
 const path = require('path');
 const mongoose = require('mongoose');
 
+// 1. Centralized validation for all critical environment variables
+const REQUIRED_ENV_VARS = ['JWT_SECRET', 'ADMIN_CODE', 'MONGO_URI'];
+
+REQUIRED_ENV_VARS.forEach((envVar) => {
+  if (!process.env[envVar]) {
+    // Throwing an error allows the entry point to handle the failure gracefully
+    // and generates a proper stack trace, rather than abruptly killing the process.
+    throw new Error(`FATAL CONFIG ERROR: Environment variable ${envVar} is not set.`);
+  }
+});
+
 const PORT = process.env.PORT || 5001;
 const ROOT_DIR = path.join(__dirname, '..', '..');
 const UPLOADS_DIR = path.join(ROOT_DIR, 'uploads');
 
-if(!process.env.JWT_SECRET) {
-  console.warn('Warning: JWT_SECRET environment variable is not set. Using default secret. Please set it in your .env file for production.');
-  process.exit(1);
-}
-
+// 2. Assign secrets without any hardcoded fallbacks
 const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_CODE = process.env.ADMIN_CODE;
+const MONGO_URI = process.env.MONGO_URI;
 
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
@@ -20,13 +29,7 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:59600',
 ];
 
-const MONGO_URI = process.env.MONGO_URI;
-
 async function connectMongoDB() {
-  if (!MONGO_URI) {
-    throw new Error('MONGO_URI environment variable is not set. Please set it in your .env file.');
-  }
-
   mongoose.set('strictQuery', false);
   await mongoose.connect(MONGO_URI, {
     serverSelectionTimeoutMS: 5000,
@@ -53,6 +56,7 @@ module.exports = {
   ROOT_DIR,
   UPLOADS_DIR,
   JWT_SECRET,
+  ADMIN_CODE,
   ALLOWED_ORIGINS,
   MONGO_URI,
   connectMongoDB,

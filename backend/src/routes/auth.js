@@ -3,14 +3,14 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
 const { validateSignup, validateLogin } = require('../middleware/validation');
-const { JWT_SECRET } = require('../config');
+// 1. Import both secrets from the centralized config
+const { JWT_SECRET, ADMIN_CODE } = require('../config');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
 const crypto = require('crypto');
 
 const router = express.Router();
 
 // POST /api/auth/signup
-// Added validateSignup middleware here
 router.post('/signup', validateSignup, async (req, res) => {
     try {
         if (process.env.NODE_ENV === 'development') console.log('Received signup request body keys:', Object.keys(req.body));
@@ -26,31 +26,25 @@ router.post('/signup', validateSignup, async (req, res) => {
             adminCode,
         } = req.body;
 
-        // Note: Manual required fields check was removed because validateSignup handles it.
-
-        // Check if user already exists
         const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
             return res.status(409).json({ message: 'User already exists with this email' });
         }
 
-        // Validate admin code if registering as admin
-        const validAdminCode = process.env.ADMIN_CODE || 'CARCRAZE_ADMIN_2024';
-        if (role === 'admin' && adminCode !== validAdminCode) {
+        // 2. Validate using the guaranteed ADMIN_CODE from config
+        if (role === 'admin' && adminCode !== ADMIN_CODE) {
             return res.status(403).json({ message: 'Invalid admin code' });
         }
 
-        // Create user based on role
         const userData = {
             firstName,
             lastName,
             email: email.toLowerCase(),
-            password, // Will be hashed by the pre-save hook
+            password, 
             phone,
             role: role || 'customer'
         };
 
-        // Add business info for sellers
         if (role === 'seller' && businessInfo) {
             userData.businessInfo = businessInfo;
         }
@@ -58,21 +52,18 @@ router.post('/signup', validateSignup, async (req, res) => {
         const user = new User(userData);
         await user.save();
 
-        // Send welcome email asynchronously so it doesn't block the response
         sendWelcomeEmail(user).catch(err => console.error('Failed to send welcome email:', err));
 
-        // Create JWT token
         const token = jwt.sign(
             { userId: user._id, role: user.role },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        // Set token as HttpOnly cookie (Upgraded to strict if front/back end share the same domain)
         res.cookie('authToken', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-            sameSite: 'strict', // Changed from lax to strict for better CSRF protection
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
@@ -88,7 +79,6 @@ router.post('/signup', validateSignup, async (req, res) => {
         });
     } catch (err) {
         console.error('Signup error:', err);
-        // Send more detailed error information
         res.status(500).json({
             message: 'Registration failed',
             error: err.message,
@@ -98,12 +88,9 @@ router.post('/signup', validateSignup, async (req, res) => {
 });
 
 // POST /api/auth/signin
-// Added validateLogin middleware here
 router.post('/signin', validateLogin, async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // Note: Manual email/password check was removed because validateLogin handles it.
 
         const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
@@ -123,7 +110,6 @@ router.post('/signin', validateLogin, async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Optimized login history update using Mongoose $push and $slice
         await User.findByIdAndUpdate(user._id, {
             lastLogin: new Date(),
             $push: {
@@ -133,7 +119,7 @@ router.post('/signin', validateLogin, async (req, res) => {
                         ip: req.ip || req.connection.remoteAddress,
                         success: true
                     }],
-                    $slice: -20 // Keeps only the 20 most recent elements
+                    $slice: -20
                 }
             }
         });
@@ -144,12 +130,11 @@ router.post('/signin', validateLogin, async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        // Set token as HttpOnly cookie (Upgraded to strict)
         res.cookie('authToken', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-            sameSite: 'strict', // Changed from lax to strict
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 
         });
 
         res.json({
@@ -199,32 +184,27 @@ router.put('/profile', authenticateToken, async (req, res) => {
     try {
         const { firstName, lastName, phone, businessInfo } = req.body;
 
-        // Find user
         const user = await User.findById(req.user.userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Validate required fields
         if (!firstName || !lastName || !phone) {
             return res.status(400).json({
                 message: 'First name, last name, and phone are required'
             });
         }
 
-        // Update user fields
         user.firstName = firstName;
         user.lastName = lastName;
         user.phone = phone;
 
-        // Update business info for sellers
         if (user.role === 'seller' && businessInfo) {
             user.businessInfo = businessInfo;
         }
 
         await user.save();
 
-        // Return updated user data (excluding password)
         res.json({
             message: 'Profile updated successfully',
             user: {
@@ -263,21 +243,17 @@ router.post('/forgot-password', async (req, res) => {
         if (!email) return res.status(400).json({ message: 'Email is required' });
 
         const user = await User.findOne({ email: email.toLowerCase() });
-        // Always respond with success to prevent user enumeration
         if (!user) {
             return res.json({ message: 'If that email exists, a reset link has been sent.' });
         }
 
-        // Generate a secure random token
         const resetToken = crypto.randomBytes(32).toString('hex');
-        // Store hashed version in DB for security
         const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
         user.passwordResetToken = hashedToken;
-        user.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+        user.passwordResetExpires = Date.now() + 60 * 60 * 1000; 
         await user.save();
 
-        // Send plain token in the email (not the hash)
         sendPasswordResetEmail(user, resetToken).catch(err => console.error('Failed to send reset email:', err));
 
         res.json({ message: 'If that email exists, a reset link has been sent.' });
@@ -294,20 +270,18 @@ router.post('/reset-password', async (req, res) => {
         if (!token || !password) return res.status(400).json({ message: 'Token and new password are required' });
         if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
 
-        // Hash the incoming token to compare with stored hash
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
         const user = await User.findOne({
             passwordResetToken: hashedToken,
-            passwordResetExpires: { $gt: Date.now() } // must not be expired
+            passwordResetExpires: { $gt: Date.now() }
         });
 
         if (!user) {
             return res.status(400).json({ message: 'Reset link is invalid or has expired.' });
         }
 
-        // Set new password and clear reset fields
-        user.password = password; // pre-save hook will hash it
+        user.password = password; 
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
         await user.save();
