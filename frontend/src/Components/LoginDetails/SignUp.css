@@ -335,6 +335,18 @@
   text-decoration: underline;
 }
 
+.custom-phone-input {
+  display: flex;
+  align-items: center;
+}
+.custom-phone-input input {
+  /* This targets the text input next to the flag */
+  width: 100%;
+  border: none;
+  outline: none;
+  padding-left: 10px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .auth-container {

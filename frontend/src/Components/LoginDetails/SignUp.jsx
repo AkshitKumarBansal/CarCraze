@@ -8,6 +8,8 @@ import car3 from '../../images/car3';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faUser, faLock, faPhone, faBuilding, faMapMarkerAlt, faUserShield, faKey } from '@fortawesome/free-solid-svg-icons';
 import { useToast } from '../../Hooks/useToast';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css'; // Requires the default CSS to render the flags
 
 
 const SignUp = ({ onSwitchToSignIn }) => {
@@ -215,14 +217,16 @@ const SignUp = ({ onSwitchToSignIn }) => {
             <div className="form-group">
               <label htmlFor="businessPhone">Business Phone *</label>
               <div className="input-with-icon">
-                <input
-                  type="tel"
+                <PhoneInput
                   id="businessPhone"
                   name="businessPhone"
-                  value={formData.businessPhone}
-                  onChange={handleInputChange}
-                  className={errors.businessPhone ? 'error' : ''}
+                  defaultCountry="IN"
                   placeholder="Enter business phone"
+                  value={formData.businessPhone}
+                  // We wrap the value in a fake event object so your existing handler works perfectly!
+                  onChange={(value) => handleInputChange({ target: { name: 'businessPhone', value } })}
+                  // We keep your error styling while adding the phone input classes
+                  className={`custom-phone-input ${errors.businessPhone ? 'error' : ''}`}
                 />
                 <FontAwesomeIcon icon={faPhone} className="input-icon" />
               </div>
@@ -372,14 +376,15 @@ const SignUp = ({ onSwitchToSignIn }) => {
               <div className="form-group">
                 <label htmlFor="phone">Phone Number *</label>
                 <div className="input-with-icon">
-                  <input
-                    type="tel"
+                  <PhoneInput
                     id="phone"
                     name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className={errors.phone ? 'error' : ''}
+                    defaultCountry="IN"
                     placeholder="Enter phone number"
+                    value={formData.phone}
+                    // The fake event object targets 'phone' instead of 'businessPhone'
+                    onChange={(value) => handleInputChange({ target: { name: 'phone', value } })}
+                    className={`custom-phone-input ${errors.phone ? 'error' : ''}`}
                   />
                   <FontAwesomeIcon icon={faPhone} className="input-icon" />
                 </div>

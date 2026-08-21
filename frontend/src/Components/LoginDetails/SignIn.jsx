@@ -8,6 +8,8 @@ import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
 import car1 from '../../images/car1';
 import car2 from '../../images/car2';
 import car3 from '../../images/car3';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css'; // Requires the default CSS to render the flags
 
 // Bug #11 fix: defined outside component so the array reference is stable
 const SLIDESHOW_IMAGES = [car1, car2, car3];
