@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export const API_ENDPOINTS = {
   // Auth endpoints
@@ -20,14 +20,9 @@ export const API_ENDPOINTS = {
   ORDERS: `${API_BASE_URL}/api/orders`,
   UPLOAD_IMAGES: `${API_BASE_URL}/api/upload/car-images`,
 
-  // Wishlist
-  WISHLIST: `${API_BASE_URL}/api/wishlist`,
-
-  // Admin
-  ADMIN: `${API_BASE_URL}/api/admin`,
-
-  // Health check
-  HEALTH: `${API_BASE_URL}/api/health`
+  WISHLIST: `${API_BASE_URL}/api/wishlist`, // Wishlist endpoints
+  ADMIN: `${API_BASE_URL}/api/admin`, // Admin endpoints
+  HEALTH: `${API_BASE_URL}/api/health` // Health check endpoint
 };
 
 export default API_BASE_URL;
