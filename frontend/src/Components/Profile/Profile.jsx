@@ -46,7 +46,7 @@ const ProfileContent = () => {
     };
 
     fetchProfile();
-  }, [toast]); // Add toast to dependency array
+  }, []);
 
   const updateFormData = (userData) => {
     const biz = (userData.businessInfo && typeof userData.businessInfo === 'object')
