@@ -4,11 +4,13 @@ const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
 const { validateSignup, validateLogin } = require('../middleware/validation');
 // 1. Import both secrets from the centralized config
-const { JWT_SECRET, ADMIN_CODE } = require('../config');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
 const crypto = require('crypto');
 
 const router = express.Router();
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_CODE = process.env.ADMIN_CODE;
 
 // POST /api/auth/signup
 router.post('/signup', validateSignup, async (req, res) => {
