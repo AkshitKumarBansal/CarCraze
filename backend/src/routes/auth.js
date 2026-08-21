@@ -2,7 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
-const { validateSignup, validateLogin } = require('../middleware/validation');
+const { validateSignup, validateLogin, validateProfileUpdate } = require('../middleware/validation');
+const { authLimiter } = require('../middleware/rateLimiter');
 // 1. Import both secrets from the centralized config
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
 const crypto = require('crypto');
@@ -13,7 +14,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const ADMIN_CODE = process.env.ADMIN_CODE;
 
 // POST /api/auth/signup
-router.post('/signup', validateSignup, async (req, res) => {
+router.post('/signup', authLimiter, validateSignup, async (req, res) => {
     try {
         if (process.env.NODE_ENV === 'development') console.log('Received signup request body keys:', Object.keys(req.body));
 
@@ -90,7 +91,7 @@ router.post('/signup', validateSignup, async (req, res) => {
 });
 
 // POST /api/auth/signin
-router.post('/signin', validateLogin, async (req, res) => {
+router.post('/signin', authLimiter, validateLogin, async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -182,7 +183,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/auth/profile - Update user profile
-router.put('/profile', authenticateToken, async (req, res) => {
+router.put('/profile', authenticateToken, validateProfileUpdate, async (req, res) => {
     try {
         const { firstName, lastName, phone, businessInfo } = req.body;
 
@@ -239,7 +240,7 @@ router.post('/logout', (req, res) => {
 });
 
 // POST /api/auth/forgot-password
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', authLimiter, async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) return res.status(400).json({ message: 'Email is required' });

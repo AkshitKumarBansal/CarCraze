@@ -19,11 +19,12 @@ const cartRouter = require('./routes/cart');
 const ordersRouter = require('./routes/orders');
 const contactRouter = require('./routes/contact');
 const wishlistRouter = require('./routes/wishlist');
+const helmet = require('helmet');
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // limit each IP to 300 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: {
@@ -32,6 +33,8 @@ const limiter = rateLimit({
 });
 
 const app = express();
+
+app.use(helmet()); // Security headers
 
 // CORS
 app.use(cors({
