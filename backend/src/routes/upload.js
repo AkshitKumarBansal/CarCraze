@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
-const upload = require('../storage/multer');
+const upload = require('../middleware/multer');
 
 router.post(
   '/car-images',

@@ -1,7 +1,7 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const Car = require('../models/Car');
-const upload = require('../storage/multer');
+const upload = require('../middleware/multer');
 const cloudinary = require('cloudinary').v2;
 const turf = require('@turf/turf');
 

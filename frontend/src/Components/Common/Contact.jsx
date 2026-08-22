@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './Contact.css';
 import { API_ENDPOINTS } from '../../config/api';
 
 const Contact = () => {
@@ -26,7 +25,6 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      // Use API_ENDPOINTS.CONTACT if defined, otherwise fallback to standard local backend URL
       const endpoint = API_ENDPOINTS?.CONTACT || 'http://localhost:5001/api/contact';
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -53,100 +51,111 @@ const Contact = () => {
   };
 
   return (
-    <div className="contact-container">
-      <div className="contact-hero">
-        <div className="container">
-          <h1>Contact Us</h1>
-          <p>Get in touch with our team - we're here to help!</p>
+    <div className="min-h-screen pt-20 bg-gray-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white py-16 text-center">
+        <div className="container mx-auto px-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Contact Us</h1>
+          <p className="text-lg md:text-xl opacity-90">Get in touch with our team - we're here to help!</p>
         </div>
       </div>
 
-      <div className="contact-content">
-        <div className="container">
-          <div className="contact-grid">
+      {/* Main Content */}
+      <div className="py-16">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+            
             {/* Contact Information */}
-            <div className="contact-info">
-              <h2>Get In Touch</h2>
-              <p>
+            <div>
+              <h2 className="text-3xl text-gray-800 font-semibold mb-6">Get In Touch</h2>
+              <p className="text-lg text-gray-600 leading-relaxed mb-10">
                 Have questions about our services? Need help finding the perfect car? 
                 Our team is ready to assist you every step of the way.
               </p>
 
-              <div className="contact-details">
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <i className="fas fa-map-marker-alt"></i>
+              <div className="mb-12 space-y-8">
+                
+                {/* Address */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shrink-0 mb-4 sm:mb-0 sm:mr-4 shadow-md">
+                    <i className="fas fa-map-marker-alt text-white text-lg"></i>
                   </div>
-                  <div className="contact-text">
-                    <h3>Address</h3>
-                    <p>123 CarCraze Street<br />New Delhi, India 110001</p>
-                  </div>
-                </div>
-
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <i className="fas fa-phone"></i>
-                  </div>
-                  <div className="contact-text">
-                    <h3>Phone</h3>
-                    <p>+91 98765 43210<br />+91 87654 32109</p>
+                  <div>
+                    <h3 className="text-gray-800 text-xl font-semibold mb-1">Address</h3>
+                    <p className="text-gray-600 leading-relaxed">123 CarCraze Street<br />New Delhi, India 110001</p>
                   </div>
                 </div>
 
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <i className="fas fa-envelope"></i>
+                {/* Phone */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shrink-0 mb-4 sm:mb-0 sm:mr-4 shadow-md">
+                    <i className="fas fa-phone text-white text-lg"></i>
                   </div>
-                  <div className="contact-text">
-                    <h3>Email</h3>
-                    <p>info@carcraze.com<br />support@carcraze.com</p>
+                  <div>
+                    <h3 className="text-gray-800 text-xl font-semibold mb-1">Phone</h3>
+                    <p className="text-gray-600 leading-relaxed">+91 98765 43210<br />+91 87654 32109</p>
                   </div>
                 </div>
 
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <i className="fas fa-clock"></i>
+                {/* Email */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shrink-0 mb-4 sm:mb-0 sm:mr-4 shadow-md">
+                    <i className="fas fa-envelope text-white text-lg"></i>
                   </div>
-                  <div className="contact-text">
-                    <h3>Business Hours</h3>
-                    <p>Mon - Fri: 9:00 AM - 7:00 PM<br />Sat - Sun: 10:00 AM - 6:00 PM</p>
+                  <div>
+                    <h3 className="text-gray-800 text-xl font-semibold mb-1">Email</h3>
+                    <p className="text-gray-600 leading-relaxed">info@carcraze.com<br />support@carcraze.com</p>
                   </div>
                 </div>
+
+                {/* Business Hours */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shrink-0 mb-4 sm:mb-0 sm:mr-4 shadow-md">
+                    <i className="fas fa-clock text-white text-lg"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-gray-800 text-xl font-semibold mb-1">Business Hours</h3>
+                    <p className="text-gray-600 leading-relaxed">Mon - Fri: 9:00 AM - 7:00 PM<br />Sat - Sun: 10:00 AM - 6:00 PM</p>
+                  </div>
+                </div>
+
               </div>
 
-              <div className="social-links">
-                <h3>Follow Us</h3>
-                <div className="social-icons">
-                  <a href="#" className="social-icon">
-                    <i className="fab fa-facebook"></i>
+              {/* Social Links */}
+              <div className="text-center sm:text-left">
+                <h3 className="text-gray-800 font-semibold mb-4 text-xl">Follow Us</h3>
+                <div className="flex gap-4 justify-center sm:justify-start">
+                  <a href="#" className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-indigo-500 transition-all duration-300 hover:bg-indigo-500 hover:text-white hover:-translate-y-1 hover:shadow-lg">
+                    <i className="fab fa-facebook-f"></i>
                   </a>
-                  <a href="#" className="social-icon">
+                  <a href="#" className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-indigo-500 transition-all duration-300 hover:bg-indigo-500 hover:text-white hover:-translate-y-1 hover:shadow-lg">
                     <i className="fab fa-twitter"></i>
                   </a>
-                  <a href="#" className="social-icon">
+                  <a href="#" className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-indigo-500 transition-all duration-300 hover:bg-indigo-500 hover:text-white hover:-translate-y-1 hover:shadow-lg">
                     <i className="fab fa-instagram"></i>
                   </a>
-                  <a href="#" className="social-icon">
-                    <i className="fab fa-linkedin"></i>
+                  <a href="#" className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-indigo-500 transition-all duration-300 hover:bg-indigo-500 hover:text-white hover:-translate-y-1 hover:shadow-lg">
+                    <i className="fab fa-linkedin-in"></i>
                   </a>
                 </div>
               </div>
             </div>
 
             {/* Contact Form */}
-            <div className="contact-form">
-              <h2>Send us a Message</h2>
+            <div className="bg-white p-6 md:p-8 rounded-xl shadow-xl border border-gray-100">
+              <h2 className="text-3xl text-gray-800 font-semibold mb-6">Send us a Message</h2>
+              
               {submitMessage && (
-              <div className={`success-message ${submitMessage.startsWith('Error') ? 'error' : ''}`}>
-                <i className={`fas ${submitMessage.startsWith('Error') ? 'fa-exclamation-circle' : 'fa-check-circle'}`}></i>
-                  {submitMessage}
+                <div className={`p-4 rounded-lg mb-6 flex items-center gap-3 transition-opacity duration-500 ${submitMessage.startsWith('Error') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                  <i className={`fas ${submitMessage.startsWith('Error') ? 'fa-exclamation-circle' : 'fa-check-circle'} text-lg`}></i>
+                  <span>{submitMessage}</span>
                 </div>
               )}
               
               <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="name">Full Name *</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label htmlFor="name" className="block mb-2 text-gray-700 font-medium">Full Name *</label>
                     <input
                       type="text"
                       id="name"
@@ -154,10 +163,11 @@ const Contact = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
+                      className="w-full p-3 border-2 border-gray-200 rounded-lg text-gray-800 transition-colors focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                     />
                   </div>
-                  <div className="form-group">
-                    <label htmlFor="email">Email Address *</label>
+                  <div>
+                    <label htmlFor="email" className="block mb-2 text-gray-700 font-medium">Email Address *</label>
                     <input
                       type="email"
                       id="email"
@@ -165,29 +175,32 @@ const Contact = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
+                      className="w-full p-3 border-2 border-gray-200 rounded-lg text-gray-800 transition-colors focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                     />
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="phone">Phone Number</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label htmlFor="phone" className="block mb-2 text-gray-700 font-medium">Phone Number</label>
                     <input
                       type="tel"
                       id="phone"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
+                      className="w-full p-3 border-2 border-gray-200 rounded-lg text-gray-800 transition-colors focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                     />
                   </div>
-                  <div className="form-group">
-                    <label htmlFor="subject">Subject *</label>
+                  <div>
+                    <label htmlFor="subject" className="block mb-2 text-gray-700 font-medium">Subject *</label>
                     <select
                       id="subject"
                       name="subject"
                       value={formData.subject}
                       onChange={handleChange}
                       required
+                      className="w-full p-3 border-2 border-gray-200 rounded-lg text-gray-800 transition-colors focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 bg-white"
                     >
                       <option value="">Select a subject</option>
                       <option value="general">General Inquiry</option>
@@ -200,8 +213,8 @@ const Contact = () => {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="message">Message *</label>
+                <div className="mb-6">
+                  <label htmlFor="message" className="block mb-2 text-gray-700 font-medium">Message *</label>
                   <textarea
                     id="message"
                     name="message"
@@ -210,13 +223,14 @@ const Contact = () => {
                     onChange={handleChange}
                     placeholder="Tell us how we can help you..."
                     required
+                    className="w-full p-3 border-2 border-gray-200 rounded-lg text-gray-800 transition-colors focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 resize-y min-h-[120px]"
                   ></textarea>
                 </div>
 
                 <button 
                   type="submit" 
-                  className="submit-btn"
                   disabled={isSubmitting}
+                  className="w-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white py-3 px-8 rounded-lg text-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-[0_6px_20px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   {isSubmitting ? (
                     <>
@@ -232,6 +246,7 @@ const Contact = () => {
                 </button>
               </form>
             </div>
+            
           </div>
         </div>
       </div>
