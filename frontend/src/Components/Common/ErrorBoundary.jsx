@@ -17,17 +17,10 @@ class ErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             return (
-                <div style={{
-                    padding: '20px',
-                    margin: '20px',
-                    border: '1px solid #ffcdd2',
-                    borderRadius: '5px',
-                    backgroundColor: '#ffebee',
-                    color: '#b71c1c'
-                }}>
-                    <h2>Something went wrong in the Profile section.</h2>
-                    <p>Please try refreshing the page.</p>
-                    <details style={{ marginTop: '10px', whiteSpace: 'pre-wrap' }}>
+                <div className="p-5 m-5 border border-red-200 rounded-md bg-red-50 text-red-900">
+                    <h2 className="text-lg font-semibold mb-2">Something went wrong in the Profile section.</h2>
+                    <p className="text-sm mb-4">Please try refreshing the page.</p>
+                    <details className="mt-3 whitespace-pre-wrap text-sm opacity-80 cursor-pointer">
                         {this.state.error && this.state.error.toString()}
                     </details>
                 </div>

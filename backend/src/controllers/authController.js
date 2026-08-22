@@ -244,6 +244,65 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const uploadVerificationDocuments = async (req, res) => {
+  try {
+    // 1. Get the authenticated user's ID (assuming your auth middleware sets req.user)
+    const userId = req.user.id; 
+
+    // 2. Extract the file URLs provided by the Cloudinary storage engine
+    // Multer places these in req.files when using upload.fields()
+    const idDocumentUrl = req.files?.idDocument?.[0]?.path;
+    const drivingLicenseUrl = req.files?.drivingLicense?.[0]?.path;
+
+    // Validate that both files were provided
+    if (!idDocumentUrl || !drivingLicenseUrl) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Both an ID Document and a Driving License are required.' 
+      });
+    }
+
+    // 3. Update the user's verification schema in MongoDB
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          'verification.idDocumentUrl': idDocumentUrl,
+          'verification.drivingLicenseUrl': drivingLicenseUrl,
+          'verification.status': 'pending',
+          'verification.submittedAt': new Date()
+        }
+      },
+      { new: true, runValidators: true } 
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // 4. (Placeholder) Trigger your automated OCR verification pipeline here
+    // e.g., await processDocumentsWithAWS(idDocumentUrl, drivingLicenseUrl);
+
+    // 5. Send success response back to the client
+    res.status(200).json({
+      success: true,
+      message: 'Verification documents uploaded successfully.',
+      verification: {
+        status: updatedUser.verification.status,
+        submittedAt: updatedUser.verification.submittedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error uploading verification documents:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during document upload.',
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
     signup,
     signin,
@@ -251,5 +310,6 @@ module.exports = {
     updateProfile,
     logout,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    uploadVerificationDocuments
 };

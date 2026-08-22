@@ -13,12 +13,13 @@ const WishlistButton = ({ carId, className = '', size = 'md' }) => {
 
   const wishlisted = isWishlisted(carId);
 
+  // Map exact dimensions to Tailwind arbitrary values
   const sizeMap = {
-    sm: { fontSize: '1.1rem', width: '30px', height: '30px' },
-    md: { fontSize: '1.35rem', width: '38px', height: '38px' },
-    lg: { fontSize: '1.7rem', width: '48px', height: '48px' },
+    sm: 'text-[1.1rem] w-[30px] h-[30px]',
+    md: 'text-[1.35rem] w-[38px] h-[38px]',
+    lg: 'text-[1.7rem] w-[48px] h-[48px]',
   };
-  const sz = sizeMap[size] || sizeMap.md;
+  const szClass = sizeMap[size] || sizeMap.md;
 
   const handleClick = async (e) => {
     e.preventDefault();
@@ -42,26 +43,17 @@ const WishlistButton = ({ carId, className = '', size = 'md' }) => {
       id={`wishlist-btn-${carId}`}
       onClick={handleClick}
       title={wishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
-      style={{
-        width: sz.width,
-        height: sz.height,
-        borderRadius: '50%',
-        border: 'none',
-        background: wishlisted ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.85)',
-        backdropFilter: 'blur(6px)',
-        boxShadow: wishlisted
-          ? '0 2px 12px rgba(239,68,68,0.25)'
-          : '0 2px 8px rgba(0,0,0,0.12)',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: sz.fontSize,
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease',
-        transform: animating ? 'scale(1.35)' : 'scale(1)',
-        flexShrink: 0,
-      }}
-      className={className}
+      className={`
+        flex items-center justify-center shrink-0 rounded-full cursor-pointer backdrop-blur-sm
+        transition-all duration-200 ease-out border-none
+        ${szClass}
+        ${wishlisted 
+          ? 'bg-red-500/15 shadow-[0_2px_12px_rgba(239,68,68,0.25)]' 
+          : 'bg-white/85 shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-white'
+        }
+        ${animating ? 'scale-[1.35]' : 'scale-100'}
+        ${className}
+      `}
       aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
       aria-pressed={wishlisted}
     >

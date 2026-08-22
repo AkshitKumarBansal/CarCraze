@@ -12,11 +12,12 @@ const CompareButton = ({ car, size = 'sm' }) => {
 
   const active = isInCompare(car._id);
 
+  // Map sizes to Tailwind classes
   const sizeMap = {
-    sm: { fontSize: '0.7rem', padding: '0.28rem 0.6rem', borderRadius: '20px' },
-    md: { fontSize: '0.82rem', padding: '0.4rem 0.9rem', borderRadius: '20px' },
+    sm: 'text-xs py-1 px-3',
+    md: 'text-sm py-1.5 px-4',
   };
-  const sz = sizeMap[size] || sizeMap.sm;
+  const szClass = sizeMap[size] || sizeMap.sm;
 
   const handleClick = (e) => {
     e.preventDefault();
@@ -34,23 +35,14 @@ const CompareButton = ({ car, size = 'sm' }) => {
       onClick={handleClick}
       title={active ? 'Remove from comparison' : 'Add to comparison'}
       aria-pressed={active}
-      style={{
-        ...sz,
-        border: active ? '1.5px solid #6366f1' : '1.5px solid #d1d5db',
-        background: active
-          ? 'linear-gradient(135deg,#6366f1,#8b5cf6)'
-          : 'rgba(255,255,255,0.9)',
-        color: active ? '#fff' : '#374151',
-        fontWeight: 700,
-        cursor: 'pointer',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.3rem',
-        boxShadow: active ? '0 2px 10px rgba(99,102,241,0.35)' : '0 1px 4px rgba(0,0,0,0.1)',
-        transition: 'all 0.2s ease',
-        whiteSpace: 'nowrap',
-        backdropFilter: 'blur(6px)',
-      }}
+      className={`
+        inline-flex items-center gap-1.5 font-bold rounded-full cursor-pointer transition-all duration-200 whitespace-nowrap backdrop-blur-sm
+        ${szClass}
+        ${active 
+          ? 'border-2 border-blue-500 bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_2px_10px_rgba(59,130,246,0.4)]' 
+          : 'border-2 border-gray-300 bg-white/90 text-gray-700 shadow-sm hover:border-blue-400 hover:text-blue-600'
+        }
+      `}
     >
       {active ? '✓ Comparing' : '⚖️ Compare'}
     </button>

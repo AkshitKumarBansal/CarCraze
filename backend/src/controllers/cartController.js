@@ -3,6 +3,7 @@ const Car = require('../models/Car');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const { sendOrderConfirmation } = require('../utils/emailService');
+const redisClient = require('../config/redisClient'); 
 
 // Controller function to get the current user's cart
 const getCart = async (req, res) => {
@@ -25,19 +26,27 @@ const getCart = async (req, res) => {
 const addToCart = async (req, res) => {
   try {
     const { carId, startDate, endDate } = req.body;
-    const userId = req.user.userId; // Assuming auth middleware sets this
+    const userId = req.user.userId;
 
     const car = await Car.findById(carId);
     if (!car) return res.status(404).json({ message: 'Car not found' });
 
-    let finalPrice = car.price; // Default to base price for standard sales
-
+    let finalPrice = car.price; 
     const isRentable = car.get('listingType') === 'rent' || car.get('category') === 'rental';
 
-    // If it's a rental, the backend securely calculates the exact price
     if (isRentable) {
       if (!startDate || !endDate) {
         return res.status(400).json({ message: 'Rental dates are required' });
+      }
+
+      // --- REDIS DISTRIBUTED LOCK IMPLEMENTATION ---
+      const lockKey = `lock:car:${carId}`;
+      const existingLockUser = await redisClient.get(lockKey);
+      
+      if (existingLockUser && existingLockUser !== userId.toString()) {
+        return res.status(409).json({ 
+          message: 'Another user is currently booking this car. Please try again in 10 minutes.' 
+        });
       }
 
       const start = new Date(startDate);
@@ -57,21 +66,21 @@ const addToCart = async (req, res) => {
       const multiplier = isWeekend ? (car.rentalPricing?.weekendMultiplier || 1.0) : 1.0;
       
       finalPrice = baseRate * durationUnits * multiplier;
+
+      // Set the Redis lock for 600 seconds (10 minutes)
+      await redisClient.setEx(lockKey, 600, userId.toString());
     }
 
-    // Find user's cart or create a new one
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       cart = new Cart({ userId, items: [] });
     }
 
-    // Check if car is already in cart
     const existingItemIndex = cart.items.findIndex(item => item.car.toString() === carId);
     if (existingItemIndex > -1) {
       return res.status(400).json({ message: 'Car is already in your cart' });
     }
 
-    // Add item with the securely calculated finalPrice
     cart.items.push({
       car: car._id,
       owner: car.sellerId,
@@ -93,12 +102,27 @@ const addToCart = async (req, res) => {
 const removeFromCart = async (req, res) => {
   try {
     const { carId } = req.params;
-    const cart = await Cart.findOne({ userId: req.user.userId });
+    const userId = req.user.userId;
+
+    const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
+    
     const before = cart.items.length;
     cart.items = cart.items.filter(it => it.car.toString() !== carId.toString());
-    if (cart.items.length === before) return res.status(404).json({ message: 'Item not found in cart' });
+    
+    if (cart.items.length === before) {
+      return res.status(404).json({ message: 'Item not found in cart' });
+    }
+
     await cart.save();
+
+    // --- RELEASE REDIS LOCK ---
+    const lockKey = `lock:car:${carId}`;
+    const lockedBy = await redisClient.get(lockKey);
+    if (lockedBy === userId.toString()) {
+      await redisClient.del(lockKey);
+    }
+
     res.json({ message: 'Removed from cart' });
   } catch (err) {
     console.error('Remove from cart error:', err);
@@ -106,16 +130,43 @@ const removeFromCart = async (req, res) => {
   }
 };
 
-// Controller function to handle checkout, create an order, and send confirmation email
+// Controller function to handle checkout
 const checkoutCart = async (req, res) => {
   try {
     const { paymentMethod = 'online' } = req.body;
-    const cart = await Cart.findOne({ userId: req.user.userId }).populate('items.car');
+    const userId = req.user.userId;
+
+    const cart = await Cart.findOne({ userId }).populate('items.car');
     if (!cart || cart.items.length === 0) return res.status(400).json({ message: 'Cart is empty' });
+
+    // --- FINAL CHECKOUT GUARDRAIL ---
+    for (const item of cart.items) {
+      const car = item.car;
+
+      // 1. Permanent Check: Did someone already successfully buy/rent it while it sat in this cart?
+      if (car.status !== 'active') {
+        return res.status(409).json({ 
+          message: `Checkout failed. ${car.brand} ${car.model} is no longer available.` 
+        });
+      }
+
+      // 2. Temporary Check: Did this user's 10-minute lock expire and another user claimed it?
+      const lockKey = `lock:car:${car._id}`;
+      const existingLockUser = await redisClient.get(lockKey);
+      
+      if (existingLockUser && existingLockUser !== userId.toString()) {
+        return res.status(409).json({
+          message: `Your reservation for ${car.brand} ${car.model} expired. Another user is currently booking it.`
+        });
+      }
+    }
+    // --- END GUARDRAIL ---
+    
     const total = cart.items.reduce((s, it) => s + (it.price || 0), 0);
     const deliveryEstimate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    
     const order = new Order({
-      userId: req.user.userId,
+      userId,
       items: cart.items.map(it => ({
         car: it.car._id,
         owner: it.owner,
@@ -129,24 +180,33 @@ const checkoutCart = async (req, res) => {
       status: paymentMethod === 'cod' ? 'created' : 'completed',
       deliveryDate: deliveryEstimate
     });
+    
     await order.save();
+    
     await Promise.all(
-      cart.items.map(it => {
+      cart.items.map(async (it) => {
         const newStatus = it.car.listingType === 'rent' ? 'rented' : 'sold';
-        return Car.findByIdAndUpdate(it.car._id, { status: newStatus });
+        await Car.findByIdAndUpdate(it.car._id, { status: newStatus });
+
+        // --- CLEANUP REDIS LOCK AFTER PURCHASE ---
+        const lockKey = `lock:car:${it.car._id}`;
+        await redisClient.del(lockKey);
       })
     );
+    
     cart.items = [];
     await cart.save();
+    
     try {
       const populatedOrder = await Order.findById(order._id).populate('items.car');
-      const user = await User.findById(req.user.userId);
+      const user = await User.findById(userId);
       if (user && populatedOrder) {
         sendOrderConfirmation(user, populatedOrder).catch(err => console.error('Failed to send order email:', err));
       }
     } catch (emailErr) {
       console.error('Error preparing order email:', emailErr);
     }
+    
     res.status(201).json({ message: 'Checkout successful', orderId: order._id, total });
   } catch (err) {
     console.error('Checkout error:', err);
