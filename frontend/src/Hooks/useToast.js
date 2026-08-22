@@ -1,4 +1,4 @@
-import { useMessages } from '../Components/Message/MessageContext';
+import { useMessages } from '../context/MessageContext';
 
 // Custom hook for showing toast notifications
 export const useToast = () => {

@@ -3,21 +3,37 @@ import { createPortal } from 'react-dom';
 
 const ImageModal = ({ src, alt, onClose }) => {
   useEffect(() => {
-    // add modal-open to body while mounted
-    document.body.classList.add('modal-open');
-    return () => document.body.classList.remove('modal-open');
+    // Prevent background scrolling using Tailwind's built-in utility class
+    document.body.classList.add('overflow-hidden');
+    return () => document.body.classList.remove('overflow-hidden');
   }, []);
 
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 900, width: '90%', maxHeight: '80vh', padding: 12, borderRadius: 8, background: 'transparent', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button className="btn" onClick={onClose}>Close</button>
+    <div 
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-opacity" 
+      onClick={onClose}
+    >
+      <div 
+        className="w-[90%] max-w-[900px] max-h-[85vh] p-3 rounded-lg bg-transparent flex flex-col gap-2" 
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-end">
+          <button 
+            className="bg-white/20 hover:bg-white/30 text-white font-medium px-5 py-2 rounded-lg backdrop-blur-md transition-colors shadow-lg cursor-pointer" 
+            onClick={onClose}
+          >
+            Close
+          </button>
         </div>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img src={src} alt={alt} style={{ maxWidth: '100%', maxHeight: 'calc(80vh - 40px)', objectFit: 'contain', borderRadius: 8 }} />
+        
+        <div className="flex-1 flex items-center justify-center">
+          <img 
+            src={src} 
+            alt={alt} 
+            className="max-w-full max-h-[calc(85vh-70px)] object-contain rounded-lg shadow-2xl" 
+          />
         </div>
       </div>
     </div>,

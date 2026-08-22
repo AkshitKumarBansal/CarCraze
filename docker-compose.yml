@@ -14,16 +14,19 @@ services:
       container_name: carcraze_backend
       ports:
         - "5001:5001"
-      # 1. Point directly to your existing .env file
+      # --- ADD THESE 3 LINES ---
+      dns:
+        - 8.8.8.8
+        - 1.1.1.1
+      # -------------------------
       env_file: 
         - ./backend/.env
-      # 2. Keep the Docker-specific overrides here
       environment:
         - PORT=5001
-        - MONGO_URI=mongodb+srv://CarCraze:123c%40rCr%40ze@cluster01.gmqpvfv.mongodb.net/CarCraze?retryWrites=true&w=majority 
         - NODE_ENV=development
       depends_on:
-        - mongodb
+        - mongodb # You can safely remove this line and the mongodb service above if you are only using Atlas
+        - redis
 
   frontend:
       build: ./frontend
@@ -34,6 +37,12 @@ services:
         - REACT_APP_API_URL=http://localhost:5001/api
       depends_on:
         - backend
+  
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: always
 
 volumes:
   mongo_data:
