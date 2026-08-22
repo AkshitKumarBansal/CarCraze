@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: carcraze_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+      build: ./backend
+      container_name: carcraze_backend
+      ports:
+        - "5001:5001"
+      # 1. Point directly to your existing .env file
+      env_file: 
+        - ./backend/.env
+      # 2. Keep the Docker-specific overrides here
+      environment:
+        - PORT=5001
+        - MONGO_URI=mongodb+srv://CarCraze:123c%40rCr%40ze@cluster01.gmqpvfv.mongodb.net/CarCraze?retryWrites=true&w=majority 
+        - NODE_ENV=development
+      depends_on:
+        - mongodb
+
+  frontend:
+      build: ./frontend
+      container_name: carcraze_frontend
+      ports:
+        - "5173:5173" # Updated to match Vite
+      environment:
+        - REACT_APP_API_URL=http://localhost:5001/api
+      depends_on:
+        - backend
+
+volumes:
+  mongo_data:
