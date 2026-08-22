@@ -26,7 +26,12 @@ L.Marker.prototype.options.icon = DefaultIcon;
 const LISTING_LABEL = { sale_new: 'New', sale_old: 'Used', rent: 'For Rent' };
 const LISTING_CLASS = { sale_new: 'new', sale_old: 'used', rent: 'rent' };
 
-const today = () => new Date().toISOString().split('T')[0];
+// Format date for datetime-local input min attribute
+const now = () => {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+};
 
 /* ── Component ───────────────────────────────────────────── */
 const CarDetail = () => {
@@ -41,6 +46,12 @@ const CarDetail = () => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
   const [rentalDates, setRentalDates] = useState({ startDate: '', endDate: '' });
+  
+  // Dynamic Pricing State
+  const [pricing, setPricing] = useState(null);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingError, setPricingError] = useState('');
+
   const [distanceInfo, setDistanceInfo] = useState({ distanceKm: null, durationMins: null, loading: false, error: null });
 
   // Delivery / Fulfillment state
@@ -86,6 +97,60 @@ const CarDetail = () => {
     fetchCar();
   }, [carId]);
 
+  /* ── Fetch Dynamic Pricing ────────────────────────────── */
+  useEffect(() => {
+    const fetchPricing = async () => {
+      if (car?.listingType === 'rent' && rentalDates.startDate && rentalDates.endDate) {
+        const start = new Date(rentalDates.startDate);
+        const end = new Date(rentalDates.endDate);
+        
+        if (start >= end) {
+          setPricingError('Return date must be after pickup date.');
+          setPricing(null);
+          return;
+        }
+
+        setPricingLoading(true);
+        setPricingError('');
+        
+        try {
+          // Derive rentals endpoint from cars endpoint if not explicitly defined in config
+          const rentalsApiUrl = API_ENDPOINTS.CARS.replace('/cars', '/rentals');
+          
+          const res = await fetch(`${rentalsApiUrl}/calculate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              carId: car._id,
+              startDate: start.toISOString(),
+              endDate: end.toISOString()
+            })
+          });
+          
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Error calculating price');
+          
+          setPricing(data.pricingBreakdown);
+        } catch (err) {
+          setPricingError(err.message);
+          setPricing(null);
+        } finally {
+          setPricingLoading(false);
+        }
+      } else {
+        setPricing(null);
+        setPricingError('');
+      }
+    };
+
+    // Debounce the fetch slightly to prevent spamming the API while typing/selecting dates
+    const delayDebounceFn = setTimeout(() => {
+      fetchPricing();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [rentalDates, car]);
+
   // Set initial delivery fulfillment based on car's config
   useEffect(() => {
     if (car) {
@@ -122,7 +187,6 @@ const CarDetail = () => {
           const carLat = car.coordinates.lat;
           const carLng = car.coordinates.lng;
 
-          // OSRM expects lon,lat format
           const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${carLng},${carLat}?overview=false`;
           const res = await fetch(osrmUrl);
           if (!res.ok) throw new Error("Failed to fetch route");
@@ -215,8 +279,8 @@ const CarDetail = () => {
         toast.warning('Please select both pickup and return dates.');
         return;
       }
-      if (new Date(rentalDates.startDate) >= new Date(rentalDates.endDate)) {
-        toast.warning('Return date must be after pickup date.');
+      if (pricingError) {
+        toast.warning(pricingError);
         return;
       }
     }
@@ -396,11 +460,11 @@ const CarDetail = () => {
             <h2>⚙️ Specifications</h2>
             <div className="cd-specs-grid">
               {[
-                { icon: '⛽', label: 'Fuel Type',     value: car.fuelType       || '—' },
-                { icon: '🔧', label: 'Transmission',  value: car.transmission   || '—' },
+                { icon: '⛽', label: 'Fuel Type',     value: car.fuelType   || '—' },
+                { icon: '🔧', label: 'Transmission',  value: car.transmission  || '—' },
                 { icon: '👥', label: 'Seating',       value: car.capacity ? `${car.capacity} Seats` : '—' },
-                { icon: '📅', label: 'Year',          value: car.year           || '—' },
-                { icon: '🎨', label: 'Colour',        value: car.color          || '—' },
+                { icon: '📅', label: 'Year',          value: car.year          || '—' },
+                { icon: '🎨', label: 'Colour',        value: car.color         || '—' },
                 { icon: '🛣️',  label: 'Mileage',      value: car.mileage ? `${Number(car.mileage).toLocaleString('en-IN')} km` : '—' },
               ].map(spec => (
                 <div className="cd-spec-item" key={spec.label}>
@@ -542,17 +606,17 @@ const CarDetail = () => {
               {isRental && <span className="cd-price-unit">/ day</span>}
             </div>
 
-            {/* Rental date pickers */}
+            {/* Rental date pickers & Dynamic Pricing UI */}
             {isRental && isAvailable && (
               <div className="cd-rental-dates">
-                <h4>📅 Select Rental Dates</h4>
+                <h4>📅 Select Rental Dates & Time</h4>
                 <div className="cd-date-row">
                   <div className="cd-date-field">
                     <label htmlFor="cd-start-date">Pickup Date</label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       id="cd-start-date"
-                      min={today()}
+                      min={now()}
                       value={rentalDates.startDate}
                       onChange={e => setRentalDates(d => ({ ...d, startDate: e.target.value }))}
                     />
@@ -560,28 +624,45 @@ const CarDetail = () => {
                   <div className="cd-date-field">
                     <label htmlFor="cd-end-date">Return Date</label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       id="cd-end-date"
-                      min={rentalDates.startDate || today()}
+                      min={rentalDates.startDate || now()}
                       value={rentalDates.endDate}
                       onChange={e => setRentalDates(d => ({ ...d, endDate: e.target.value }))}
                     />
                   </div>
                 </div>
-                {rentalDates.startDate && rentalDates.endDate && (() => {
-                  // Use UTC dates to avoid timezone issues
-                  const start = new Date(rentalDates.startDate + 'T00:00:00Z');
-                  const end = new Date(rentalDates.endDate + 'T00:00:00Z');
-                  if (end < start) return null;
-                  // Calculate inclusive number of days. +1 because a 1-day rental (e.g., 10th-10th) has a 0ms difference.
-                  const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+                
+                {/* Dynamic Pricing Results */}
+                {pricingLoading && (
+                  <p style={{ margin: '0.6rem 0 0', fontSize: '0.85rem', color: '#6b7280' }}>
+                    ⏳ Calculating dynamic price and availability...
+                  </p>
+                )}
+                
+                {pricingError && !pricingLoading && (
+                  <p style={{ margin: '0.6rem 0 0', fontSize: '0.85rem', color: '#dc2626', fontWeight: 600 }}>
+                    ❌ {pricingError}
+                  </p>
+                )}
 
-                  return days > 0 ? (
-                    <p style={{ margin: '0.6rem 0 0', fontSize: '0.82rem', color: '#6366f1', fontWeight: 600 }}>
-                      🗓️ {days} day{days > 1 ? 's' : ''} &nbsp;→&nbsp; ₹{(days * car.price).toLocaleString('en-IN')} total
+                {pricing && !pricingLoading && (
+                  <div style={{ margin: '1rem 0 0', padding: '0.75rem', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
+                    <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#166534', fontWeight: 500 }}>
+                      ✅ Available for {pricing.durationUnits} {pricing.rentalTier === 'hourly' ? 'Hours' : 'Days'}
                     </p>
-                  ) : null;
-                })()}
+                    
+                    {pricing.surgeFee > 0 && (
+                      <p style={{ margin: '0 0 6px 0', fontSize: '0.8rem', color: '#b91c1c' }}>
+                        📈 Weekend/Holiday Surge Applied: +₹{pricing.surgeFee.toLocaleString('en-IN')}
+                      </p>
+                    )}
+                    
+                    <p style={{ margin: 0, fontSize: '1.1rem', color: '#15803d', fontWeight: 700 }}>
+                      Total: ₹{pricing.totalCalculatedPrice.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -736,7 +817,12 @@ const CarDetail = () => {
                 <button
                   className="cd-btn-cart"
                   onClick={handleAddToCart}
-                  disabled={addingToCart || (car.deliveryConfig && deliveryFulfillment === 'delivery' && (car.deliveryConfig.type === 'radius' || car.deliveryConfig.type === 'polygon') && deliveryEligible !== true)}
+                  disabled={
+                    addingToCart || 
+                    pricingError || 
+                    pricingLoading ||
+                    (car.deliveryConfig && deliveryFulfillment === 'delivery' && (car.deliveryConfig.type === 'radius' || car.deliveryConfig.type === 'polygon') && deliveryEligible !== true)
+                  }
                   id="cd-add-to-cart-btn"
                 >
                   {addingToCart ? '⏳ Adding…' : '🛒 Add to Cart'}

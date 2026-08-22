@@ -10,28 +10,41 @@ const CustomerCart = () => {
   const [error, setError] = useState('');
   const [checkoutStatus, setCheckoutStatus] = useState(null);
 
-  const formatDate = (iso) => {
+  // UPDATED: Now includes the time (e.g., "24 Aug 2026, 10:30 PM")
+  const formatDateTime = (iso) => {
     if (!iso) return '';
-    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const date = new Date(iso);
+    return date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
-  const calculateDays = (start, end) => {
-    if (!start || !end) return 0;
+  // UPDATED: Dynamically calculates hours OR days based on the new tier logic
+  const calculateDuration = (start, end) => {
+    if (!start || !end) return '';
     const startDate = new Date(start);
     const endDate = new Date(end);
-    const msPerDay = 1000 * 60 * 60 * 24;
-    // Calculate inclusive number of days. +1 because a 1-day rental has a 0ms difference.
-    const days = Math.round((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
-    return days > 0 ? days : 0;
+    const diffInMs = endDate.getTime() - startDate.getTime();
+    const durationHours = Math.ceil(diffInMs / (1000 * 60 * 60));
+    
+    if (durationHours < 24) {
+      return `${durationHours} Hour${durationHours > 1 ? 's' : ''}`;
+    } else {
+      const days = Math.ceil(durationHours / 24);
+      return `${days} Day${days > 1 ? 's' : ''}`;
+    }
   };
 
   const fetchCart = async () => {
     try {
       setLoading(true);
-      // const token = localStorage.getItem('token'); // Legacy
       const res = await fetch(API_ENDPOINTS.CART, {
         credentials: 'include'
-        // headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch cart');
       const data = await res.json();
@@ -48,11 +61,9 @@ const CustomerCart = () => {
 
   const removeItem = async (carId) => {
     try {
-      // const token = localStorage.getItem('token');
       const res = await fetch(`${API_ENDPOINTS.CART}/${carId}`, {
         method: 'DELETE',
         credentials: 'include'
-        // headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to remove');
       await fetchCart();
@@ -63,7 +74,6 @@ const CustomerCart = () => {
   const checkout = async (method = 'online') => {
     try {
       setCheckoutStatus('processing');
-      // const token = localStorage.getItem('token');
       const res = await fetch(API_ENDPOINTS.CART_CHECKOUT, {
         method: 'POST',
         credentials: 'include',
@@ -145,18 +155,22 @@ const CustomerCart = () => {
                     <span>📧 {item.owner?.email || 'N/A'}</span>
                   </div>
                 </div>
-                {/* Rental Information Display */}
+
+                {/* UPDATED: Rental Information Display */}
                 {item.car.listingType === 'rent' && item.startDate && item.endDate && (
-                  <div className="cart-card-rental-info">
-                    <div className="rental-date-item">
-                      <strong>From:</strong> {formatDate(item.startDate)}
+                  <div className="cart-card-rental-info" style={{ padding: '0.5rem', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0', fontSize: '0.85rem' }}>
+                    <div className="rental-date-item" style={{ marginBottom: '4px' }}>
+                      <strong>Pickup:</strong> {formatDateTime(item.startDate)}
                     </div>
-                    <div className="rental-date-item">
-                      <strong>To:</strong> {formatDate(item.endDate)}
+                    <div className="rental-date-item" style={{ marginBottom: '4px' }}>
+                      <strong>Return:</strong> {formatDateTime(item.endDate)}
                     </div>
-                    <div className="rental-duration">({calculateDays(item.startDate, item.endDate)} days)</div>
+                    <div className="rental-duration" style={{ color: '#166534', fontWeight: 'bold' }}>
+                      (Duration: {calculateDuration(item.startDate, item.endDate)})
+                    </div>
                   </div>
                 )}
+
                 <div className="cart-card-actions">
                   <div className="cart-price">₹{item.price.toLocaleString('en-IN')}</div>
                   <button
