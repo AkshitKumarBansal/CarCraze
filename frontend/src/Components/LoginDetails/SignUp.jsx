@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faUser, faLock, faPhone, faBuilding, faMapMarkerAlt, faUserShield, faKey } from '@fortawesome/free-solid-svg-icons';
 import { useToast } from '../../Hooks/useToast';
 import PhoneInput from 'react-phone-number-input';
+import { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'; // Requires the default CSS to render the flags
 
 
@@ -81,10 +82,10 @@ const SignUp = ({ onSwitchToSignIn }) => {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    if (!formData.phone.trim()) {
+    if (!formData.phone) {
       newErrors.phone = 'Phone number is required';
-    } else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Phone number must be 10 digits';
+    } else if (!isValidPhoneNumber(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
     }
 
     // Role-specific validation
