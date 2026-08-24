@@ -10,10 +10,11 @@ const { errorHandler } = require('./middleware/error');
 
 const healthRouter = require('./routes/health');
 const uploadRouter = require('./routes/upload');
-const authRouter = require('./routes/auth');
+const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/user.routes');
 const sellerRouter = require('./routes/seller');
 const carsRouter = require('./routes/cars');
-const adminRouter = require('./routes/admin');
+const adminRoutes = require('./routes/admin.routes');
 const rentalsRouter = require('./routes/rentals');
 const cartRouter = require('./routes/cart');
 const ordersRouter = require('./routes/orders');
@@ -61,11 +62,12 @@ app.use(limiter);
 // Routes
 app.use('/api/health', healthRouter);
 app.use('/api/upload', uploadRouter);
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/seller', sellerRouter);
 app.use('/api/cars', carsRouter);
 app.use('/api/rentals', rentalsRouter);
-app.use('/api/admin', adminRouter);
+app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/contact', contactRouter);

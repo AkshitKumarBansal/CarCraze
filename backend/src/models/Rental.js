@@ -7,7 +7,16 @@ const rentalSchema = new mongoose.Schema({
   endDate: { type: Date, required: true },
   pricePerDay: Number,
   totalAmount: Number,
-  status: { type: String, enum: ['booked', 'completed', 'cancelled'], default: 'booked' },
+  status: { type: String, enum: ['booked', 'active', 'completed', 'cancelled'], default: 'booked' },
+  preInspectionPhotos: [{ type: String }],
+  postInspectionPhotos: [{ type: String }], 
+  depositAmount: { type: Number, required: true, default: 0 },
+  depositStatus: { 
+    type: String, 
+    enum: ['pending', 'held', 'refunded', 'deducted'], 
+    default: 'pending' 
+  },
+  
   createdAt: { type: Date, default: Date.now }
 });
 

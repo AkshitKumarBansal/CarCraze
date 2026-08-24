@@ -1,4 +1,5 @@
 import React from 'react';
+import './index.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MessageProvider } from './context/MessageContext';
@@ -42,6 +43,7 @@ import EditCar from './Pages/Seller/EditCar';
 import AdminDashboard from './Pages/Admin/AdminDashboard';
 import UserManagement from './Pages/Admin/UserManagement';
 import UserDetail from './Pages/Admin/UserDetail';
+import VerificationManager from './Pages/Admin/VerificationManager';
 
 // Profile Page
 import Profile from './Pages/Profile/Profile';
@@ -203,6 +205,7 @@ const AppWithRouter = () => {
           />
           <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><UserManagement /></ProtectedRoute>} />
           <Route path="/admin/users/:userId" element={<ProtectedRoute requiredRole="admin"><UserDetail /></ProtectedRoute>} />
+          <Route path="/admin/verifications" element={<ProtectedRoute requiredRole="admin"><VerificationManager /></ProtectedRoute>} />
         </Routes>
       </main>
       
