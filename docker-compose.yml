@@ -14,27 +14,31 @@ services:
       container_name: carcraze_backend
       ports:
         - "5001:5001"
-      # --- ADD THESE 3 LINES ---
       dns:
         - 8.8.8.8
         - 1.1.1.1
-      # -------------------------
       env_file: 
         - ./backend/.env
       environment:
         - PORT=5001
         - NODE_ENV=development
       depends_on:
-        - mongodb # You can safely remove this line and the mongodb service above if you are only using Atlas
+        - mongodb
         - redis
+      volumes:
+        - ./backend:/app
+        - /app/node_modules
 
   frontend:
       build: ./frontend
       container_name: carcraze_frontend
       ports:
-        - "5173:5173" # Updated to match Vite
+        - "5173:5173"
+      volumes:
+        - ./frontend:/app
+        - /app/node_modules
       environment:
-        - REACT_APP_API_URL=http://localhost:5001/api
+        - VITE_API_URL= 
       depends_on:
         - backend
   

@@ -27,60 +27,44 @@ const addToCart = async (req, res) => {
   try {
     const { carId, startDate, endDate } = req.body;
     const userId = req.user.userId;
-
     const car = await Car.findById(carId);
     if (!car) return res.status(404).json({ message: 'Car not found' });
-
     let finalPrice = car.price; 
     const isRentable = car.get('listingType') === 'rent' || car.get('category') === 'rental';
-
     if (isRentable) {
       if (!startDate || !endDate) {
         return res.status(400).json({ message: 'Rental dates are required' });
       }
-
-      // --- REDIS DISTRIBUTED LOCK IMPLEMENTATION ---
       const lockKey = `lock:car:${carId}`;
       const existingLockUser = await redisClient.get(lockKey);
-      
       if (existingLockUser && existingLockUser !== userId.toString()) {
         return res.status(409).json({ 
           message: 'Another user is currently booking this car. Please try again in 10 minutes.' 
         });
       }
-
       const start = new Date(startDate);
       const end = new Date(endDate);
       const diffInMs = end - start;
       const durationHours = Math.ceil(diffInMs / (1000 * 60 * 60));
-      
       let durationUnits = durationHours;
       let baseRate = car.rentalPricing?.hourlyRate || (car.price / 24) || 10;
-
       if (durationHours >= 24) {
         durationUnits = Math.ceil(durationHours / 24);
         baseRate = car.rentalPricing?.dailyRate || car.price || 0;
       }
-
       const isWeekend = start.getDay() === 0 || start.getDay() === 6;
       const multiplier = isWeekend ? (car.rentalPricing?.weekendMultiplier || 1.0) : 1.0;
-      
       finalPrice = baseRate * durationUnits * multiplier;
-
-      // Set the Redis lock for 600 seconds (10 minutes)
       await redisClient.setEx(lockKey, 600, userId.toString());
     }
-
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       cart = new Cart({ userId, items: [] });
     }
-
     const existingItemIndex = cart.items.findIndex(item => item.car.toString() === carId);
     if (existingItemIndex > -1) {
       return res.status(400).json({ message: 'Car is already in your cart' });
     }
-
     cart.items.push({
       car: car._id,
       owner: car.sellerId,
@@ -88,10 +72,8 @@ const addToCart = async (req, res) => {
       startDate: isRentable ? new Date(startDate) : null,
       endDate: isRentable ? new Date(endDate) : null
     });
-
     await cart.save();
     res.status(200).json({ message: 'Added to cart successfully', cart });
-
   } catch (error) {
     console.error('Cart add error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -103,26 +85,19 @@ const removeFromCart = async (req, res) => {
   try {
     const { carId } = req.params;
     const userId = req.user.userId;
-
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
-    
     const before = cart.items.length;
     cart.items = cart.items.filter(it => it.car.toString() !== carId.toString());
-    
     if (cart.items.length === before) {
       return res.status(404).json({ message: 'Item not found in cart' });
     }
-
     await cart.save();
-
-    // --- RELEASE REDIS LOCK ---
     const lockKey = `lock:car:${carId}`;
     const lockedBy = await redisClient.get(lockKey);
     if (lockedBy === userId.toString()) {
       await redisClient.del(lockKey);
     }
-
     res.json({ message: 'Removed from cart' });
   } catch (err) {
     console.error('Remove from cart error:', err);
@@ -135,22 +110,15 @@ const checkoutCart = async (req, res) => {
   try {
     const { paymentMethod = 'online' } = req.body;
     const userId = req.user.userId;
-
     const cart = await Cart.findOne({ userId }).populate('items.car');
     if (!cart || cart.items.length === 0) return res.status(400).json({ message: 'Cart is empty' });
-
-    // --- FINAL CHECKOUT GUARDRAIL ---
     for (const item of cart.items) {
       const car = item.car;
-
-      // 1. Permanent Check: Did someone already successfully buy/rent it while it sat in this cart?
       if (car.status !== 'active') {
         return res.status(409).json({ 
           message: `Checkout failed. ${car.brand} ${car.model} is no longer available.` 
         });
       }
-
-      // 2. Temporary Check: Did this user's 10-minute lock expire and another user claimed it?
       const lockKey = `lock:car:${car._id}`;
       const existingLockUser = await redisClient.get(lockKey);
       
@@ -160,11 +128,8 @@ const checkoutCart = async (req, res) => {
         });
       }
     }
-    // --- END GUARDRAIL ---
-    
     const total = cart.items.reduce((s, it) => s + (it.price || 0), 0);
     const deliveryEstimate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    
     const order = new Order({
       userId,
       items: cart.items.map(it => ({
@@ -180,23 +145,17 @@ const checkoutCart = async (req, res) => {
       status: paymentMethod === 'cod' ? 'created' : 'completed',
       deliveryDate: deliveryEstimate
     });
-    
     await order.save();
-    
     await Promise.all(
       cart.items.map(async (it) => {
         const newStatus = it.car.listingType === 'rent' ? 'rented' : 'sold';
         await Car.findByIdAndUpdate(it.car._id, { status: newStatus });
-
-        // --- CLEANUP REDIS LOCK AFTER PURCHASE ---
         const lockKey = `lock:car:${it.car._id}`;
         await redisClient.del(lockKey);
       })
     );
-    
     cart.items = [];
     await cart.save();
-    
     try {
       const populatedOrder = await Order.findById(order._id).populate('items.car');
       const user = await User.findById(userId);
@@ -205,8 +164,7 @@ const checkoutCart = async (req, res) => {
       }
     } catch (emailErr) {
       console.error('Error preparing order email:', emailErr);
-    }
-    
+    }  
     res.status(201).json({ message: 'Checkout successful', orderId: order._id, total });
   } catch (err) {
     console.error('Checkout error:', err);

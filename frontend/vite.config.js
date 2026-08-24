@@ -9,9 +9,12 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    watch: {
+      usePolling: true,
+    },
     proxy: {
       '/api': {
-        target: 'http://localhost:5001', // your backend server
+        target: 'http://backend:5001', 
         changeOrigin: true,
         secure: false,
       },

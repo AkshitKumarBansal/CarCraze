@@ -184,6 +184,9 @@ const Navbar = ({ isLoggedIn }) => {
                       <Link to="/admin/users" className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                         <i className="fas fa-users w-5 text-center text-gray-400"></i> User Management
                       </Link>
+                      <Link to="/admin/verifications" className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                        <i className="fas fa-id-card w-5 text-center text-gray-400"></i> ID Verifications
+                      </Link>
                     </>
                   )}
 
