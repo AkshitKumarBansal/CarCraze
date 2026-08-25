@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import { useToast } from '../../Hooks/useToast';
+import { useNavigate } from 'react-router-dom'; // ADDED THIS
+import { useAuth } from '../../context/AuthContext'; // ADDED THIS
 
 const CustomerCart = () => {
   const toast = useToast();
+  const navigate = useNavigate(); // ADDED THIS
+  const { user } = useAuth(); // ADDED THIS
+  
   const [cart, setCart] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [checkoutStatus, setCheckoutStatus] = useState(null);
 
-  // UPDATED: Now includes the time (e.g., "24 Aug 2026, 10:30 PM")
   const formatDateTime = (iso) => {
     if (!iso) return '';
     const date = new Date(iso);
@@ -23,7 +27,6 @@ const CustomerCart = () => {
     });
   };
 
-  // UPDATED: Dynamically calculates hours OR days based on the new tier logic
   const calculateDuration = (start, end) => {
     if (!start || !end) return '';
     const startDate = new Date(start);
@@ -71,6 +74,14 @@ const CustomerCart = () => {
   };
 
   const checkout = async (method = 'online') => {
+    // --- ADDED VERIFICATION GUARD ---
+    if (user?.verification?.status !== 'verified') {
+      toast.warning('⚠️ Identity verification is required to place an order.');
+      navigate('/profile'); // Redirect to profile to upload documents
+      return; 
+    }
+    // --------------------------------
+
     try {
       setCheckoutStatus('processing');
       const res = await fetch(API_ENDPOINTS.CART_CHECKOUT, {

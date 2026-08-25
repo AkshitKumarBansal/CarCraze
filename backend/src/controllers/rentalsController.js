@@ -74,6 +74,18 @@ const createRental = async (req, res) => {
     if (req.user.role !== 'customer') {
       return res.status(403).json({ message: 'Customer access required' });
     }
+
+    // --- ADDED VERIFICATION GUARD ON THE BACKEND ---
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    if (user.verification?.status !== 'verified') {
+      return res.status(403).json({ 
+        message: 'Account not verified. Please verify your identity in your profile to book rentals.' 
+      });
+    }
+    // -----------------------------------------------
+
     const { carId, startDate, endDate } = req.body;
     if (!carId || !startDate || !endDate) {
       return res.status(400).json({ message: 'carId, startDate and endDate are required' });
@@ -112,6 +124,7 @@ const createRental = async (req, res) => {
     const multiplier = isWeekend ? (car.rentalPricing?.weekendMultiplier || 1.0) : 1.0;
     const subtotal = baseRate * durationUnits;
     const totalAmount = subtotal * multiplier;
+    
     const rental = new Rental({
       car: car._id,
       customer: req.user.userId,
@@ -122,7 +135,7 @@ const createRental = async (req, res) => {
       durationHours,
       rentalTier,
       pricePerDay: baseRate, 
-      totalAmount,           
+      totalAmount,          
       pricingBreakdown: {
         baseRate,
         durationUnits,
@@ -134,11 +147,10 @@ const createRental = async (req, res) => {
     await rental.save();
     car.status = 'rented';
     await car.save();
+
     try {
-      const user = await User.findById(req.user.userId);
-      if (user) {
-        sendRentalReminder(user, rental, car).catch(err => console.error('Failed to send rental reminder email:', err));
-      }
+      // (Using the already fetched 'user' object)
+      sendRentalReminder(user, rental, car).catch(err => console.error('Failed to send rental reminder email:', err));
     } catch (emailErr) {
       console.error('Error preparing rental email:', emailErr);
     }

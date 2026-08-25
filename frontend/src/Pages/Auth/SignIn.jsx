@@ -125,7 +125,7 @@ const SignIn = ({ onSwitchToSignUp, onLoginSuccess }) => {
         // Store user data in localStorage for quick access
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        if (onLoginSuccess) onLoginSuccess();
+        if (onLoginSuccess) await onLoginSuccess();
 
         // Show success message
         toast.success(`👋 Welcome back, ${data.user.firstName}!`);
