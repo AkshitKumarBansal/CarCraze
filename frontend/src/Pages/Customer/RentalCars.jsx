@@ -1,3 +1,4 @@
+// Author: Akshit Kumar Bansal
 import React, { useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
@@ -8,9 +9,17 @@ import CompareButton from '../../Components/Common/CompareButton';
 const RentalCars = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const limit = 12;
+
   const [search, setSearch] = useState('');
   const [geoSearch, setGeoSearch] = useState({ active: false, lat: null, lng: null, radius: 10 });
   const [rentalDates, setRentalDates] = useState({ startDate: '', endDate: '' });
@@ -24,21 +33,48 @@ const RentalCars = () => {
   });
 
   useEffect(() => {
+    setPage(1);
+  }, [search, filters, sortBy, sortOrder, geoSearch.active, geoSearch.radius]);
+
+  useEffect(() => {
     const fetchCars = async () => {
       try {
         setLoading(true);
         setError('');
-        let url = API_ENDPOINTS.CARS;
+        
+        const queryParams = new URLSearchParams({
+          page,
+          limit,
+          sortBy,
+          sortOrder,
+          listingType: 'rent',
+          ...(search && { search }),
+          ...(filters.priceMin && { priceMin: filters.priceMin }),
+          ...(filters.priceMax && { priceMax: filters.priceMax }),
+          ...(filters.fuelType && { fuelType: filters.fuelType }),
+          ...(filters.transmission && { transmission: filters.transmission }),
+          ...(filters.capacity && { capacity: filters.capacity }),
+          ...(filters.pickupAvailable && { pickupAvailable: true }),
+        });
+
         if (geoSearch.active && geoSearch.lat && geoSearch.lng) {
-          url += `?lat=${geoSearch.lat}&lng=${geoSearch.lng}&radius=${geoSearch.radius}`;
+          queryParams.append('lat', geoSearch.lat);
+          queryParams.append('lng', geoSearch.lng);
+          queryParams.append('radius', geoSearch.radius);
         }
+
+        const url = `${API_ENDPOINTS.CARS}?${queryParams.toString()}`;
         const res = await fetch(url);
+        
         if (!res.ok) throw new Error(`Failed to fetch cars: ${res.status}`);
+        
         const data = await res.json();
-        console.log('Fetched rental cars data:', data.cars); 
-        const all = Array.isArray(data?.cars) ? data.cars : [];
-        const onlyRent = all.filter(c => c.listingType === 'rent');
-        setCars(onlyRent);
+        setCars(Array.isArray(data?.cars) ? data.cars : []);
+        
+        if (data?.pagination) {
+          setTotalPages(data.pagination.totalPages);
+        }
+        
       } catch (err) {
         console.error('Error fetching rental cars:', err);
         setError('Unable to load rental cars. Please try again later.');
@@ -48,7 +84,7 @@ const RentalCars = () => {
     };
 
     fetchCars();
-  }, [geoSearch.active, geoSearch.lat, geoSearch.lng, geoSearch.radius]);
+  }, [page, sortBy, sortOrder, search, filters, geoSearch]);
 
   const handleGeoSearch = () => {
     if (geoSearch.active) {
@@ -77,25 +113,10 @@ const RentalCars = () => {
     }
   };
 
-  const filteredCars = cars.filter(car => {
-    const matchesSearch = `${car.brand ?? ''} ${car.model ?? ''}`.toLowerCase().includes(search.toLowerCase());
-    const matchesMinPrice = filters.priceMin ? car.price >= Number(filters.priceMin) : true;
-    const matchesMaxPrice = filters.priceMax ? car.price <= Number(filters.priceMax) : true;
-    const matchesFuel = filters.fuelType ? car.fuelType === filters.fuelType : true;
-    const matchesTransmission = filters.transmission ? car.transmission === filters.transmission : true;
-    const matchesCapacity = filters.capacity ? car.capacity === Number(filters.capacity) : true;
-    const matchesPickup = filters.pickupAvailable 
-      ? (car.deliveryConfig?.type === 'pickup' || car.deliveryConfig?.pickupAvailable !== false) 
-      : true;
-
-    return matchesSearch && matchesMinPrice && matchesMaxPrice && matchesFuel && matchesTransmission && matchesCapacity && matchesPickup;
-  });
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8 pt-24">
       <div className="max-w-7xl mx-auto">
         
-        {/* Header */}
         <button 
           className="mb-6 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2" 
           onClick={() => navigate(-1)}
@@ -105,17 +126,36 @@ const RentalCars = () => {
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Rental Cars</h1>
         <p className="text-gray-600 mb-8 text-lg">Rent a car for your next trip, short or long term.</p>
 
-        {/* Search & Dates Form Container */}
+        {/* Search, Filters & Dates Container */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-10">
           
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by car name (brand or model)..."
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all mb-6 text-gray-700"
-          />
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by car name (brand or model)..."
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-700"
+            />
+            
+            <select 
+              className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 bg-white min-w-[200px]"
+              onChange={(e) => {
+                const [by, order] = e.target.value.split('-');
+                setSortBy(by);
+                setSortOrder(order);
+              }}
+              value={`${sortBy}-${sortOrder}`}
+            >
+              <option value="createdAt-desc">Newest First</option>
+              <option value="price-asc">Price/Day: Low to High</option>
+              <option value="price-desc">Price/Day: High to Low</option>
+              <option value="year-desc">Year: Newest to Oldest</option>
+              {geoSearch.active && <option value="distance-asc">Distance: Nearest First</option>}
+            </select>
+          </div>
           
+          {/* Rental Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Pickup Date *</label>
@@ -139,7 +179,6 @@ const RentalCars = () => {
             </div>
           </div>
 
-          {/* Location Radius Search */}
           <div className="flex flex-wrap items-center gap-4 mb-6 pt-4 border-t border-gray-100">
             <button 
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-colors ${geoSearch.active ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`} 
@@ -163,7 +202,6 @@ const RentalCars = () => {
             )}
           </div>
           
-          {/* Detailed Filters */}
           <div className="flex flex-wrap items-center gap-4">
             <input type="number" placeholder="Min Price (₹)" value={filters.priceMin} onChange={e => setFilters({...filters, priceMin: e.target.value})} className="w-full sm:w-auto px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-700" />
             <input type="number" placeholder="Max Price (₹)" value={filters.priceMax} onChange={e => setFilters({...filters, priceMax: e.target.value})} className="w-full sm:w-auto px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-700" />
@@ -203,124 +241,154 @@ const RentalCars = () => {
           </div>
         </div>
 
-        {/* Catalog Section */}
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">All Rental Cars</h2>
           
           {loading && <div className="text-center py-12 text-gray-500 font-medium text-lg animate-pulse">Loading rental cars...</div>}
           {error && !loading && <div className="text-center py-12 text-red-500 bg-red-50 rounded-xl border border-red-100">{error}</div>}
+          {!loading && !error && cars.length === 0 && (
+             <div className="text-center py-12 text-gray-500 font-medium text-lg">No rental cars match your criteria.</div>
+          )}
           
-          {!loading && !error && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredCars.map(car => (
-                <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group" key={car._id || car.id}>
-                  
-                  {/* Image Container */}
-                  <div className="relative h-48 bg-gray-100 overflow-hidden">
-                    {car.images && car.images.length > 0 ? (
-                      <img 
-                        src={car.images[0]} 
-                        alt={`${car.brand} ${car.model}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
+          {!loading && !error && cars.length > 0 && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {cars.map(car => (
+                  <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group" key={car._id || car.id}>
                     
-                    <div className={`absolute inset-0 flex items-center justify-center text-5xl text-gray-300 bg-gray-100 ${car.images && car.images.length > 0 ? 'hidden' : 'flex'}`}>
-                      <i className="fas fa-car"></i>
-                    </div>
-                    
-                    {car.images && car.images.length > 1 && (
-                      <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1.5">
-                        <i className="fas fa-images"></i>
-                        {car.images.length}
-                      </div>
-                    )}
-                    
-                    <div className="absolute top-2 right-2 z-10">
-                      <WishlistButton carId={car._id || car.id} size="sm" />
-                    </div>
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="font-bold text-gray-500 text-xs uppercase tracking-wider">{car.brand}</span>
-                      <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{car.year}</span>
-                    </div>
-                    
-                    <div className="text-xl font-bold text-gray-900 mb-3 line-clamp-1">{car.model}</div>
-                    
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      <span className="bg-blue-50 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-md">{car.fuelType}</span>
-                      <span className="bg-blue-50 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-md">{car.transmission}</span>
-                      <span className="bg-blue-50 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-md">{car.capacity} Seats</span>
-                    </div>
-                    
-                    <div className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1" title={car.description}>
-                      {car.description}
-                    </div>
-                    
-                    {/* Card Footer */}
-                    <div className="pt-4 border-t border-gray-100 flex flex-col gap-3 mt-auto">
-                      <span className="text-xl font-extrabold text-gray-900">
-                        ₹{car.price.toLocaleString('en-IN')}
-                        <span className="text-sm text-gray-500 font-medium"> /day</span>
-                      </span>
+                    <div className="relative h-48 bg-gray-100 overflow-hidden">
+                      {car.images && car.images.length > 0 ? (
+                        <img 
+                          src={car.images[0]} 
+                          alt={`${car.brand} ${car.model}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
                       
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold rounded-lg transition-colors text-center"
-                          onClick={() => navigate(`/cars/${car._id || car.id}`)}
-                        >
-                          View
-                        </button>
-                        <button
-                          className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm text-center"
-                          onClick={async () => {
-                            if (!rentalDates.startDate || !rentalDates.endDate) {
-                              toast.error('❌ Please select both Pickup and Return dates before adding to cart.');
-                              return;
-                            }
-                            try {
-                              const res = await fetch(API_ENDPOINTS.CART, {
-                                method: 'POST',
-                                credentials: 'include',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ 
-                                  carId: car._id || car.id,
-                                  startDate: rentalDates.startDate,
-                                  endDate: rentalDates.endDate 
-                                })
-                              });
-                              if (res.status === 401) {
-                                navigate('/signin');
+                      <div className={`absolute inset-0 flex items-center justify-center text-5xl text-gray-300 bg-gray-100 ${car.images && car.images.length > 0 ? 'hidden' : 'flex'}`}>
+                        <i className="fas fa-car"></i>
+                      </div>
+                      
+                      {car.images && car.images.length > 1 && (
+                        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1.5">
+                          <i className="fas fa-images"></i>
+                          {car.images.length}
+                        </div>
+                      )}
+                      
+                      <div className="absolute top-2 right-2 z-10">
+                        <WishlistButton carId={car._id || car.id} size="sm" />
+                      </div>
+                    </div>
+
+                    <div className="p-5 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-gray-500 text-xs uppercase tracking-wider">{car.brand}</span>
+                        <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{car.year}</span>
+                      </div>
+                      
+                      <div className="text-xl font-bold text-gray-900 mb-3 line-clamp-1">{car.model}</div>
+                      
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        <span className="bg-blue-50 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-md">{car.fuelType}</span>
+                        <span className="bg-blue-50 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-md">{car.transmission}</span>
+                        <span className="bg-blue-50 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-md">{car.capacity} Seats</span>
+                      </div>
+                      
+                      <div className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1" title={car.description}>
+                        {car.description}
+                      </div>
+                      
+                      <div className="pt-4 border-t border-gray-100 flex flex-col gap-3 mt-auto">
+                        <div className="flex justify-between items-center">
+                           <span className="text-xl font-extrabold text-gray-900">
+                             ₹{car.price.toLocaleString('en-IN')}
+                             <span className="text-sm text-gray-500 font-medium"> /day</span>
+                           </span>
+                           {car.distance && (
+                             <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                               {car.distance.toFixed(1)} km away
+                             </span>
+                           )}
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold rounded-lg transition-colors text-center"
+                            onClick={() => navigate(`/cars/${car._id || car.id}`)}
+                          >
+                            View
+                          </button>
+                          <button
+                            className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm text-center"
+                            onClick={async () => {
+                              if (!rentalDates.startDate || !rentalDates.endDate) {
+                                toast.error('❌ Please select both Pickup and Return dates before adding to cart.');
                                 return;
                               }
-                              const data = await res.json();
-                              if (!res.ok) throw new Error(data.message || 'Add to cart failed');
-                              toast.success(`🚗 ${car.brand} ${car.model} added to cart!`);
-                            } catch (err) {
-                              console.error('Add to cart error', err);
-                              toast.error('❌ Failed to add to cart: ' + (err.message || 'Please try again'));
-                            }
-                          }}
-                        >
-                          Add to Cart
-                        </button>
-                      </div>
-                      <div className="w-full">
-                        <CompareButton car={car} size="sm" />
+                              try {
+                                const res = await fetch(API_ENDPOINTS.CART, {
+                                  method: 'POST',
+                                  credentials: 'include',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ 
+                                    carId: car._id || car.id,
+                                    startDate: rentalDates.startDate,
+                                    endDate: rentalDates.endDate 
+                                  })
+                                });
+                                if (res.status === 401) {
+                                  navigate('/signin');
+                                  return;
+                                }
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.message || 'Add to cart failed');
+                                toast.success(`🚗 ${car.brand} ${car.model} added to cart!`);
+                              } catch (err) {
+                                console.error('Add to cart error', err);
+                                toast.error('❌ Failed to add to cart: ' + (err.message || 'Please try again'));
+                              }
+                            }}
+                          >
+                            Add to Cart
+                          </button>
+                        </div>
+                        <div className="w-full">
+                          <CompareButton car={car} size="sm" />
+                        </div>
                       </div>
                     </div>
+                    
                   </div>
-                  
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-12 mb-8">
+                  <button 
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-gray-700 font-semibold">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button 
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>

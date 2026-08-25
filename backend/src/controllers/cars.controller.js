@@ -2,24 +2,143 @@ const Car = require('../models/Car');
 const Review = require('../models/Review');
 const turf = require('@turf/turf');
 
-// Controller function to get all active cars, optionally filtered by location and radius
+// Helper to build MongoDB query based on req.query parameters
+const buildFilterQuery = (query) => {
+  const filter = { status: 'active' };
+
+  if (query.listingType) {
+    filter.listingType = query.listingType;
+  }
+  
+  if (query.search) {
+    filter.$or = [
+      { brand: { $regex: query.search, $options: 'i' } },
+      { model: { $regex: query.search, $options: 'i' } }
+    ];
+  }
+
+  if (query.priceMin || query.priceMax) {
+    filter.price = {};
+    // Ensure we are comparing numbers safely
+    if (query.priceMin) filter.price.$gte = Number(query.priceMin);
+    if (query.priceMax) filter.price.$lte = Number(query.priceMax);
+  }
+
+  // Use Case-Insensitive Regex for exact text matches
+  if (query.fuelType) {
+    filter.fuelType = { $regex: new RegExp(`^${query.fuelType}$`, 'i') };
+  }
+  
+  if (query.transmission) {
+    filter.transmission = { $regex: new RegExp(`^${query.transmission}$`, 'i') };
+  }
+  
+  if (query.capacity) {
+    // Check for both Number and String in case the DB schema is mixed
+    filter.capacity = { $in: [Number(query.capacity), String(query.capacity)] };
+  }
+
+  // If pickup is requested, check the delivery config
+  if (query.pickupAvailable === 'true') {
+    filter.$or = [
+      { 'deliveryConfig.type': 'pickup' },
+      { 'deliveryConfig.type': 'anywhere' },
+      { 'deliveryConfig.pickupAvailable': { $ne: false } }
+    ];
+  }
+
+  return filter;
+};
+
+// Controller function to get all active cars, optionally filtered by location, paginated, and sorted
 const getAllCars = async (req, res) => {
   try {
-    const { lat, lng, radius } = req.query;
-    let cars = await Car.find({ status: 'active' }).lean();
-    if (lat && lng && radius) {
+    const { 
+      lat, 
+      lng, 
+      radius, 
+      page = 1, 
+      limit = 12, 
+      sortBy = 'createdAt', 
+      sortOrder = 'desc' 
+    } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const order = sortOrder === 'desc' ? -1 : 1;
+    
+    // Generate the dynamic filter based on query params
+    const dbFilter = buildFilterQuery(req.query);
+    console.log("MongoDB Filter:", JSON.stringify(dbFilter, null, 2));
+    // SCENARIO 1: Location-based sorting/filtering (Requires in-memory processing with turf.js)
+    if (lat && lng) {
+      let cars = await Car.find(dbFilter).lean();
       const userPoint = turf.point([parseFloat(lng), parseFloat(lat)]);
-      const searchRadius = parseFloat(radius);
-      cars = cars.filter(car => {
-        if (!car.locationGeo || !car.locationGeo.coordinates) {
-          return false;
+      const searchRadius = radius ? parseFloat(radius) : null;
+
+      // 1. Calculate distance and optionally filter by radius
+      cars = cars.reduce((acc, car) => {
+        if (car.locationGeo && car.locationGeo.coordinates && car.locationGeo.coordinates.length === 2) {
+          const carPoint = turf.point(car.locationGeo.coordinates);
+          car.distance = turf.distance(userPoint, carPoint, { units: 'kilometers' });
+          
+          if (!searchRadius || car.distance <= searchRadius) {
+            acc.push(car);
+          }
         }
-        const carPoint = turf.point(car.locationGeo.coordinates);
-        const distance = turf.distance(userPoint, carPoint, { units: 'kilometers' });
-        return distance <= searchRadius;
+        return acc;
+      }, []);
+
+      // 2. In-memory Sorting
+      cars.sort((a, b) => {
+        let valA = a[sortBy];
+        let valB = b[sortBy];
+
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) return -1 * order;
+        if (valA > valB) return 1 * order;
+        return 0;
+      });
+
+      // 3. In-memory Pagination
+      const total = cars.length;
+      const paginatedCars = cars.slice((pageNum - 1) * limitNum, pageNum * limitNum);
+
+      return res.json({ 
+        cars: paginatedCars,
+        pagination: {
+          total,
+          currentPage: pageNum,
+          totalPages: Math.ceil(total / limitNum)
+        }
       });
     }
-    res.json({ cars });
+
+    // SCENARIO 2: Standard Database-level pagination & sorting
+    const sortConfig = { [sortBy]: order };
+    
+    // Fallback if someone tries to sort by distance without providing lat/lng
+    if (sortBy === 'distance') sortConfig['createdAt'] = order; 
+
+    const cars = await Car.find(dbFilter)
+      .sort(sortConfig)
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
+      .lean();
+
+    const total = await Car.countDocuments(dbFilter);
+
+    res.json({ 
+      cars,
+      pagination: {
+        total,
+        currentPage: pageNum,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
+
   } catch (err) {
     console.error('Get cars error:', err);
     res.status(500).json({ message: 'Internal server error' });
