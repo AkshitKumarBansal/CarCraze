@@ -143,6 +143,7 @@ const SignUp = ({ onSwitchToSignIn }) => {
         toast.error(data.message || "Registration failed");
       } else {
         toast.success(`🎉 ${data.user.role.charAt(0).toUpperCase() + data.user.role.slice(1)} account created successfully!`);
+        navigate('/signin');
       }
 
       setFormData({

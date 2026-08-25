@@ -78,12 +78,26 @@ const userSchema = new mongoose.Schema({
   // UPDATED: ID & Driving License Verification fields
   verification: {
     isVerified: { type: Boolean, default: false },
-    status: { type: String, enum: ['unverified', 'pending', 'approved', 'rejected'], default: 'unverified' },
+    
+    // 1st Option: Overall verification state
+    status: { 
+      type: String, 
+      enum: ['unverified', 'verified'], 
+      default: 'unverified' 
+    },
+    
+    // 2nd Option: Document review process
+    reviewStatus: { 
+      type: String, 
+      enum: ['none', 'pending', 'approved', 'rejected'], 
+      default: 'none' 
+    },
+    
     idDocumentUrl: { type: String, trim: true, default: null },
     drivingLicenseUrl: { type: String, trim: true, default: null },
     submittedAt: { type: Date, default: null },
     verifiedAt: { type: Date, default: null },
-    rejectionReason: { type: String, default: null } // Helpful if OCR or admin rejects it
+    rejectionReason: { type: String, default: null } 
   },
 
   // Wishlist - saved/favourite cars

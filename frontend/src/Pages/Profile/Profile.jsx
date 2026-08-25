@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import { useToast } from '../../Hooks/useToast';
 import ErrorBoundary from '../../Components/Common/ErrorBoundary';
+import VerificationUpload from '../../Components/Customer/VerificationUpload';
 
 const ProfileContent = () => {
   const toast = useToast();
@@ -342,6 +343,23 @@ const ProfileContent = () => {
             </form>
           )}
         </div>
+        {user && user.verification?.status !== 'approved' && (
+          <div className="mt-8">
+            <VerificationUpload />
+            
+            {/* Optional status banner */}
+            {user.verification?.status === 'pending' && (
+              <p className="text-blue-600 mt-2 text-center font-medium">
+                Your documents are currently under review.
+              </p>
+            )}
+            {user.verification?.status === 'rejected' && (
+              <p className="text-red-600 mt-2 text-center font-medium">
+                Verification rejected: {user.verification.rejectionReason}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
