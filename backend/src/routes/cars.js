@@ -6,7 +6,7 @@ const {
   getCarReviews, 
   addCarReview, 
   checkDelivery 
-} = require('../controllers/carsController');
+} = require('../controllers/cars.controller');
 
 const router = express.Router();
 
