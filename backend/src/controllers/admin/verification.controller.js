@@ -101,4 +101,29 @@ const verifySeller = async (req, res) => {
   }
 };
 
-module.exports = { getPendingVerifications, updateVerificationStatus, verifySeller };
+const verifyDrivingLicense = async (req, res) => {
+  const { dlNumber, dob } = req.body;
+  const kycApiUrl = "https://api.your-kyc-provider.com/v1/verification/driving-license";
+  
+  try {
+    const response = await fetch(kycApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.KYC_API_KEY}`
+      },
+      body: JSON.stringify({ id_number: dlNumber, dob })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.status_code === 200) {
+      return res.status(200).json({ status: data.result.status });
+    }    
+    return res.status(400).json({ message: "Verification failed" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+module.exports = { getPendingVerifications, updateVerificationStatus, verifySeller,  verifyDrivingLicense};
