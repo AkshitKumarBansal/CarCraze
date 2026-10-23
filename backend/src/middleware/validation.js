@@ -25,7 +25,7 @@ const validateSignup = [
     .isMobilePhone('any', { strictMode: true })
     .withMessage('Please enter a valid business phone number including the country code'),
   body('role')
-    .isIn(['customer', 'seller', 'admin'])
+    .isIn(['customer', 'seller'])
     .withMessage('Invalid role specified')
 ];
 
