@@ -28,7 +28,6 @@ const SignUp = ({ onSwitchToSignIn }) => {
     businessEmail: '',
     businessAddress: '',
     businessPhone: '',
-    adminCode: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -322,7 +321,6 @@ const SignUp = ({ onSwitchToSignIn }) => {
               >
                 <option value="customer">Customer - Buy cars</option>
                 <option value="seller">Seller - Sell cars</option>
-                <option value="admin">Admin - Manage platform</option>
               </select>
             </div>
 

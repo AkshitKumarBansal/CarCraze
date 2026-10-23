@@ -2,15 +2,25 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 const API_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function AcceptAdminInvitation() {
+
+  const { refreshAuth } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const token = searchParams.get('token') || '';
+
+  if (!process.env.JWT_SECRET) {
+        console.error('JWT_SECRET is not configured.');
+        return res.status(500).json({
+            message: 'Authentication is not configured.'
+        });
+    }
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -34,6 +44,7 @@ export default function AcceptAdminInvitation() {
   };
 
   const handleSubmit = async (event) => {
+    if (loading) return;
     event.preventDefault();
     setError('');
     setSuccess(false);
@@ -64,10 +75,11 @@ export default function AcceptAdminInvitation() {
         { withCredentials: true }
       );
 
+      await refreshAuth();
+
       setSuccess(true);
 
-      // Allow the browser to process the authentication cookie.
-      setTimeout(() => navigate('/admin'), 800);
+      navigate('/admin/dashboard', { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.message ||
