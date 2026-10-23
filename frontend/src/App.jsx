@@ -48,6 +48,10 @@ import VerificationManager from './Pages/Admin/VerificationManager';
 // Profile Page
 import Profile from './Pages/Profile/Profile';
 
+import InviteAdministrator from './Pages/Admin/InviteAdministrator';
+import AcceptAdminInvitation from './Pages/Auth/AcceptAdminInvitation';
+import AdminRoute from './Components/Auth/AdminRoute';
+
 // Bug #12 fix: isLoggedIn is now derived from AuthContext (no more fake sentinel token).
 const AppWithRouter = () => {
   const navigate = useNavigate();
@@ -201,6 +205,19 @@ const AppWithRouter = () => {
               <ProtectedRoute requiredRole="admin">
                 <AdminDashboard />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accept-admin-invitation"
+            element={<AcceptAdminInvitation />}
+          />
+
+          <Route
+            path="/admin/invite"
+            element={
+              <AdminRoute>
+                <InviteAdministrator />
+              </AdminRoute>
             }
           />
           <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><UserManagement /></ProtectedRoute>} />

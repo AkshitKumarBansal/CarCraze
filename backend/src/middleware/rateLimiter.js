@@ -10,4 +10,15 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { authLimiter };
+const adminInvitationLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        message:
+            'Too many invitation attempts. Please try again later.'
+    }
+});
+
+module.exports = { authLimiter, adminInvitationLimiter };
