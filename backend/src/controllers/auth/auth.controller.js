@@ -2,6 +2,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../../models/User');
 const { sendWelcomeEmail } = require('../../utils/emailService');
+const { validatePassword } = require('../../utils/passwordPolicy');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -60,6 +61,14 @@ const signup = async (req, res) => {
             });
         }
 
+        const passwordValidation = validatePassword(password);
+
+        if (!passwordValidation.valid) {
+            return res.status(400).json({
+                message: passwordValidation.message
+            });
+        }
+
         const assignedRole = role || 'customer';
 
         const userData = {
@@ -96,7 +105,8 @@ const signup = async (req, res) => {
         const token = jwt.sign(
             {
                 userId: user._id,
-                role: user.role
+                role: user.role,
+                tokenVersion: user.tokenVersion ?? 0
             },
             JWT_SECRET,
             {
@@ -213,7 +223,8 @@ const signin = async (req, res) => {
         const token = jwt.sign(
             {
                 userId: user._id,
-                role: user.role
+                role: user.role,
+                tokenVersion: user.tokenVersion ?? 0
             },
             JWT_SECRET,
             {

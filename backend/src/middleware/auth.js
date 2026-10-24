@@ -1,4 +1,3 @@
-
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
@@ -49,7 +48,7 @@ const authenticateToken = async (req, res, next) => {
 
     // Confirm that the account still exists and is active.
     const user = await User.findById(decoded.userId)
-      .select('_id role isActive isBanned');
+      .select('_id role isActive isBanned tokenVersion');
 
     if (!user) {
       return res.status(401).json({
@@ -70,6 +69,19 @@ const authenticateToken = async (req, res, next) => {
       userId: user._id.toString(),
       role: user.role,
     };
+
+    const currentTokenVersion = user.tokenVersion ?? 0;
+    const tokenVersion = decoded.tokenVersion;
+
+    if (
+        !Number.isInteger(tokenVersion) ||
+        tokenVersion !== currentTokenVersion
+    ) {
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'Your session is no longer valid. Please sign in again.'
+        });
+    }
 
     next();
   } catch (error) {
