@@ -95,9 +95,14 @@ const SignUp = ({ onSwitchToSignIn }) => {
 
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password =
-        'Password must be at least 6 characters';
+    } else if (formData.password.length < 12) {
+        newErrors.password =
+            'Password must be at least 12 characters';
+    } else if (
+        new TextEncoder().encode(formData.password).length > 72
+    ) {
+        newErrors.password =
+            'Password must not exceed 72 UTF-8 bytes';
     }
 
     if (!formData.confirmPassword) {
@@ -617,7 +622,8 @@ const SignUp = ({ onSwitchToSignIn }) => {
                     value={formData.password}
                     onChange={handleInputChange}
                     className={inputClass(errors.password)}
-                    placeholder="Create password"
+                    placeholder="At least 12 characters"
+                    minLength={12}
                     autoComplete="new-password"
                   />
 

@@ -193,8 +193,16 @@ const userSchema = new mongoose.Schema({
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Car' }],
 
   // Password reset token fields
+  // Password reset token fields
   passwordResetToken: { type: String },
-  passwordResetExpires: { type: Date }
+  passwordResetExpires: { type: Date },
+
+  // Used to invalidate JWT sessions after password changes.
+  tokenVersion: {
+      type: Number,
+      default: 0,
+      min: 0
+  }
 }, {
   timestamps: true // Automatically add createdAt and updatedAt fields
 });

@@ -241,6 +241,7 @@ export default function AcceptAdminInvitation() {
                 type="password"
                 autoComplete="new-password"
                 minLength={12}
+                maxLength={72}
                 value={formData.password}
                 onChange={handleChange}
                 required

@@ -43,9 +43,14 @@ const ResetPassword = () => {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
+    if (password.length < 12) {
+        setError('Password must be at least 12 characters.');
+        return;
+    }
+
+    if (new TextEncoder().encode(password).length > 72) {
+        setError('Password must not exceed 72 UTF-8 bytes.');
+        return;
     }
     if (password !== confirm) {
       setError('Passwords do not match.');
@@ -95,7 +100,8 @@ const ResetPassword = () => {
                       type="password"
                       value={password}
                       onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                      placeholder="Minimum 6 characters"
+                      placeholder="At least 12 characters"
+                      minLength={12}
                       className={`w-full py-3 pr-3.5 pl-10 border-2 rounded-xl text-[0.95rem] transition-all duration-200 bg-gray-50 focus:outline-none focus:bg-white focus:ring-[3px] ${
                         error 
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-500/15' 

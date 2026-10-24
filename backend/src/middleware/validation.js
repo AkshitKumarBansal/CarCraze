@@ -1,3 +1,8 @@
+const {
+    MIN_PASSWORD_LENGTH,
+    validatePassword
+} = require('../utils/passwordPolicy');
+
 const { body, validationResult } = require('express-validator');
 
 const validateSignup = [
@@ -6,8 +11,15 @@ const validateSignup = [
     .normalizeEmail()
     .withMessage('Please enter a valid email'),
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
+    .custom((password) => {
+        const result = validatePassword(password);
+
+        if (!result.valid) {
+            throw new Error(result.message);
+        }
+
+        return true;
+    }),
   body('firstName')
     .trim()
     .notEmpty()

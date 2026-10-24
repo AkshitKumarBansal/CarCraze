@@ -1,9 +1,10 @@
-
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
 const User = require('../../models/User');
 const AdminInvitation = require('../../models/AdminInvitation');
+
+const { validatePassword } = require('../../utils/passwordPolicy');
 
 // Prevent sensitive invitation responses from being cached.
 const setSensitiveResponseHeaders = (res) => {
@@ -127,10 +128,12 @@ const acceptAdminInvitation = async (req, res) => {
       });
     }
 
-    if (password.length < 12) {
-      return res.status(400).json({
-        message: 'Password must be at least 12 characters long.',
-      });
+    const passwordValidation = validatePassword(password);
+
+    if (!passwordValidation.valid) {
+        return res.status(400).json({
+            message: passwordValidation.message
+        });
     }
 
     const tokenHash = crypto
@@ -191,6 +194,7 @@ const acceptAdminInvitation = async (req, res) => {
       {
         userId: user._id,
         role: user.role,
+        tokenVersion: user.tokenVersion ?? 0
       },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
