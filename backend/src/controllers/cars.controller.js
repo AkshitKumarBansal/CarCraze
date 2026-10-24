@@ -61,7 +61,7 @@ const getAllCars = async (req, res) => {
       limit = 12, 
       sortBy = 'createdAt', 
       sortOrder = 'desc' 
-    } = req.query;
+    } = req.query;  
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
@@ -148,14 +148,36 @@ const getAllCars = async (req, res) => {
 // Controller function to get a single car by ID, including seller information
 const getCarById = async (req, res) => {
   try {
-    const car = await Car.findById(req.params.id)
-      .populate('sellerId', 'firstName lastName email phone businessInfo rating')
+    const car = await Car.findOne({
+      _id: req.params.id,
+      status: 'active'
+    })
+      .populate(
+        'sellerId',
+        'firstName lastName businessInfo rating'
+      )
       .lean();
-    if (!car) return res.status(404).json({ message: 'Car not found' });
-    res.json({ car });
+
+    if (!car) {
+      return res.status(404).json({
+        message: 'Car not found'
+      });
+    }
+
+    return res.status(200).json({ car });
   } catch (err) {
     console.error('Get car by ID error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+
+    // Invalid MongoDB ObjectIds should not produce a 500 response.
+    if (err.name === 'CastError') {
+      return res.status(404).json({
+        message: 'Car not found'
+      });
+    }
+
+    return res.status(500).json({
+      message: 'Internal server error'
+    });
   }
 };
 
