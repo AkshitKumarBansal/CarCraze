@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const adminInvitationSchema = new mongoose.Schema({
@@ -30,10 +29,10 @@ const adminInvitationSchema = new mongoose.Schema({
   timestamps: true
 });
 
-adminInvitationSchema.index(
-  { expiresAt: 1 },
-  { expireAfterSeconds: 0 }
-);
+adminInvitationSchema.index({
+  email: 1,
+  usedAt: 1,
+});
 
 module.exports = mongoose.model(
   'AdminInvitation',
