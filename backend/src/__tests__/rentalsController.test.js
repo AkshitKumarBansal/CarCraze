@@ -16,6 +16,7 @@ jest.mock('../models/Rental', () => {
 
 jest.mock('../models/Car', () => ({
   findById: jest.fn(),
+  findOne: jest.fn(),
   updateOne: jest.fn()
 }));
 
@@ -58,6 +59,7 @@ describe('Rental controller validation', () => {
 
   const makeCar = (overrides = {}) => ({
     _id: new mongoose.Types.ObjectId(carId),
+    status: 'active',
     listingType: 'rent',
     category: 'rental',
     price: 240,
@@ -108,7 +110,7 @@ describe('Rental controller validation', () => {
       json: jest.fn().mockReturnThis()
     };
 
-    Car.findById.mockReturnValue(
+    Car.findOne.mockReturnValue(
       createMockQuery(makeCar())
     );
 
@@ -148,6 +150,25 @@ describe('Rental controller validation', () => {
       );
     });
 
+    test('rejects an inactive car', async () => {
+      Car.findOne.mockReturnValue(
+        createMockQuery(null)
+      );
+
+      await calculatePriceAndAvailability(req, res);
+
+      expect(Car.findOne).toHaveBeenCalledWith({
+        _id: carId,
+        status: 'active'
+      });
+
+      expect(res.status).toHaveBeenCalledWith(404);
+
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Car not found'
+      });
+    });
+
     test('rejects invalid dates', async () => {
       req.body.startDate = 'not-a-date';
 
@@ -179,7 +200,7 @@ describe('Rental controller validation', () => {
     });
 
     test('rejects dates overlapping a blackout period', async () => {
-      Car.findById.mockReturnValue(
+      Car.findOne.mockReturnValue(
         createMockQuery(
           makeCar({
             blackoutDates: [{
@@ -238,7 +259,10 @@ describe('Rental controller validation', () => {
       expect(mockSession.endSession).toHaveBeenCalledTimes(1);
 
       expect(Car.updateOne).toHaveBeenCalledWith(
-        { _id: req.body.carId },
+        {
+          _id: req.body.carId,
+          status: 'active'
+        },
         { $inc: { bookingLockVersion: 1 } },
         { session: mockSession }
       );
@@ -247,7 +271,7 @@ describe('Rental controller validation', () => {
     });
 
     test('rejects a booking overlapping a blackout period', async () => {
-      Car.findById.mockReturnValue(
+      Car.findOne.mockReturnValue(
         createMockQuery(
           makeCar({
             blackoutDates: [{

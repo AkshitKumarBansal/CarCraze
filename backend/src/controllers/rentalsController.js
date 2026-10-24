@@ -43,7 +43,10 @@ const getRentalDetails = async ({ carId, startDate, endDate, session }) => {
     );
   }
 
-  const carQuery = Car.findById(carId);
+  const carQuery = Car.findOne({
+    _id: carId,
+    status: 'active'
+  });
 
   if (session) {
     carQuery.session(session);
@@ -234,11 +237,15 @@ const createRental = async (req, res) => {
       // allowing MongoDB to retry or reject one of them.
       const carId = req.body.carId;
 
-      await Car.updateOne(
-        { _id: carId },
+      const lockResult = await Car.updateOne(
+        { _id: carId, status: 'active' },
         { $inc: { bookingLockVersion: 1 } },
         { session }
       );
+
+      if (lockResult.matchedCount !== 1) {
+        throw new RentalValidationError(404, 'Car not found');
+      }
 
       // Recheck availability inside the transaction.
       details = await getRentalDetails({
