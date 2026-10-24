@@ -9,15 +9,19 @@ let initializationPromise = null;
 
 const initializeTransporter = async () => {
   if (process.env.SMTP_HOST) {
-    // Use real SMTP if configured
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT || 587,
-      secure: process.env.SMTP_PORT == 465, 
+      secure: process.env.SMTP_PORT == 465,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+    });
+  } else if (process.env.NODE_ENV === 'test') {
+    // Never connect to an external SMTP server in tests.
+    transporter = nodemailer.createTransport({
+      jsonTransport: true,
     });
   } else {
     // Generate or reuse a test ethereal account if no SMTP config is provided
