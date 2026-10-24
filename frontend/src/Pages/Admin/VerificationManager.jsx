@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../../config/api';
 
@@ -8,142 +8,297 @@ const VerificationManager = () => {
   const [error, setError] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [activeRejectId, setActiveRejectId] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
 
-  // Helper to get the auth token (adjust if you store it in a cookie instead)
   const getAuthHeaders = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
-    withCredentials: true
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+    },
+    withCredentials: true,
   });
 
-  useEffect(() => {
-    fetchPendingVerifications();
-  }, []);
-
-  const fetchPendingVerifications = async () => {
+  const fetchPendingVerifications = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
+
       const response = await axios.get(
-        `${API_BASE_URL}/api/admin/verifications/pending`, 
+        `${API_BASE_URL}/api/admin/verifications/pending`,
         getAuthHeaders()
       );
-      setPendingUsers(response.data.data);
+
+      setPendingUsers(
+        Array.isArray(response.data?.data) ? response.data.data : []
+      );
     } catch (err) {
-      console.error('Fetch Error:', err);
-      setError(err.response?.data?.message || 'Failed to load verifications.');
+      console.error('Fetch verification error:', err);
+
+      setError(
+        err.response?.data?.message ||
+          'Failed to load pending identity verifications.'
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPendingVerifications();
+  }, [fetchPendingVerifications]);
 
   const handleAction = async (userId, status) => {
-    try {
-      const payload = { status };
-      if (status === 'rejected') {
-        if (!rejectReason.trim()) return alert('Please provide a rejection reason.');
-        payload.rejectionReason = rejectReason;
+    if (processingId) return;
+
+    const payload = { status };
+
+    if (status === 'rejected') {
+      const reason = rejectReason.trim();
+
+      if (!reason) {
+        alert('Please provide a rejection reason.');
+        return;
       }
 
+      if (reason.length > 500) {
+        alert('Rejection reason cannot exceed 500 characters.');
+        return;
+      }
+
+      payload.rejectionReason = reason;
+    }
+
+    try {
+      setProcessingId(userId);
+
       await axios.put(
-        `${API_BASE_URL}/api/admin/verifications/${userId}`, 
+        `${API_BASE_URL}/api/admin/verifications/${userId}`,
         payload,
         getAuthHeaders()
       );
-      
-      alert(`User ${status} successfully!`);
-      setPendingUsers(pendingUsers.filter(user => user._id !== userId));
+
+      alert(
+        status === 'approved'
+          ? 'Identity verification approved successfully.'
+          : 'Identity verification rejected successfully.'
+      );
+
+      setPendingUsers((currentUsers) =>
+        currentUsers.filter((user) => user._id !== userId)
+      );
+
       setActiveRejectId(null);
       setRejectReason('');
     } catch (err) {
-      console.error('Update Error:', err);
-      alert(err.response?.data?.message || `Failed to ${status} user.`);
+      console.error('Update verification error:', err);
+
+      alert(
+        err.response?.data?.message ||
+          `Failed to ${status} identity verification.`
+      );
+    } finally {
+      setProcessingId(null);
     }
   };
 
-  if (loading) return <div className="p-6">Loading pending verifications...</div>;
-  if (error) return <div className="p-6 text-red-500">{error}</div>;
+  if (loading) {
+    return (
+      <div className="p-6" role="status">
+        Loading pending verifications...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <p className="text-red-500" role="alert">
+          {error}
+        </p>
+
+        <button
+          type="button"
+          onClick={fetchPendingVerifications}
+          className="mt-3 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold mb-4">Pending ID Verifications</h2>
-      
+    <div className="rounded-lg bg-white p-6 shadow">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-2xl font-bold">
+          Pending ID Verifications
+        </h2>
+
+        <button
+          type="button"
+          onClick={fetchPendingVerifications}
+          className="rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100"
+        >
+          Refresh
+        </button>
+      </div>
+
       {pendingUsers.length === 0 ? (
-        <p className="text-gray-500">No pending verifications to review.</p>
+        <p className="text-gray-500">
+          No pending identity verifications to review.
+        </p>
       ) : (
         <div className="space-y-6">
-          {pendingUsers.map((user) => (
-            <div key={user._id} className="border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row justify-between gap-4">
-              <div>
-                <h3 className="font-bold text-lg">{user.firstName} {user.lastName}</h3>
-                <p className="text-sm text-gray-600">{user.email}</p>
-                <p className="text-xs text-gray-400 mt-1">Submitted: {new Date(user.verification.submittedAt).toLocaleDateString()}</p>
-                
-                <div className="flex gap-4 mt-3">
-                  <a 
-                    href={user.verification.idDocumentUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline text-sm font-medium"
-                  >
-                    View ID Document
-                  </a>
-                  <a 
-                    href={user.verification.drivingLicenseUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline text-sm font-medium"
-                  >
-                    View Driving License
-                  </a>
-                </div>
-              </div>
+          {pendingUsers.map((user) => {
+            const identity = user.identityVerification || {};
 
-              <div className="flex flex-col gap-2 min-w-[200px]">
-                {activeRejectId === user._id ? (
-                  <div className="flex flex-col gap-2">
-                    <input 
-                      type="text" 
-                      placeholder="Reason for rejection..."
-                      className="border rounded p-2 text-sm"
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                    />
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleAction(user._id, 'rejected')}
-                        className="bg-red-600 text-white px-3 py-1 rounded text-sm flex-1 hover:bg-red-700"
+            const submittedDate = identity.submittedAt
+              ? new Date(identity.submittedAt)
+              : null;
+
+            const validSubmittedDate =
+              submittedDate &&
+              !Number.isNaN(submittedDate.getTime());
+
+            return (
+              <div
+                key={user._id}
+                className="flex flex-col justify-between gap-4 rounded-lg border border-gray-200 p-4 md:flex-row"
+              >
+                <div className="min-w-0">
+                  <h3 className="text-lg font-bold">
+                    {user.firstName} {user.lastName}
+                  </h3>
+
+                  <p className="text-sm text-gray-600">
+                    {user.email}
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-400">
+                    Submitted:{' '}
+                    {validSubmittedDate
+                      ? submittedDate.toLocaleDateString()
+                      : 'Not available'}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-4">
+                    {identity.idDocumentUrl ? (
+                      <a
+                        href={identity.idDocumentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-blue-600 hover:underline"
                       >
-                        Confirm
+                        View ID Document
+                      </a>
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        ID document unavailable
+                      </span>
+                    )}
+
+                    {identity.drivingLicenseUrl ? (
+                      <a
+                        href={identity.drivingLicenseUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-blue-600 hover:underline"
+                      >
+                        View Driving License
+                      </a>
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        Driving licence unavailable
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex min-w-[200px] flex-col gap-2">
+                  {activeRejectId === user._id ? (
+                    <div className="flex flex-col gap-2">
+                      <label
+                        htmlFor={`rejection-reason-${user._id}`}
+                        className="text-sm font-medium"
+                      >
+                        Rejection reason
+                      </label>
+
+                      <textarea
+                        id={`rejection-reason-${user._id}`}
+                        placeholder="Explain why the documents are rejected..."
+                        className="w-full rounded border p-2 text-sm"
+                        value={rejectReason}
+                        maxLength={500}
+                        rows={3}
+                        onChange={(event) =>
+                          setRejectReason(event.target.value)
+                        }
+                        disabled={processingId === user._id}
+                      />
+
+                      <p className="text-xs text-gray-500">
+                        {rejectReason.length}/500 characters
+                      </p>
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleAction(user._id, 'rejected')
+                          }
+                          disabled={processingId === user._id}
+                          className="flex-1 rounded bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {processingId === user._id
+                            ? 'Processing...'
+                            : 'Confirm Rejection'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveRejectId(null);
+                            setRejectReason('');
+                          }}
+                          disabled={processingId === user._id}
+                          className="flex-1 rounded bg-gray-300 px-3 py-2 text-sm text-gray-800 hover:bg-gray-400 disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleAction(user._id, 'approved')
+                        }
+                        disabled={processingId === user._id}
+                        className="rounded bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {processingId === user._id
+                          ? 'Processing...'
+                          : 'Approve'}
                       </button>
-                      <button 
+
+                      <button
+                        type="button"
                         onClick={() => {
-                          setActiveRejectId(null);
+                          setActiveRejectId(user._id);
                           setRejectReason('');
                         }}
-                        className="bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm flex-1 hover:bg-gray-400"
+                        disabled={processingId === user._id}
+                        className="rounded bg-red-100 px-4 py-2 font-medium text-red-700 hover:bg-red-200 disabled:opacity-50"
                       >
-                        Cancel
+                        Reject
                       </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <button 
-                      onClick={() => handleAction(user._id, 'approved')}
-                      className="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button 
-                      onClick={() => setActiveRejectId(user._id)}
-                      className="bg-red-100 text-red-700 px-4 py-2 rounded font-medium hover:bg-red-200 transition-colors"
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

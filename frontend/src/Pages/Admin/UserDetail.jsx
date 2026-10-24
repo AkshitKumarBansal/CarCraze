@@ -10,9 +10,13 @@ const UserDetail = () => {
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
+  const [sellerRejectReason, setSellerRejectReason] = useState('');
+  const [showSellerRejectInput, setShowSellerRejectInput] = useState(false);
+  const [verificationUpdating, setVerificationUpdating] = useState(false);
 
   const fetchUser = async () => {
     try {
+      setError('');
       setLoading(true);
       const response = await fetch(`${API_ENDPOINTS.ADMIN}/users/${userId}`, {
         credentials: 'include',
@@ -21,6 +25,9 @@ const UserDetail = () => {
         throw new Error('Failed to fetch user details.');
       }
       const data = await response.json();
+      if (!data?.user) {
+        throw new Error('User details were not included in the server response.');
+      }
       setUser(data.user);
       setFormData(data.user);
     } catch (err) {
@@ -98,20 +105,61 @@ const UserDetail = () => {
     }
   };
 
+  
   const handleVerifyStatus = async (status) => {
+    if (verificationUpdating) return;
+
+    const payload = { status };
+
+    if (status === 'rejected') {
+      const reason = sellerRejectReason.trim();
+
+      if (!reason) {
+        alert('Please provide a rejection reason.');
+        return;
+      }
+
+      if (reason.length > 500) {
+        alert('Rejection reason cannot exceed 500 characters.');
+        return;
+      }
+
+      payload.rejectionReason = reason;
+    }
+
     try {
-      const response = await fetch(`${API_ENDPOINTS.ADMIN}/users/${userId}/verify`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) throw new Error('Failed to update verification status.');
+      setVerificationUpdating(true);
+
+      const response = await fetch(
+        `${API_ENDPOINTS.ADMIN}/users/${userId}/verify`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to update seller verification status.'
+        );
+      }
+
+      setShowSellerRejectInput(false);
+      setSellerRejectReason('');
+
       await fetchUser();
+      alert('Seller verification status updated successfully.');
     } catch (err) {
       alert(err.message);
+    } finally {
+      setVerificationUpdating(false);
     }
   };
+
 
   const handleForceReset = async () => {
     try {
@@ -384,23 +432,119 @@ const UserDetail = () => {
             </div>
           </div>
 
-          {user.role === 'seller' && user.sellerData && (
+          {user.role === 'seller' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8 mb-8 transition-shadow hover:shadow-md">
               <h2 className="m-0 text-xl font-extrabold text-gray-900 border-b border-gray-200 pb-4 mb-6">Seller Information</h2>
-              
-              <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <h3 className="m-0 text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Verification Status</h3>
-                  <span className={`text-xl font-extrabold capitalize ${user.verification?.status === 'approved' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                    {user.verification?.status || 'unverified'}
-                  </span>
+              <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <h3 className="m-0 text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">
+                      Seller Verification Status
+                    </h3>
+
+                    <span
+                      className={`text-xl font-extrabold capitalize ${
+                        user.sellerVerification?.status === 'approved'
+                          ? 'text-emerald-500'
+                          : user.sellerVerification?.status === 'rejected'
+                            ? 'text-red-500'
+                            : 'text-amber-500'
+                      }`}
+                    >
+                      {user.sellerVerification?.status || 'not_requested'}
+                    </span>
+
+                    {user.sellerVerification?.rejectionReason && (
+                      <p className="mt-2 text-sm text-red-600">
+                        <strong>Last rejection reason:</strong>{' '}
+                        {user.sellerVerification.rejectionReason}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      disabled={verificationUpdating}
+                      onClick={() => handleVerifyStatus('pending')}
+                      className="px-4 py-2 text-xs font-bold border-2 border-indigo-500 text-indigo-600 rounded-lg hover:bg-indigo-50 disabled:opacity-50"
+                    >
+                      Mark Pending
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={verificationUpdating}
+                      onClick={() => handleVerifyStatus('approved')}
+                      className="px-4 py-2 text-xs font-bold border-2 border-emerald-500 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50"
+                    >
+                      Approve
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={verificationUpdating}
+                      onClick={() => {
+                        setSellerRejectReason('');
+                        setShowSellerRejectInput(true);
+                      }}
+                      className="px-4 py-2 text-xs font-bold border-2 border-red-500 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2 flex-wrap mt-2 sm:mt-0">
-                  <button className="px-4 py-2 text-xs font-bold border-2 border-indigo-500 text-indigo-600 bg-transparent rounded-lg cursor-pointer transition-colors hover:bg-indigo-50" onClick={() => handleVerifyStatus('pending')}>Mark Pending</button>
-                  <button className="px-4 py-2 text-xs font-bold border-2 border-emerald-500 bg-emerald-500 text-white rounded-lg cursor-pointer transition-colors hover:bg-emerald-600 shadow-sm" onClick={() => handleVerifyStatus('approved')}>Approve</button>
-                  <button className="px-4 py-2 text-xs font-bold border-2 border-red-500 bg-red-500 text-white rounded-lg cursor-pointer transition-colors hover:bg-red-600 shadow-sm" onClick={() => handleVerifyStatus('rejected')}>Reject</button>
-                </div>
+
+                {showSellerRejectInput && (
+                  <div className="mt-4 space-y-2">
+                    <label
+                      htmlFor="seller-rejection-reason"
+                      className="block text-sm font-semibold text-gray-700"
+                    >
+                      Rejection reason (required)
+                    </label>
+
+                    <textarea
+                      id="seller-rejection-reason"
+                      value={sellerRejectReason}
+                      onChange={(event) => setSellerRejectReason(event.target.value)}
+                      maxLength={500}
+                      rows={3}
+                      placeholder="Explain why the seller application is rejected..."
+                      className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+                      disabled={verificationUpdating}
+                    />
+
+                    <p className="text-xs text-gray-500">
+                      {sellerRejectReason.length}/500 characters
+                    </p>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={verificationUpdating}
+                        onClick={() => handleVerifyStatus('rejected')}
+                        className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                      >
+                        {verificationUpdating ? 'Processing...' : 'Confirm Rejection'}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={verificationUpdating}
+                        onClick={() => {
+                          setShowSellerRejectInput(false);
+                          setSellerRejectReason('');
+                        }}
+                        className="rounded bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-300 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
@@ -414,7 +558,7 @@ const UserDetail = () => {
                 </div>
               </div>
               
-              <h3 className="m-0 mt-8 text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4">Inventory <span className="text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full text-sm ml-2">{user.sellerData.inventory.length}</span></h3>
+              <h3 className="m-0 mt-8 text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4">Inventory <span className="text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full text-sm ml-2">{(user.sellerData?.inventory || []).length}</span></h3>
               <div className="overflow-x-auto rounded-xl border border-gray-200">
                 <table className="w-full border-collapse text-sm text-left">
                   <thead className="bg-gray-50 border-b border-gray-200">
@@ -425,7 +569,7 @@ const UserDetail = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {user.sellerData.inventory.map(car => (
+                    {(user.sellerData?.inventory || []).map(car => (
                       <tr key={car._id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="p-4 font-semibold text-gray-900">{car.year} {car.brand} {car.model}</td>
                         <td className="p-4 text-gray-700 font-medium">₹{car.price.toLocaleString()}</td>

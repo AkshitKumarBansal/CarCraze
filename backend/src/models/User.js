@@ -75,30 +75,119 @@ const userSchema = new mongoose.Schema({
     totalReviews: { type: Number, default: 0 }
   },
   
-  // UPDATED: ID & Driving License Verification fields
-  verification: {
-    isVerified: { type: Boolean, default: false },
-    
-    // 1st Option: Overall verification state
-    status: { 
-      type: String, 
-      enum: ['unverified', 'verified'], 
-      default: 'unverified' 
+
+  // Identity verification: customer or seller identity documents
+  identityVerification: {
+    status: {
+      type: String,
+      enum: ['unverified', 'pending', 'verified', 'rejected'],
+      default: 'unverified'
     },
-    
-    // 2nd Option: Document review process
-    reviewStatus: { 
-      type: String, 
-      enum: ['none', 'pending', 'approved', 'rejected'], 
-      default: 'none' 
+
+    idDocumentUrl: {
+      type: String,
+      trim: true,
+      default: null
     },
-    
-    idDocumentUrl: { type: String, trim: true, default: null },
-    drivingLicenseUrl: { type: String, trim: true, default: null },
-    submittedAt: { type: Date, default: null },
-    verifiedAt: { type: Date, default: null },
-    rejectionReason: { type: String, default: null } 
+
+    drivingLicenseUrl: {
+      type: String,
+      trim: true,
+      default: null
+    },
+
+    submittedAt: {
+      type: Date,
+      default: null
+    },
+
+    reviewedAt: {
+      type: Date,
+      default: null
+    },
+
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+
+    rejectionReason: {
+      type: String,
+      default: null,
+      maxlength: 500
+    },
+
+    history: [{
+      fromStatus: String,
+      toStatus: String,
+      reason: {
+        type: String,
+        default: null,
+        maxlength: 500
+      },
+      adminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+      },
+      changedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   },
+
+  // Seller verification: approval to sell or list cars
+  sellerVerification: {
+    status: {
+      type: String,
+      enum: ['not_requested', 'pending', 'approved', 'rejected'],
+      default: 'not_requested'
+    },
+
+    submittedAt: {
+      type: Date,
+      default: null
+    },
+
+    reviewedAt: {
+      type: Date,
+      default: null
+    },
+
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+
+    rejectionReason: {
+      type: String,
+      default: null,
+      maxlength: 500
+    },
+
+    history: [{
+      fromStatus: String,
+      toStatus: String,
+      reason: {
+        type: String,
+        default: null,
+        maxlength: 500
+      },
+      adminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+      },
+      changedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
+  },
+
 
   // Wishlist - saved/favourite cars
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Car' }],

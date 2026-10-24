@@ -9,6 +9,16 @@ jest.mock('../utils/emailService', () => ({
     sendPasswordResetEmail: jest.fn().mockResolvedValue(true),
 }));
 
+jest.mock('../config/redisClient', () => ({
+    get: jest.fn(),
+    set: jest.fn(),
+    setEx: jest.fn(),
+    del: jest.fn(),
+    connect: jest.fn().mockResolvedValue(undefined),
+    isOpen: false,
+    on: jest.fn(),
+}));
+
 // 2. Import the mocked function so we can check if it was triggered
 const { sendWelcomeEmail } = require('../utils/emailService');
 
@@ -51,13 +61,13 @@ describe('Auth API Routes', () => {
             lastName: 'User',
             email: 'testuser@example.com',
             password: 'securePassword123',
-            phone: '1234567890'
+            phone: '+919876543210'
         };
 
         const res = await request(app)
             .post('/api/auth/signup')
             .send(validUser);
-
+        console.log('Signup response:', res.statusCode, res.body);
         // Assert the database and server responded correctly
         expect(res.statusCode).toBe(201);
         expect(res.body.message).toBe('Signup successful');
