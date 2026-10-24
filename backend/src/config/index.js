@@ -16,19 +16,23 @@ REQUIRED_ENV_VARS.forEach((envVar) => {
   }
 });
 
-// 2. Database Connection
+
+ // 2. Database Connection
 async function connectMongoDB() {
   mongoose.set('strictQuery', false);
-  
-  // Use the environment variable directly
+
   await mongoose.connect(process.env.MONGO_URI, {
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
   });
 
+  // Temporary diagnostic logs
   console.log('MongoDB connected successfully!');
+  console.log('MongoDB Host:', mongoose.connection.host);
+  console.log('Connection State:', mongoose.connection.readyState);
+  console.log('Database Name:', mongoose.connection.name);
 
-  mongoose.connection.on('error', err => {
+  mongoose.connection.on('error', (err) => {
     console.error('MongoDB connection error:', err);
   });
 
@@ -41,5 +45,4 @@ async function connectMongoDB() {
   });
 }
 
-// Only export what is actually needed
 module.exports = { connectMongoDB };
