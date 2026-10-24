@@ -5,8 +5,19 @@ const jwt = require('jsonwebtoken');
 const User = require('../../models/User');
 const AdminInvitation = require('../../models/AdminInvitation');
 
+// Prevent sensitive invitation responses from being cached.
+const setSensitiveResponseHeaders = (res) => {
+  res.set({
+    'Cache-Control': 'no-store, private, max-age=0',
+    Pragma: 'no-cache',
+    'Referrer-Policy': 'no-referrer',
+  });
+};
+
 // Existing authenticated admin creates an invitation.
 const createAdminInvitation = async (req, res) => {
+  setSensitiveResponseHeaders(res);
+
   try {
     const email = String(req.body.email || '')
       .trim()
@@ -14,7 +25,7 @@ const createAdminInvitation = async (req, res) => {
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({
-        message: 'Enter a valid email address.'
+        message: 'Enter a valid email address.',
       });
     }
 
@@ -22,17 +33,16 @@ const createAdminInvitation = async (req, res) => {
 
     if (existingUser) {
       return res.status(409).json({
-        message: 'An account already exists with this email.'
+        message: 'An account already exists with this email.',
       });
     }
 
-    // Invalidate any older unused invitations for this email.
+    // Invalidate previous unused invitations for this email.
     await AdminInvitation.updateMany(
       { email, usedAt: null },
       { $set: { usedAt: new Date() } }
     );
 
-    // Generate a cryptographically secure, unguessable token.
     const token = crypto.randomBytes(32).toString('hex');
 
     const tokenHash = crypto
@@ -40,45 +50,59 @@ const createAdminInvitation = async (req, res) => {
       .update(token)
       .digest('hex');
 
-    const expiresAt = new Date(
-      Date.now() + 15 * 60 * 1000
-    );
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    await AdminInvitation.create({
+    const invitation = await AdminInvitation.create({
       email,
       tokenHash,
       invitedBy: req.user.userId,
-      expiresAt
+      expiresAt,
     });
 
-    // Return the raw token only once.
-    // Deliver it privately; never log it or store it in frontend code.
+    // Return the raw token only to the authenticated administrator
+    // who is creating the invitation. Never log this token or URL.
     return res.status(201).json({
       message: 'Invitation created. It expires in 15 minutes.',
       email,
       token,
-      expiresAt
+      expiresAt: invitation.expiresAt,
     });
   } catch (error) {
-    console.error('Create admin invitation failed:', error);
+    // Do not log invitation tokens, URLs, or request bodies.
+    console.error('Create admin invitation failed:', {
+      name: error.name,
+      code: error.code,
+    });
 
     return res.status(500).json({
-      message: 'Could not create the invitation.'
+      message: 'Could not create the invitation.',
     });
   }
 };
 
-
 // Invitee accepts an invitation and creates an admin account.
 const acceptAdminInvitation = async (req, res) => {
+  setSensitiveResponseHeaders(res);
+
+  let claimedInvitation = null;
+
   try {
+    // Check configuration before consuming an invitation.
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not configured.');
+
+      return res.status(500).json({
+        message: 'Authentication is not configured.',
+      });
+    }
+
     const {
       firstName,
       lastName,
       email,
       password,
       phone,
-      token
+      token,
     } = req.body;
 
     const normalizedEmail = String(email || '')
@@ -86,22 +110,26 @@ const acceptAdminInvitation = async (req, res) => {
       .toLowerCase();
 
     if (
-      !firstName?.trim() ||
-      !lastName?.trim() ||
-      !normalizedEmail ||
+      typeof firstName !== 'string' ||
+      !firstName.trim() ||
+      typeof lastName !== 'string' ||
+      !lastName.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) ||
+      typeof password !== 'string' ||
       !password ||
-      !phone ||
+      typeof phone !== 'string' ||
+      !phone.trim() ||
       typeof token !== 'string' ||
-      token.length !== 64
+      !/^[a-f0-9]{64}$/i.test(token)
     ) {
       return res.status(400).json({
-        message: 'Provide all required fields and a valid invitation token.'
+        message: 'Provide valid values for all required fields.',
       });
     }
 
     if (password.length < 12) {
       return res.status(400).json({
-        message: 'Password must be at least 12 characters long.'
+        message: 'Password must be at least 12 characters long.',
       });
     }
 
@@ -110,33 +138,37 @@ const acceptAdminInvitation = async (req, res) => {
       .update(token)
       .digest('hex');
 
-    // Atomically claim the invitation. Only one request can claim it.
-    const invitation = await AdminInvitation.findOneAndUpdate(
+    // Atomically claim a valid, unused, unexpired invitation.
+    // A concurrent request cannot claim the same invitation.
+    claimedInvitation = await AdminInvitation.findOneAndUpdate(
       {
         email: normalizedEmail,
         tokenHash,
         usedAt: null,
-        expiresAt: { $gt: new Date() }
+        expiresAt: { $gt: new Date() },
       },
       {
-        $set: { usedAt: new Date() }
+        $set: { usedAt: new Date() },
       },
       { new: true }
     );
 
-    if (!invitation) {
+    if (!claimedInvitation) {
       return res.status(400).json({
-        message: 'Invitation is invalid, expired, or already used.'
+        message: 'Invitation is invalid, expired, or already used.',
       });
     }
 
     const existingUser = await User.findOne({
-      email: normalizedEmail
+      email: normalizedEmail,
     });
 
     if (existingUser) {
+      // Keep the invitation consumed if this email already has an account.
+      claimedInvitation = null;
+
       return res.status(409).json({
-        message: 'An account already exists with this email. Request a new invitation if needed.'
+        message: 'An account already exists with this email.',
       });
     }
 
@@ -146,15 +178,20 @@ const acceptAdminInvitation = async (req, res) => {
       email: normalizedEmail,
       password,
       phone: phone.trim(),
-      role: 'admin'
+      role: 'admin',
     });
 
-    // Your User model hashes the password in its pre-save hook.
     await user.save();
 
-    // Match the existing CarCraze authentication response.
+    // The account now exists, so do not release this invitation,
+    // even if a later authentication step fails.
+    claimedInvitation = null;
+
     const authToken = jwt.sign(
-      { userId: user._id, role: user.role },
+      {
+        userId: user._id,
+        role: user.role,
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -163,7 +200,7 @@ const acceptAdminInvitation = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(201).json({
@@ -173,19 +210,55 @@ const acceptAdminInvitation = async (req, res) => {
         role: user.role,
         firstName: user.firstName,
         lastName: user.lastName,
-        email: user.email
-      }
+        email: user.email,
+      },
     });
   } catch (error) {
-    console.error('Accept admin invitation failed:', error);
+    // Never log the request body, raw token, or invitation URL.
+    console.error('Accept admin invitation failed:', {
+      name: error.name,
+      code: error.code,
+    });
+
+    // If account creation failed, attempt to release the claim.
+    // Match the exact claim so another request's state is not changed.
+    if (claimedInvitation) {
+      try {
+        await AdminInvitation.updateOne(
+          {
+            _id: claimedInvitation._id,
+            usedAt: claimedInvitation.usedAt,
+            expiresAt: { $gt: new Date() },
+          },
+          { $set: { usedAt: null } }
+        );
+      } catch (recoveryError) {
+        console.error('Could not release claimed invitation:', {
+          name: recoveryError.name,
+          code: recoveryError.code,
+        });
+      }
+    }
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: 'An account or invitation already exists for this email.',
+      });
+    }
+
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        message: 'Please check the submitted account details.',
+      });
+    }
 
     return res.status(500).json({
-      message: 'Could not complete administrator registration.'
+      message: 'Could not complete administrator registration.',
     });
   }
 };
 
 module.exports = {
   createAdminInvitation,
-  acceptAdminInvitation
+  acceptAdminInvitation,
 };

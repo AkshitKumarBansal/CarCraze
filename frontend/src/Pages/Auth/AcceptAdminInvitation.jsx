@@ -1,6 +1,10 @@
 
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import {
+  useNavigate,
+  useSearchParams,
+  useLocation,
+} from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,26 +12,40 @@ const API_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function AcceptAdminInvitation() {
-
   const { refreshAuth } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const token = searchParams.get('token') || '';
+  // Capture the token before removing it from the URL.
+  const [token] = useState(
+    () => new URLSearchParams(window.location.search).get('token') || ''
+  );
 
-  if (!process.env.JWT_SECRET) {
-        console.error('JWT_SECRET is not configured.');
-        return res.status(500).json({
-            message: 'Authentication is not configured.'
-        });
+  // Remove the token from the visible URL while preserving other parameters.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    if (params.has('token')) {
+      params.delete('token');
+
+      navigate(
+        {
+          pathname: location.pathname,
+          search: params.toString() ? `?${params.toString()}` : '',
+          hash: location.hash,
+        },
+        { replace: true }
+      );
     }
+  }, [location.pathname, location.search, location.hash, navigate]);
 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-    phone: ''
+    phone: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -39,18 +57,22 @@ export default function AcceptAdminInvitation() {
 
     setFormData((previous) => ({
       ...previous,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (event) => {
-    if (loading) return;
     event.preventDefault();
+
+    if (loading) return;
+
     setError('');
     setSuccess(false);
 
     if (!token) {
-      setError('The invitation token is missing from the URL.');
+      setError(
+        'The invitation token is missing. Please open the complete invitation link.'
+      );
       return;
     }
 
@@ -65,19 +87,21 @@ export default function AcceptAdminInvitation() {
       await axios.post(
         `${API_URL}/api/auth/admin-invitations/accept`,
         {
-          ...formData,
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),
           email: formData.email.trim().toLowerCase(),
+          password: formData.password,
           phone: formData.phone.trim(),
-          token
+          token,
         },
-        { withCredentials: true }
+        {
+          withCredentials: true,
+        }
       );
 
-      await refreshAuth();
-
       setSuccess(true);
+
+      await refreshAuth();
 
       navigate('/admin/dashboard', { replace: true });
     } catch (err) {
@@ -103,9 +127,11 @@ export default function AcceptAdminInvitation() {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-2xl text-red-700">
             !
           </div>
+
           <h1 className="text-2xl font-bold text-slate-900">
             Invalid invitation link
           </h1>
+
           <p className="mt-3 leading-6 text-slate-600">
             The invitation token is missing. Please open the complete
             invitation link you received.
@@ -182,6 +208,7 @@ export default function AcceptAdminInvitation() {
                 className={inputClass}
                 placeholder="admin@example.com"
               />
+
               <p className="mt-2 text-xs leading-5 text-slate-500">
                 Use the same email address the invitation was created for.
               </p>

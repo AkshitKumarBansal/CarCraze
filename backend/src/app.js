@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 
 const express = require('express');
@@ -5,7 +6,8 @@ const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
-// const { ALLOWED_ORIGINS } = require('./config');
+const helmet = require('helmet');
+
 const { errorHandler } = require('./middleware/error');
 
 const healthRouter = require('./routes/health');
@@ -20,44 +22,57 @@ const cartRouter = require('./routes/cart');
 const ordersRouter = require('./routes/orders');
 const contactRouter = require('./routes/contact');
 const wishlistRouter = require('./routes/wishlist');
-const helmet = require('helmet');
 
-// Rate limiting
-const limiter = rateLimit({
+// Global rate limiter
+const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  limit: 100, // Maximum 100 requests per IP per window
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
   message: {
-    message: 'Too many requests from this IP, please try again after 15 minutes'
-  }
+    code: 'GLOBAL_RATE_LIMIT',
+    message:
+      'Too many requests from this IP. Please try again after 15 minutes.',
+  },
+  handler: (req, res, next, options) => {
+    return res.status(options.statusCode).json(options.message);
+  },
 });
 
 const app = express();
+
+// Trust one reverse proxy only if your deployment actually uses one.
+// Configure this value to match your production proxy setup.
 app.set('trust proxy', 1);
 
-app.use(helmet()); // Security headers
+// Security headers
+app.use(helmet());
 
 // CORS
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
-// Cookie parser - must be before routes
+// Cookie parser must run before routes that read cookies
 app.use(cookieParser());
 
-// Body parsers
+// Request body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static: uploads
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+// Static uploads
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, '..', 'uploads'))
+);
 
-// Apply rate limiting to all routes
-app.use(limiter);
+// Apply global rate limiting before routes
+app.use(globalLimiter);
 
 // Routes
 app.use('/api/health', healthRouter);
@@ -73,14 +88,14 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/wishlist', wishlistRouter);
 
-// 404 Handler
+// 404 handler
 app.use((req, res, next) => {
   const error = new Error('Not Found');
   error.status = 404;
   next(error);
 });
 
-// Global Error Handler
+// Global error handler
 app.use(errorHandler);
 
 module.exports = app;
