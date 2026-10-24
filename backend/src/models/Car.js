@@ -43,8 +43,16 @@ const carSchema = new mongoose.Schema({
   // Blackout dates for maintenance or manual blocks
   blackoutDates: [blackoutDateSchema],
 
+  
   status: { type: String, default: 'active' },
-  images: [{ type: String }]
+  images: [{ type: String }],
+
+  // Used to coordinate concurrent booking transactions
+  bookingLockVersion: {
+    type: Number,
+    default: 0
+  }
+
 }, { 
   timestamps: true 
 });

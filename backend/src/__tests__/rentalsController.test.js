@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 // Register mocks before importing the controller or models.
@@ -14,7 +15,8 @@ jest.mock('../models/Rental', () => {
 });
 
 jest.mock('../models/Car', () => ({
-  findById: jest.fn()
+  findById: jest.fn(),
+  updateOne: jest.fn()
 }));
 
 jest.mock('../models/User', () => ({
@@ -29,15 +31,27 @@ const Rental = require('../models/Rental');
 const Car = require('../models/Car');
 const User = require('../models/User');
 const { sendRentalReminder } = require('../utils/emailService');
+
 const {
   calculatePriceAndAvailability,
   createRental
 } = require('../controllers/rentalsController');
 
+// Mock a Mongoose query that supports .session() and await.
+const createMockQuery = (result) => ({
+  session: jest.fn().mockReturnThis(),
+
+  then: (resolve, reject) =>
+    Promise.resolve(result).then(resolve, reject),
+
+  catch: (reject) =>
+    Promise.resolve(result).catch(reject)
+});
 
 describe('Rental controller validation', () => {
   let req;
   let res;
+  let mockSession;
 
   const carId = new mongoose.Types.ObjectId().toString();
   const userId = new mongoose.Types.ObjectId().toString();
@@ -54,7 +68,6 @@ describe('Rental controller validation', () => {
       minRentalHours: 2
     },
     blackoutDates: [],
-    save: jest.fn().mockResolvedValue(undefined),
     ...overrides
   });
 
@@ -67,6 +80,16 @@ describe('Rental controller validation', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockSession = {
+      withTransaction: jest.fn(async (callback) => {
+        await callback();
+      }),
+      endSession: jest.fn().mockResolvedValue(undefined)
+    };
+
+    jest.spyOn(mongoose, 'startSession')
+      .mockResolvedValue(mockSession);
 
     req = {
       body: {
@@ -85,10 +108,25 @@ describe('Rental controller validation', () => {
       json: jest.fn().mockReturnThis()
     };
 
-    Car.findById.mockResolvedValue(makeCar());
-    Rental.findOne.mockResolvedValue(null);
-    User.findById.mockResolvedValue(makeUser());
+    Car.findById.mockReturnValue(
+      createMockQuery(makeCar())
+    );
 
+    Car.updateOne.mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 1,
+      modifiedCount: 1
+    });
+
+    Rental.findOne.mockReturnValue(
+      createMockQuery(null)
+    );
+
+    User.findById.mockResolvedValue(makeUser());
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('calculatePriceAndAvailability', () => {
@@ -96,6 +134,7 @@ describe('Rental controller validation', () => {
       await calculatePriceAndAvailability(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
+
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           available: true,
@@ -131,6 +170,7 @@ describe('Rental controller validation', () => {
       await calculatePriceAndAvailability(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
+
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.stringContaining('Minimum rental')
@@ -139,25 +179,30 @@ describe('Rental controller validation', () => {
     });
 
     test('rejects dates overlapping a blackout period', async () => {
-      Car.findById.mockResolvedValue(
-        makeCar({
-          blackoutDates: [{
-            startDate: new Date('2027-01-04T12:00:00.000Z'),
-            endDate: new Date('2027-01-04T15:00:00.000Z')
-          }]
-        })
+      Car.findById.mockReturnValue(
+        createMockQuery(
+          makeCar({
+            blackoutDates: [{
+              startDate: new Date('2027-01-04T12:00:00.000Z'),
+              endDate: new Date('2027-01-04T15:00:00.000Z')
+            }]
+          })
+        )
       );
 
       await calculatePriceAndAvailability(req, res);
 
       expect(res.status).toHaveBeenCalledWith(409);
+
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ available: false })
       );
     });
 
     test('rejects dates overlapping an existing booking', async () => {
-      Rental.findOne.mockResolvedValue({ _id: 'existing-rental' });
+      Rental.findOne.mockReturnValue(
+        createMockQuery({ _id: 'existing-rental' })
+      );
 
       await calculatePriceAndAvailability(req, res);
 
@@ -166,6 +211,7 @@ describe('Rental controller validation', () => {
           status: { $in: ['booked', 'active'] }
         })
       );
+
       expect(res.status).toHaveBeenCalledWith(409);
     });
   });
@@ -175,6 +221,7 @@ describe('Rental controller validation', () => {
       await createRental(req, res);
 
       expect(res.status).toHaveBeenCalledWith(201);
+
       expect(Rental).toHaveBeenCalledWith(
         expect.objectContaining({
           customer: expect.any(mongoose.Types.ObjectId),
@@ -185,22 +232,38 @@ describe('Rental controller validation', () => {
           totalAmount: 40
         })
       );
+
+      expect(mongoose.startSession).toHaveBeenCalledTimes(1);
+      expect(mockSession.withTransaction).toHaveBeenCalledTimes(1);
+      expect(mockSession.endSession).toHaveBeenCalledTimes(1);
+
+      expect(Car.updateOne).toHaveBeenCalledWith(
+        { _id: req.body.carId },
+        { $inc: { bookingLockVersion: 1 } },
+        { session: mockSession }
+      );
+
+      expect(sendRentalReminder).toHaveBeenCalled();
     });
 
     test('rejects a booking overlapping a blackout period', async () => {
-      Car.findById.mockResolvedValue(
-        makeCar({
-          blackoutDates: [{
-            startDate: new Date('2027-01-04T12:00:00.000Z'),
-            endDate: new Date('2027-01-04T15:00:00.000Z')
-          }]
-        })
+      Car.findById.mockReturnValue(
+        createMockQuery(
+          makeCar({
+            blackoutDates: [{
+              startDate: new Date('2027-01-04T12:00:00.000Z'),
+              endDate: new Date('2027-01-04T15:00:00.000Z')
+            }]
+          })
+        )
       );
 
       await createRental(req, res);
 
       expect(res.status).toHaveBeenCalledWith(409);
       expect(Rental).not.toHaveBeenCalled();
+      expect(mockSession.endSession).toHaveBeenCalledTimes(1);
+      expect(sendRentalReminder).not.toHaveBeenCalled();
     });
 
     test('rejects a booking shorter than the minimum duration', async () => {
@@ -210,25 +273,45 @@ describe('Rental controller validation', () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(Rental).not.toHaveBeenCalled();
+      expect(mockSession.endSession).toHaveBeenCalledTimes(1);
+      expect(sendRentalReminder).not.toHaveBeenCalled();
     });
 
     test('rejects a booking when dates are already booked', async () => {
-      Rental.findOne.mockResolvedValue({ _id: 'existing-rental' });
+      Rental.findOne.mockReturnValue(
+        createMockQuery({ _id: 'existing-rental' })
+      );
 
       await createRental(req, res);
 
       expect(res.status).toHaveBeenCalledWith(409);
       expect(Rental).not.toHaveBeenCalled();
+      expect(mockSession.endSession).toHaveBeenCalledTimes(1);
+      expect(sendRentalReminder).not.toHaveBeenCalled();
     });
 
     test('rejects an unverified customer', async () => {
       User.findById.mockResolvedValue(
-        makeUser({ verification: { status: 'pending' } })
+        makeUser({
+          verification: { status: 'pending' }
+        })
       );
 
       await createRental(req, res);
 
       expect(res.status).toHaveBeenCalledWith(403);
+      expect(Rental).not.toHaveBeenCalled();
+      expect(mongoose.startSession).not.toHaveBeenCalled();
+      expect(sendRentalReminder).not.toHaveBeenCalled();
+    });
+
+    test('rejects a user who is not a customer', async () => {
+      req.user.role = 'admin';
+
+      await createRental(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(mongoose.startSession).not.toHaveBeenCalled();
       expect(Rental).not.toHaveBeenCalled();
     });
   });

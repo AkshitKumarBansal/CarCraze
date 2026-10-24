@@ -14,7 +14,7 @@ class RentalValidationError extends Error {
 }
 
 // Shared validation, availability and pricing logic for both endpoints.
-const getRentalDetails = async ({ carId, startDate, endDate }) => {
+const getRentalDetails = async ({ carId, startDate, endDate, session }) => {
   if (!carId || !startDate || !endDate) {
     throw new RentalValidationError(
       400,
@@ -43,7 +43,13 @@ const getRentalDetails = async ({ carId, startDate, endDate }) => {
     );
   }
 
-  const car = await Car.findById(carId);
+  const carQuery = Car.findById(carId);
+
+  if (session) {
+    carQuery.session(session);
+  }
+
+  const car = await carQuery;
 
   if (!car) {
     throw new RentalValidationError(404, 'Car not found');
@@ -77,12 +83,20 @@ const getRentalDetails = async ({ carId, startDate, endDate }) => {
 
   // Only bookings that occupy the car should block availability.
   // Adjacent bookings are allowed: one can end when another begins.
-  const overlappingRental = await Rental.findOne({
+  
+  const rentalQuery = Rental.findOne({
     car: car._id,
     status: { $in: ['booked', 'active'] },
     startDate: { $lt: end },
     endDate: { $gt: start }
   });
+
+  if (session) {
+    rentalQuery.session(session);
+  }
+
+  const overlappingRental = await rentalQuery;
+
 
   if (overlappingRental) {
     throw new RentalValidationError(
@@ -183,7 +197,10 @@ const calculatePriceAndAvailability = async (req, res) => {
   }
 };
 
+
 const createRental = async (req, res) => {
+  let session;
+
   try {
     if (req.user?.role !== 'customer') {
       return res.status(403).json({
@@ -194,7 +211,9 @@ const createRental = async (req, res) => {
     const user = await User.findById(req.user.userId);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({
+        message: 'User not found'
+      });
     }
 
     if (user.verification?.status !== 'verified') {
@@ -204,40 +223,61 @@ const createRental = async (req, res) => {
       });
     }
 
-    // Reuse exactly the same rules as the pricing endpoint.
-    const details = await getRentalDetails(req.body);
+    session = await mongoose.startSession();
 
-    const rental = new Rental({
-      car: details.car._id,
-      customer: user._id,
-      startDate: details.start,
-      endDate: details.end,
-      durationHours: details.durationHours,
-      rentalTier: details.rentalTier,
-      pricePerDay: details.baseRate,
-      totalAmount: details.totalCalculatedPrice,
-      pricingBreakdown: {
-        baseRate: details.baseRate,
-        durationUnits: details.durationUnits,
-        surgeMultiplierApplied:
-          details.pricingBreakdown.surgeMultiplierApplied,
-        surgeFee: details.pricingBreakdown.surgeFee,
-        totalCalculatedPrice: details.totalCalculatedPrice
-      }
+    let rental;
+    let details;
+
+    await session.withTransaction(async () => {
+      // Write to the car document inside this transaction.
+      // Competing transactions for the same car will conflict,
+      // allowing MongoDB to retry or reject one of them.
+      const carId = req.body.carId;
+
+      await Car.updateOne(
+        { _id: carId },
+        { $inc: { bookingLockVersion: 1 } },
+        { session }
+      );
+
+      // Recheck availability inside the transaction.
+      details = await getRentalDetails({
+        ...req.body,
+        session
+      });
+
+      rental = new Rental({
+        car: details.car._id,
+        customer: user._id,
+        startDate: details.start,
+        endDate: details.end,
+        durationHours: details.durationHours,
+        rentalTier: details.rentalTier,
+        pricePerDay: details.baseRate,
+        totalAmount: details.totalCalculatedPrice,
+        pricingBreakdown: {
+          baseRate: details.baseRate,
+          durationUnits: details.durationUnits,
+          surgeMultiplierApplied:
+            details.pricingBreakdown.surgeMultiplierApplied,
+          surgeFee: details.pricingBreakdown.surgeFee,
+          totalCalculatedPrice:
+            details.totalCalculatedPrice
+        }
+      });
+
+      await rental.save({ session });
     });
 
-    await rental.save();
-
-    // Do not set the car permanently to "rented" for a date-based
-    // booking. Availability is determined by overlapping rentals.
-    try {
-      Promise.resolve(sendRentalReminder(user, rental, details.car))
-        .catch((emailErr) => {
-          console.error('Failed to send rental reminder email:', emailErr);
-        });
-    } catch (emailErr) {
-      console.error('Error preparing rental email:', emailErr);
-    }
+    // This runs only after the transaction has committed.
+    Promise.resolve()
+      .then(() => sendRentalReminder(user, rental, details.car))
+      .catch((emailErr) => {
+        console.error(
+          'Failed to send rental reminder email:',
+          emailErr
+        );
+      });
 
     return res.status(201).json({
       message: 'Rental booked successfully',
@@ -252,7 +292,14 @@ const createRental = async (req, res) => {
     }
 
     console.error('Create rental error:', err);
-    return res.status(500).json({ message: 'Internal server error' });
+
+    return res.status(500).json({
+      message: 'Internal server error'
+    });
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
   }
 };
 
