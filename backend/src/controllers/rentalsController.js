@@ -1,163 +1,258 @@
+
+const mongoose = require('mongoose');
 const Rental = require('../models/Rental');
 const Car = require('../models/Car');
 const User = require('../models/User');
 const { sendRentalReminder } = require('../utils/emailService');
 
-// Controller function to calculate rental pricing and check car availability for selected dates
+class RentalValidationError extends Error {
+  constructor(statusCode, message, extra = {}) {
+    super(message);
+    this.statusCode = statusCode;
+    this.extra = extra;
+  }
+}
+
+// Shared validation, availability and pricing logic for both endpoints.
+const getRentalDetails = async ({ carId, startDate, endDate }) => {
+  if (!carId || !startDate || !endDate) {
+    throw new RentalValidationError(
+      400,
+      'carId, startDate and endDate are required'
+    );
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(carId)) {
+    throw new RentalValidationError(400, 'Invalid carId');
+  }
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (
+    !Number.isFinite(start.getTime()) ||
+    !Number.isFinite(end.getTime())
+  ) {
+    throw new RentalValidationError(400, 'Invalid rental dates');
+  }
+
+  if (end <= start) {
+    throw new RentalValidationError(
+      400,
+      'End date must be after start date'
+    );
+  }
+
+  const car = await Car.findById(carId);
+
+  if (!car) {
+    throw new RentalValidationError(404, 'Car not found');
+  }
+
+  const isRentable =
+    car.listingType === 'rent' || car.category === 'rental';
+
+  if (!isRentable) {
+    throw new RentalValidationError(
+      400,
+      'Car is not available for rent'
+    );
+  }
+
+  // Reject a rental that overlaps any blackout period.
+  const isBlackedOut = (car.blackoutDates || []).some((blackout) => {
+    const blackoutStart = new Date(blackout.startDate);
+    const blackoutEnd = new Date(blackout.endDate);
+
+    return start < blackoutEnd && end > blackoutStart;
+  });
+
+  if (isBlackedOut) {
+    throw new RentalValidationError(
+      409,
+      'Car is unavailable for these dates.',
+      { available: false }
+    );
+  }
+
+  // Only bookings that occupy the car should block availability.
+  // Adjacent bookings are allowed: one can end when another begins.
+  const overlappingRental = await Rental.findOne({
+    car: car._id,
+    status: { $in: ['booked', 'active'] },
+    startDate: { $lt: end },
+    endDate: { $gt: start }
+  });
+
+  if (overlappingRental) {
+    throw new RentalValidationError(
+      409,
+      'Car is already booked for these dates.',
+      { available: false }
+    );
+  }
+
+  const durationHours = Math.ceil(
+    (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+  );
+
+  const minHours = car.rentalPricing?.minRentalHours ?? 2;
+
+  if (
+    !Number.isFinite(minHours) ||
+    minHours < 1 ||
+    durationHours < minHours
+  ) {
+    throw new RentalValidationError(
+      400,
+      `Minimum rental is ${minHours} hours.`
+    );
+  }
+
+  let rentalTier = 'hourly';
+  let durationUnits = durationHours;
+  let baseRate =
+    car.rentalPricing?.hourlyRate ?? (car.price / 24) ?? 10;
+
+  if (durationHours >= 24) {
+    rentalTier = 'daily';
+    durationUnits = Math.ceil(durationHours / 24);
+    baseRate = car.rentalPricing?.dailyRate ?? car.price ?? 0;
+  }
+
+  const isWeekend = start.getDay() === 0 || start.getDay() === 6;
+  const multiplier = isWeekend
+    ? (car.rentalPricing?.weekendMultiplier ?? 1)
+    : 1;
+
+  if (
+    !Number.isFinite(baseRate) ||
+    baseRate < 0 ||
+    !Number.isFinite(multiplier) ||
+    multiplier < 1
+  ) {
+    throw new RentalValidationError(
+      400,
+      'Invalid rental pricing configuration'
+    );
+  }
+
+  const subtotal = baseRate * durationUnits;
+  const totalCalculatedPrice = subtotal * multiplier;
+
+  const pricingBreakdown = {
+    rentalTier,
+    durationUnits,
+    baseRate,
+    surgeMultiplierApplied: multiplier,
+    surgeFee: totalCalculatedPrice - subtotal,
+    totalCalculatedPrice
+  };
+
+  return {
+    car,
+    start,
+    end,
+    durationHours,
+    rentalTier,
+    durationUnits,
+    baseRate,
+    totalCalculatedPrice,
+    pricingBreakdown
+  };
+};
+
 const calculatePriceAndAvailability = async (req, res) => {
   try {
-    const { carId, startDate, endDate } = req.body;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (start >= end) {
-      return res.status(400).json({ message: 'End date must be after start date' });
-    }
-    const car = await Car.findById(carId);
-    if (!car) return res.status(404).json({ message: 'Car not found' });    
-    const isRentable = car.get('listingType') === 'rent' || car.get('category') === 'rental';
-    if (!isRentable) {
-      return res.status(400).json({ message: 'Car is not available for rent' });
-    }
-    if (car.blackoutDates && car.blackoutDates.length > 0) {
-      const isBlackedOut = car.blackoutDates.some(
-        (b) => start < new Date(b.endDate) && end > new Date(b.startDate)
-      );
-      if (isBlackedOut) return res.status(409).json({ available: false, message: 'Car is unavailable for these dates.' });
-    }
-    const overlappingRentals = await Rental.findOne({
-      car: carId,
-      status: { $in: ['pending', 'confirmed', 'active'] }, 
-      $or: [
-        { startTime: { $lt: end }, endTime: { $gt: start } },
-        { startDate: { $lt: end }, endDate: { $gt: start } } // Fallback for older documents
-      ]
-    });
-    if (overlappingRentals) return res.status(409).json({ available: false, message: 'Dates are already booked.' });
-    const diffInMs = end - start;
-    const durationHours = Math.ceil(diffInMs / (1000 * 60 * 60));
-    const minHours = car.rentalPricing?.minRentalHours || 2;
-    if (durationHours < minHours) {
-      return res.status(400).json({ message: `Minimum rental is ${minHours} hours.` });
-    }
-    let rentalTier = 'hourly';
-    let durationUnits = durationHours;
-    let baseRate = car.rentalPricing?.hourlyRate || (car.price / 24) || 10; 
-    if (durationHours >= 24) {
-      rentalTier = 'daily';
-      durationUnits = Math.ceil(durationHours / 24);
-      baseRate = car.rentalPricing?.dailyRate || car.price || 0;
-    }
-    const isWeekend = start.getDay() === 0 || start.getDay() === 6;
-    const multiplier = isWeekend ? (car.rentalPricing?.weekendMultiplier || 1.0) : 1.0;
-    const subtotal = baseRate * durationUnits;
-    const totalCalculatedPrice = subtotal * multiplier;
+    const details = await getRentalDetails(req.body);
+
     return res.status(200).json({
       available: true,
-      pricingBreakdown: {
-        rentalTier,
-        durationUnits,
-        baseRate,
-        surgeMultiplierApplied: multiplier,
-        surgeFee: totalCalculatedPrice - subtotal,
-        totalCalculatedPrice
-      }
+      pricingBreakdown: details.pricingBreakdown
     });
   } catch (err) {
+    if (err instanceof RentalValidationError) {
+      return res.status(err.statusCode).json({
+        message: err.message,
+        ...err.extra
+      });
+    }
+
     console.error('Calculate pricing error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// Controller function to update an existing rental booking and manage car availability
 const createRental = async (req, res) => {
   try {
-    if (req.user.role !== 'customer') {
-      return res.status(403).json({ message: 'Customer access required' });
-    }
-
-    // --- ADDED VERIFICATION GUARD ON THE BACKEND ---
-    const user = await User.findById(req.user.userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    
-    if (user.verification?.status !== 'verified') {
-      return res.status(403).json({ 
-        message: 'Account not verified. Please verify your identity in your profile to book rentals.' 
+    if (req.user?.role !== 'customer') {
+      return res.status(403).json({
+        message: 'Customer access required'
       });
     }
-    // -----------------------------------------------
 
-    const { carId, startDate, endDate } = req.body;
-    if (!carId || !startDate || !endDate) {
-      return res.status(400).json({ message: 'carId, startDate and endDate are required' });
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    const car = await Car.findById(carId);
-    if (!car) return res.status(404).json({ message: 'Car not found' });
-    const isRentable = car.get('listingType') === 'rent' || car.get('category') === 'rental';
-    if (!isRentable) {
-      return res.status(400).json({ message: 'Car is not available for rent' });
+
+    if (user.verification?.status !== 'verified') {
+      return res.status(403).json({
+        message:
+          'Account not verified. Please verify your identity in your profile to book rentals.'
+      });
     }
-    const s = new Date(startDate);
-    const e = new Date(endDate);
-    if (e <= s) return res.status(400).json({ message: 'Invalid rental dates' });
-    const overlappingRentals = await Rental.findOne({
-      car: carId,
-      status: { $in: ['pending', 'confirmed', 'active'] },
-      $or: [
-        { startTime: { $lt: e }, endTime: { $gt: s } },
-        { startDate: { $lt: e }, endDate: { $gt: s } } 
-      ]
-    });
-    if (overlappingRentals) {
-      return res.status(409).json({ message: 'Car is already booked for these dates' });
-    }
-    const diffInMs = e - s;
-    const durationHours = Math.ceil(diffInMs / (1000 * 60 * 60));
-    let rentalTier = 'hourly';
-    let durationUnits = durationHours;
-    let baseRate = car.rentalPricing?.hourlyRate || (car.price / 24) || 10;
-    if (durationHours >= 24) {
-      rentalTier = 'daily';
-      durationUnits = Math.ceil(durationHours / 24);
-      baseRate = car.rentalPricing?.dailyRate || car.price || 0;
-    }
-    const isWeekend = s.getDay() === 0 || s.getDay() === 6;
-    const multiplier = isWeekend ? (car.rentalPricing?.weekendMultiplier || 1.0) : 1.0;
-    const subtotal = baseRate * durationUnits;
-    const totalAmount = subtotal * multiplier;
-    
+
+    // Reuse exactly the same rules as the pricing endpoint.
+    const details = await getRentalDetails(req.body);
+
     const rental = new Rental({
-      car: car._id,
-      customer: req.user.userId,
-      startDate: s,
-      endDate: e,
-      startTime: s,
-      endTime: e,
-      durationHours,
-      rentalTier,
-      pricePerDay: baseRate, 
-      totalAmount,          
+      car: details.car._id,
+      customer: user._id,
+      startDate: details.start,
+      endDate: details.end,
+      durationHours: details.durationHours,
+      rentalTier: details.rentalTier,
+      pricePerDay: details.baseRate,
+      totalAmount: details.totalCalculatedPrice,
       pricingBreakdown: {
-        baseRate,
-        durationUnits,
-        surgeMultiplierApplied: multiplier,
-        surgeFee: totalAmount - subtotal,
-        totalCalculatedPrice: totalAmount
+        baseRate: details.baseRate,
+        durationUnits: details.durationUnits,
+        surgeMultiplierApplied:
+          details.pricingBreakdown.surgeMultiplierApplied,
+        surgeFee: details.pricingBreakdown.surgeFee,
+        totalCalculatedPrice: details.totalCalculatedPrice
       }
     });
-    await rental.save();
-    car.status = 'rented';
-    await car.save();
 
+    await rental.save();
+
+    // Do not set the car permanently to "rented" for a date-based
+    // booking. Availability is determined by overlapping rentals.
     try {
-      // (Using the already fetched 'user' object)
-      sendRentalReminder(user, rental, car).catch(err => console.error('Failed to send rental reminder email:', err));
+      Promise.resolve(sendRentalReminder(user, rental, details.car))
+        .catch((emailErr) => {
+          console.error('Failed to send rental reminder email:', emailErr);
+        });
     } catch (emailErr) {
       console.error('Error preparing rental email:', emailErr);
     }
-    res.status(201).json({ message: 'Rental booked successfully', rental });
+
+    return res.status(201).json({
+      message: 'Rental booked successfully',
+      rental
+    });
   } catch (err) {
+    if (err instanceof RentalValidationError) {
+      return res.status(err.statusCode).json({
+        message: err.message,
+        ...err.extra
+      });
+    }
+
     console.error('Create rental error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
