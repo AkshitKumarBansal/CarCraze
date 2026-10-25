@@ -51,10 +51,40 @@ const carSchema = new mongoose.Schema({
   bookingLockVersion: {
     type: Number,
     default: 0
+  },
+
+  locationGeo: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      required: false
+    },
+    coordinates: {
+      type: [Number],
+      required: false,
+      validate: {
+        validator: function (coordinates) {
+          if (coordinates == null) return true;
+
+          return (
+            Array.isArray(coordinates) &&
+            coordinates.length === 2 &&
+            coordinates.every(Number.isFinite) &&
+            coordinates[0] >= -180 &&
+            coordinates[0] <= 180 &&
+            coordinates[1] >= -90 &&
+            coordinates[1] <= 90
+          );
+        },
+        message: 'Invalid GeoJSON coordinates'
+      }
+    }
   }
 
 }, { 
   timestamps: true 
 });
+
+carSchema.index({ locationGeo: '2dsphere' });
 
 module.exports = mongoose.model('Car', carSchema);

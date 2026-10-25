@@ -1,4 +1,3 @@
-
 const crypto = require('crypto');
 
 jest.mock('../models/User', () => ({
@@ -66,6 +65,20 @@ describe('resetPassword controller', () => {
             message: 'Token and new password are required'
         });
         expect(User.findOne).not.toHaveBeenCalled();
+        expect(user.save).not.toHaveBeenCalled();
+    });
+
+    it('should reject a request with a missing password', async () => {
+        req.body.password = undefined;
+
+        await resetPassword(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith({
+            message: 'Token and new password are required'
+        });
+        expect(User.findOne).not.toHaveBeenCalled();
+        expect(user.save).not.toHaveBeenCalled();
     });
 
     it('should reject a password shorter than the minimum length', async () => {
@@ -80,6 +93,7 @@ describe('resetPassword controller', () => {
             })
         );
         expect(User.findOne).not.toHaveBeenCalled();
+        expect(user.save).not.toHaveBeenCalled();
     });
 
     it('should reject a password exceeding 72 UTF-8 bytes', async () => {
@@ -88,7 +102,29 @@ describe('resetPassword controller', () => {
         await resetPassword(req, res);
 
         expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: expect.any(String)
+            })
+        );
         expect(User.findOne).not.toHaveBeenCalled();
+        expect(user.save).not.toHaveBeenCalled();
+    });
+
+    it('should reject a multibyte password exceeding 72 UTF-8 bytes', async () => {
+        // Each "é" occupies 2 bytes in UTF-8: 37 characters = 74 bytes.
+        req.body.password = 'é'.repeat(37);
+
+        await resetPassword(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: expect.any(String)
+            })
+        );
+        expect(User.findOne).not.toHaveBeenCalled();
+        expect(user.save).not.toHaveBeenCalled();
     });
 
     it('should reject an invalid or expired reset token', async () => {
@@ -157,8 +193,9 @@ describe('resetPassword controller', () => {
 
         expect(user.passwordResetToken).toBeUndefined();
         expect(user.passwordResetExpires).toBeUndefined();
+        expect(user.save).toHaveBeenCalledTimes(1);
 
-        // Simulate a second request using the same token.
+        // Simulate another request using the same, now-invalid token.
         jest.clearAllMocks();
         User.findOne.mockResolvedValue(null);
 
@@ -169,7 +206,19 @@ describe('resetPassword controller', () => {
 
         await resetPassword(req, res);
 
+        expect(User.findOne).toHaveBeenCalledWith({
+            passwordResetToken: hashedToken,
+            passwordResetExpires: {
+                $gt: expect.any(Number)
+            }
+        });
+
         expect(res.status).toHaveBeenCalledWith(400);
-        expect(user.save).toHaveBeenCalledTimes(0);
+        expect(res.json).toHaveBeenCalledWith({
+            message: 'Reset link is invalid or has expired.'
+        });
+
+        // The user must not be saved again on token reuse.
+        expect(user.save).not.toHaveBeenCalled();
     });
 });
