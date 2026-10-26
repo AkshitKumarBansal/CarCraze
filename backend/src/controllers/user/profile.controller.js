@@ -15,7 +15,7 @@ const getProfile = async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       phone: user.phone,
-      verification: user.verification,
+      identityVerification: user.identityVerification,
       ...(user.role === 'seller' && {
         businessInfo: user.businessInfo,
         rating: user.rating
@@ -56,7 +56,7 @@ const updateProfile = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         phone: user.phone,
-        verification: user.verification,
+        identityVerification: user.identityVerification,
         ...(user.role === 'seller' && {
           businessInfo: user.businessInfo,
           rating: user.rating
@@ -85,25 +85,28 @@ const uploadVerificationDocuments = async (req, res) => {
       userId,
       {
         $set: {
-          'verification.idDocumentUrl': idDocumentUrl,
-          'verification.drivingLicenseUrl': drivingLicenseUrl,
-          'verification.reviewStatus': 'pending', // Sets the review to pending
-          'verification.status': 'unverified',    // Overall status remains unverified until admin approval
-          'verification.submittedAt': new Date()
+          'identityVerification.idDocumentUrl': idDocumentUrl,
+          'identityVerification.drivingLicenseUrl': drivingLicenseUrl,
+          'identityVerification.status': 'pending',
+          'identityVerification.submittedAt': new Date(),
+          'identityVerification.reviewedAt': null,
+          'identityVerification.reviewedBy': null,
+          'identityVerification.rejectionReason': null
         }
       },
-      { new: true, runValidators: true } 
+      { new: true, runValidators: true }
     );
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     } 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Verification documents uploaded successfully.',
-      verification: {
-        status: updatedUser.verification.status,
-        reviewStatus: updatedUser.verification.reviewStatus,
-        submittedAt: updatedUser.verification.submittedAt
+      identityVerification: {
+        status: updatedUser.identityVerification.status,
+        idDocumentUrl: updatedUser.identityVerification.idDocumentUrl,
+        drivingLicenseUrl: updatedUser.identityVerification.drivingLicenseUrl,
+        submittedAt: updatedUser.identityVerification.submittedAt
       }
     });
   } catch (error) {

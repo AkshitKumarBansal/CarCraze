@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const Rental = require('../models/Rental');
 const Car = require('../models/Car');
@@ -219,7 +218,11 @@ const createRental = async (req, res) => {
       });
     }
 
-    if (user.verification?.status !== 'verified') {
+    const verificationStatus =
+      user.identityVerification?.status ??
+      user.verification?.status;
+
+    if (verificationStatus !== 'verified') {
       return res.status(403).json({
         message:
           'Account not verified. Please verify your identity in your profile to book rentals.'
