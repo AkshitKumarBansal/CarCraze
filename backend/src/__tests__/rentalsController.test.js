@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 // Register mocks before importing the controller or models.
@@ -76,7 +75,9 @@ describe('Rental controller validation', () => {
   const makeUser = (overrides = {}) => ({
     _id: new mongoose.Types.ObjectId(userId),
     role: 'customer',
-    verification: { status: 'verified' },
+    identityVerification: {
+      status: 'verified'
+    },
     ...overrides
   });
 
@@ -314,10 +315,69 @@ describe('Rental controller validation', () => {
       expect(sendRentalReminder).not.toHaveBeenCalled();
     });
 
-    test('rejects an unverified customer', async () => {
+    test.each([
+      'pending',
+      'unverified',
+      'rejected'
+    ])(
+      'rejects a customer whose identity status is %s',
+      async (status) => {
+        User.findById.mockResolvedValue(
+          makeUser({
+            identityVerification: { status }
+          })
+        );
+
+        await createRental(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(403);
+
+        expect(res.json).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: expect.stringMatching(/not verified/i)
+          })
+        );
+
+        expect(Rental).not.toHaveBeenCalled();
+        expect(mongoose.startSession).not.toHaveBeenCalled();
+        expect(sendRentalReminder).not.toHaveBeenCalled();
+      }
+    );
+
+    test('allows a verified customer to proceed with rental creation', async () => {
       User.findById.mockResolvedValue(
         makeUser({
-          verification: { status: 'pending' }
+          identityVerification: { status: 'verified' }
+        })
+      );
+
+      await createRental(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(Rental).toHaveBeenCalledTimes(1);
+      expect(mongoose.startSession).toHaveBeenCalledTimes(1);
+      expect(sendRentalReminder).toHaveBeenCalled();
+    });
+
+    test('rejects a customer whose identity verification is missing', async () => {
+      User.findById.mockResolvedValue(
+        makeUser({
+          identityVerification: undefined
+        })
+      );
+
+      await createRental(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(Rental).not.toHaveBeenCalled();
+      expect(mongoose.startSession).not.toHaveBeenCalled();
+      expect(sendRentalReminder).not.toHaveBeenCalled();
+    });
+
+    test('rejects a customer whose identity verification is null', async () => {
+      User.findById.mockResolvedValue(
+        makeUser({
+          identityVerification: null
         })
       );
 
